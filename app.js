@@ -1066,3 +1066,97 @@ if ("IntersectionObserver" in window) {
 } else {
   [...revealGroups, ...revealItems].forEach((item) => item.classList.add("is-visible"));
 }
+
+
+function scenarioSummary(scenario) {
+  const ids = Array.isArray(scenario && scenario.projectIds) ? scenario.projectIds : [];
+  const projects = proposals.filter((proposal) => ids.includes(proposal.id) && isEvaluated(proposal));
+  const budget = Math.max(0, numberOr(scenario && scenario.budget, organisation.budget));
+  const staff = Math.max(1, numberOr(scenario && scenario.staff, organisation.staff));
+  return { projects, budget, staff, ...calculateScenario(projects, budget, staff) };
+}
+
+function renderComparisonWorkspace() {
+  const workspace = $("#comparison-workspace");
+  if (!workspace) return;
+  const selected = selectedProposals();
+  if (selected.length < 2) {
+    workspace.innerHTML = '<div class="workspace-empty"><p class="section-kicker">Comparison set</p><h4>' + (selected.length || "No") + ' project' + (selected.length === 1 ? "" : "s") + ' selected</h4><p>Shortlist two to four evaluated proposals in the overview to begin a comparison.</p><button type="button" class="solid-button" data-open-overview>Open portfolio overview</button></div>';
+    workspace.querySelector("[data-open-overview]").addEventListener("click", () => setActiveView("manager"));
+    return;
+  }
+  const cards = selected.map((proposal) => '<article><span class="objective-tag">' + escapeHTML(proposal.objective) + '</span><h4>' + escapeHTML(proposal.title) + '</h4><p>' + money(proposal.cost) + ' · ' + proposal.staff + ' FTE · ' + escapeHTML(proposal.duration) + '</p><button type="button" data-remove-comparison-project="' + escapeHTML(proposal.id) + '">Remove</button></article>').join("");
+  const strengths = CRITERIA.map((criterion) => {
+    const highest = Math.max(...selected.map((proposal) => Number(proposal.scores[criterion.key])));
+    const names = selected.filter((proposal) => Number(proposal.scores[criterion.key]) === highest).map((proposal) => proposal.title).join(", ");
+    return '<li><span>' + escapeHTML(criterion.short) + '</span><strong>' + escapeHTML(names) + ' · ' + highest + '/5</strong></li>';
+  }).join("");
+  const legend = selected.map((proposal, index) => '<span><i class="legend-colour-' + index + '"></i>' + escapeHTML(proposal.title) + '</span>').join("");
+  const header = CRITERIA.map((criterion) => '<th>' + escapeHTML(criterion.short) + '</th>').join("");
+  const rows = selected.map((proposal) => '<tr><th>' + escapeHTML(proposal.title) + '</th>' + CRITERIA.map((criterion) => '<td><span class="score-cell ' + scoreClass(proposal.scores[criterion.key]) + '">' + proposal.scores[criterion.key] + '</span></td>').join("") + '<td>' + money(proposal.cost) + '</td><td>' + proposal.staff + ' FTE</td></tr>').join("");
+  workspace.innerHTML = '<div class="comparison-selected-strip">' + cards + '</div><div class="comparison-stage"><section class="comparison-radar-panel"><div class="comparison-panel-heading"><p class="section-kicker">Five-criterion profile</p><strong>Overlay view</strong></div><div class="workspace-radar">' + radarSVG(selected) + '</div><div class="workspace-legend">' + legend + '</div></section><aside class="comparison-tradeoffs"><p class="section-kicker">Recorded strengths</p><h4>Read the trade-offs, not a winner.</h4><p>The chart helps the Portfolio Manager discuss the highest recorded ratings, cost, resource limits, and reviewer evidence.</p><ul>' + strengths + '</ul><button type="button" class="outline-button" data-open-scenarios>Build a scenario</button></aside></div><div class="comparison-score-table"><div class="comparison-panel-heading"><p class="section-kicker">Side-by-side detail</p><button type="button" class="text-button" data-open-overview>Change shortlist</button></div><div class="comparison-table-wrap"><table class="comparison-table"><thead><tr><th>Project</th>' + header + '<th>Cost</th><th>Staff</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+  workspace.querySelectorAll("[data-remove-comparison-project]").forEach((button) => button.addEventListener("click", () => toggleShortlist(button.dataset.removeComparisonProject, false)));
+  workspace.querySelectorAll("[data-open-overview]").forEach((button) => button.addEventListener("click", () => setActiveView("manager")));
+  workspace.querySelector("[data-open-scenarios]").addEventListener("click", () => setActiveView("scenarios"));
+}
+
+function renderScenarioWorkspace() {
+  const workspace = $("#scenario-workspace");
+  if (!workspace) return;
+  const selected = selectedProposals();
+  const totals = calculateScenario(selected);
+  const pickList = proposals.filter(isEvaluated).map((proposal) => '<button type="button" class="scenario-pick ' + (state.compared.has(proposal.id) ? "is-picked" : "") + '" data-scenario-toggle="' + escapeHTML(proposal.id) + '"><span class="scenario-pick-check">' + (state.compared.has(proposal.id) ? "✓" : "+") + '</span><span><strong>' + escapeHTML(proposal.title) + '</strong><small>' + escapeHTML(proposal.objective) + ' · ' + money(proposal.cost) + ' · ' + proposal.staff + ' FTE</small></span></button>').join("") || '<p class="workspace-list-empty">No evaluated proposals are ready to add.</p>';
+  const currentProjects = selected.length ? selected.map((proposal) => '<span>' + escapeHTML(proposal.title) + '<button type="button" aria-label="Remove project" data-remove-scenario-project="' + escapeHTML(proposal.id) + '">×</button></span>').join("") : '<p>Select evaluated proposals from the list.</p>';
+  const candidateState = !selected.length ? "Choose projects to check the portfolio limits." : totals.budgetOk && totals.staffOk ? "This candidate is within both organisation limits." : (!totals.budgetOk ? "Budget limit exceeded. " : "") + (!totals.staffOk ? "Staff capacity exceeded." : "");
+  const saved = ["A", "B"].map((name) => { const summary = state.scenarios[name] && scenarioSummary(state.scenarios[name]); return summary ? '<article class="saved-scenario-card ' + (summary.budgetOk && summary.staffOk ? "is-feasible" : "is-warning") + '"><p class="section-kicker">Scenario ' + name + '</p><h4>' + (summary.budgetOk && summary.staffOk ? "Within limits" : "Needs revision") + '</h4><dl><div><dt>Projects</dt><dd>' + summary.projects.length + '</dd></div><div><dt>Cost</dt><dd>' + money(summary.totalCost) + '</dd></div><div><dt>Staff</dt><dd>' + summary.totalStaff + ' FTE</dd></div></dl><p>' + escapeHTML(summary.projects.map((project) => project.title).join(", ")) + '</p><button type="button" class="text-button" data-load-scenario="' + name + '">Load Scenario ' + name + '</button></article>' : '<article class="saved-scenario-card is-empty"><p class="section-kicker">Scenario ' + name + '</p><h4>Not saved yet.</h4><p>Save a temporary candidate set to review it later.</p></article>'; }).join("");
+  workspace.innerHTML = '<div class="scenario-builder"><section class="scenario-project-picker"><div class="comparison-panel-heading"><div><p class="section-kicker">Evaluated proposals</p><strong>Choose up to four projects</strong></div><button type="button" class="text-button" data-open-overview>Filter in overview</button></div><div class="scenario-pick-list">' + pickList + '</div></section><aside class="scenario-current-panel"><p class="section-kicker">Current selection</p><h4>' + (selected.length ? selected.length + ' project' + (selected.length === 1 ? "" : "s") + ' selected' : "Start a candidate set") + '</h4><div class="scenario-current-projects">' + currentProjects + '</div><div class="scenario-constraint-grid"><article><span>Total cost</span><strong>' + money(totals.totalCost) + '</strong><small class="' + (totals.budgetOk ? "check-ok" : "check-warning") + '">' + (totals.budgetOk ? "Within " + money(organisation.budget) : money(totals.totalCost - organisation.budget) + " over budget") + '</small></article><article><span>Required staff</span><strong>' + totals.totalStaff + ' FTE</strong><small class="' + (totals.staffOk ? "check-ok" : "check-warning") + '">' + (totals.staffOk ? "Within " + organisation.staff + " FTE" : totals.totalStaff - organisation.staff + " FTE over capacity") + '</small></article></div><div class="scenario-status ' + (selected.length && totals.budgetOk && totals.staffOk ? "is-feasible" : selected.length ? "is-warning" : "") + '">' + candidateState + '</div><div class="scenario-current-actions"><button type="button" class="solid-button" data-save-scenario-view="A">Save as Scenario A</button><button type="button" class="outline-button" data-save-scenario-view="B">Save as Scenario B</button><button type="button" class="text-button" data-open-comparison-view ' + (selected.length < 2 ? "disabled" : "") + '">Compare selected</button></div></aside></div><div class="scenario-saved-grid">' + saved + '</div>';
+  workspace.querySelectorAll("[data-scenario-toggle]").forEach((button) => button.addEventListener("click", () => toggleShortlist(button.dataset.scenarioToggle, !state.compared.has(button.dataset.scenarioToggle))));
+  workspace.querySelectorAll("[data-remove-scenario-project]").forEach((button) => button.addEventListener("click", () => toggleShortlist(button.dataset.removeScenarioProject, false)));
+  workspace.querySelectorAll("[data-save-scenario-view]").forEach((button) => button.addEventListener("click", () => { saveScenario(button.dataset.saveScenarioView); renderScenarioWorkspace(); renderDecisionWorkspace(); renderReportWorkspace(); }));
+  workspace.querySelectorAll("[data-load-scenario]").forEach((button) => button.addEventListener("click", () => { const scenario = state.scenarios[button.dataset.loadScenario]; state.compared = new Set((scenario.projectIds || []).filter((id) => proposals.some((proposal) => proposal.id === id && isEvaluated(proposal)))); renderAll(); renderScenarioWorkspace(); }));
+  workspace.querySelector("[data-open-overview]").addEventListener("click", () => setActiveView("manager"));
+  const compare = workspace.querySelector("[data-open-comparison-view]"); if (!compare.disabled) compare.addEventListener("click", () => setActiveView("comparison"));
+}
+
+function renderDecisionWorkspace() {
+  const workspace = $("#decision-workspace");
+  if (!workspace) return;
+  const outcomes = ["Approved", "Deferred", "Rejected"];
+  const columns = outcomes.map((outcome) => { const records = proposals.filter((proposal) => state.decisions[proposal.id] && state.decisions[proposal.id].decision === outcome); const cards = records.map((proposal) => '<article><p class="section-kicker">Scenario ' + escapeHTML(state.decisions[proposal.id].scenario || "—") + '</p><h4>' + escapeHTML(proposal.title) + '</h4><p>' + escapeHTML(proposal.summary) + '</p><button type="button" class="text-button" data-open-decision-project="' + escapeHTML(proposal.id) + '">Review rationale</button></article>').join("") || '<div class="decision-empty">No ' + outcome.toLowerCase() + ' projects recorded yet.</div>'; return '<section class="decision-column"><header><span class="status-pill">' + outcome + '</span><strong>' + records.length + '</strong></header>' + cards + '</section>'; }).join("");
+  workspace.innerHTML = '<div class="decision-status-row"><article><span>Saved scenarios</span><strong>' + Object.keys(state.scenarios || {}).length + '</strong><small>available for decision context</small></article><article><span>Recorded decisions</span><strong>' + Object.keys(state.decisions || {}).length + '</strong><small>kept in this browser</small></article><article><span>Next step</span><strong>Review evidence</strong><small>then make a human decision</small></article></div><div class="decision-board">' + columns + '</div><div class="decision-audit-note"><p class="section-kicker">Decision trail</p><p>Decisions stay connected to the reviewer rationale and candidate scenario. The final outcome remains human-led.</p><button type="button" class="outline-button" data-open-overview>Open portfolio overview</button></div>';
+  workspace.querySelectorAll("[data-open-decision-project]").forEach((button) => button.addEventListener("click", () => { state.selectedId = button.dataset.openDecisionProject; setActiveView("manager"); }));
+  workspace.querySelector("[data-open-overview]").addEventListener("click", () => setActiveView("manager"));
+}
+
+function renderReportWorkspace() {
+  const workspace = $("#report-workspace");
+  if (!workspace) return;
+  const evaluated = proposals.filter(isEvaluated);
+  const objectives = [...new Set(proposals.map((proposal) => proposal.objective).filter(Boolean))];
+  const scenarios = Object.entries(state.scenarios || {}).map(([name, scenario]) => { const summary = scenarioSummary(scenario); return '<article><p class="section-kicker">Scenario ' + escapeHTML(name) + '</p><strong>' + (summary.budgetOk && summary.staffOk ? "Within limits" : "Needs revision") + '</strong><span>' + summary.projects.length + ' projects · ' + money(summary.totalCost) + ' · ' + summary.totalStaff + ' FTE</span></article>'; }).join("") || '<article><p class="section-kicker">Candidate scenarios</p><strong>None saved</strong><span>Build a scenario to compare cost and staff requirements.</span></article>';
+  workspace.innerHTML = '<div class="report-metrics"><article><span>Proposals</span><strong>' + proposals.length + '</strong><small>' + evaluated.length + ' evaluated</small></article><article><span>Strategic objectives</span><strong>' + objectives.length + '</strong><small>' + escapeHTML(objectives.join(" · ") || "Not set") + '</small></article><article><span>Organisation limits</span><strong>' + money(organisation.budget) + '</strong><small>' + organisation.staff + ' FTE available</small></article></div><div class="report-scenarios"><div><p class="section-kicker">Saved scenario check</p><h4>Portfolio discussion notes</h4></div>' + scenarios + '</div><div class="report-note"><p class="section-kicker">What this page does</p><p>A compact local snapshot for the team discussion. It does not calculate an automatic recommendation or replace reviewer rationale.</p><button type="button" class="solid-button" data-open-scenarios>Review scenarios</button></div>';
+  workspace.querySelector("[data-open-scenarios]").addEventListener("click", () => setActiveView("scenarios"));
+}
+
+function openComparison() {
+  if (selectedProposals().length < 2) { window.alert("Choose two to four evaluated projects before comparing them."); return; }
+  setActiveView("comparison");
+}
+
+function setActiveView(view) {
+  const knownViews = ["organisation", "proposer", "reviewer", "manager", "comparison", "scenarios", "decisions", "reports", "tests"];
+  if (!knownViews.includes(view)) return;
+  state.activeView = view;
+  $$('[data-workspace-view]').forEach((section) => { section.hidden = section.dataset.workspaceView !== view; });
+  $$('[data-workspace-view-button]').forEach((button) => { if (button.dataset.workspaceViewButton === view) button.setAttribute("aria-current", "page"); else button.removeAttribute("aria-current"); });
+  const testButton = $("#open-test-mode"); if (testButton) testButton.setAttribute("aria-pressed", String(view === "tests"));
+  if (view === "manager") renderAll();
+  if (view === "reviewer") renderReviewQueue();
+  if (view === "organisation") renderOrganisationForm();
+  if (view === "proposer") populateObjectives();
+  if (view === "comparison") renderComparisonWorkspace();
+  if (view === "scenarios") renderScenarioWorkspace();
+  if (view === "decisions") renderDecisionWorkspace();
+  if (view === "reports") renderReportWorkspace();
+  if (view === "tests") renderTestHarness();
+}
