@@ -328,11 +328,34 @@ body.js-ready .reveal-group.is-visible .reveal { transition-delay: 0ms; }
 .compare-fact { border-top: 1px solid var(--line); padding: 15px 0; }
 .compare-fact span { display: block; margin-bottom: 5px; color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .compare-fact strong { font-size: 13px; }
-.review-dialog { width: min(720px, calc(100% - 34px)); }
+.review-dialog { width: min(860px, calc(100% - 34px)); }
 .review-form { padding: 30px; }
 .review-reminder { display: grid; grid-template-columns: auto 1fr; gap: 14px; border: 1px solid var(--ink); background: var(--yellow); padding: 16px; font-size: 11px; }
-.review-form label { display: grid; gap: 9px; margin-top: 26px; font-size: 11px; font-weight: 800; }
+.review-ratings { margin-top: 30px; }
+.review-ratings-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--ink); padding-bottom: 16px; }
+.review-ratings-heading .section-kicker { margin-bottom: 7px; }
+.review-ratings-heading h3 { margin: 0; font-size: clamp(24px, 3vw, 34px); letter-spacing: -.045em; line-height: 1; }
+.review-ratings-heading > p { max-width: 190px; margin: 0; color: var(--muted); font-size: 10px; text-align: right; }
+.review-ratings--compact { display: grid; gap: 12px; }
+.review-ratings--compact .review-ratings-heading { margin-bottom: 4px; }
+.rating-section { min-width: 0; margin: 0; border: 1px solid var(--ink); background: white; padding: 16px; }
+.rating-section legend { width: calc(100% + 2px); margin-left: -1px; padding: 0 1px 10px; background: white; }
+.rating-section legend > span { display: block; font-size: 13px; font-weight: 800; letter-spacing: -.015em; }
+.rating-section legend > small { display: block; max-width: 620px; margin-top: 4px; color: var(--muted); font-size: 10px; font-weight: 400; line-height: 1.4; }
+.rating-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.rating-choice { position: relative; display: grid; min-width: 0; min-height: 60px; grid-template-columns: 16px minmax(0, 1fr); align-items: center; gap: 8px; border: 1px solid var(--line); background: #fafaf6; padding: 8px 9px; cursor: pointer; transition: border-color 150ms ease, background 150ms ease, transform 150ms ease; }
+.rating-choice:hover { border-color: var(--ink); transform: translateY(-2px); }
+.rating-choice:has(input:checked) { border-color: var(--ink); background: var(--yellow); box-shadow: inset 0 0 0 1px var(--ink); }
+.rating-choice input { width: 16px; height: 16px; margin: 0; accent-color: var(--ink); cursor: pointer; }
+.rating-choice > span { display: block; min-width: 0; }
+.rating-choice strong, .rating-choice small { display: block; width: 100%; }
+.rating-choice strong { font-size: 16px; line-height: 1; }
+.rating-choice small { margin-top: 4px; color: var(--muted); font-size: 8px; font-weight: 800; line-height: 1.1; text-transform: uppercase; white-space: nowrap; }
+.rating-choice:has(input:checked) small { color: #4f4600; }
+.rating-choice:focus-within { outline: 2px solid var(--ink); outline-offset: 2px; }
+.review-form > label { display: grid; gap: 9px; margin-top: 26px; font-size: 11px; font-weight: 800; }
 .review-form textarea { width: 100%; resize: vertical; border: 1px solid var(--ink); background: #fafaf6; padding: 16px; outline: 0; font-weight: 400; }
+.review-form textarea:focus { box-shadow: inset 0 0 0 2px var(--yellow); }
 .review-form .solid-button { margin-top: 16px; }
 .save-message { min-height: 20px; margin: 12px 0 0; color: var(--success); font-size: 11px; font-weight: 800; }
 
@@ -370,4 +393,10 @@ body.js-ready .reveal-group.is-visible .reveal { transition-delay: 0ms; }
   .modal-header { padding: 20px; }
   .review-form { padding: 20px; }
   .review-reminder { grid-template-columns: 1fr; }
+  .review-ratings-heading { display: grid; gap: 8px; }
+  .review-ratings-heading > p { max-width: none; text-align: left; }
+  .rating-section { padding: 14px; }
+  .rating-options { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 6px; }
+  .rating-choice { min-height: 58px; padding: 8px; }
+  .rating-choice small { font-size: 7px; }
 }
