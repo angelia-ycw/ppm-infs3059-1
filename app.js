@@ -572,7 +572,7 @@ function renderDetail() {
   } else {
     detailEl.innerHTML = `${detailHeader}${detailsOverview(proposal)}
       <div class="insight-grid"><div class="single-radar">${radarSVG([proposal])}</div><div class="criteria-panel"><h4>Criterion ratings</h4>${CRITERIA.map((criterion, index) => `<button type="button" class="criterion-row ${index === 0 ? "is-active" : ""}" data-criterion="${criterion.key}"><span>${criterion.label}</span><strong class="${scoreClass(proposal.scores[criterion.key])}">${proposal.scores[criterion.key]}/5</strong></button>`).join("")}</div><div class="rationale-panel"><p class="section-kicker">Reviewer rationale</p><h4 id="rationale-title">${CRITERIA[0].label}</h4><p id="rationale-copy">${escapeHTML(proposal.rationales[CRITERIA[0].key])}</p>${proposal.missing.length ? `<div class="missing-note"><strong>Information still required</strong><span>${proposal.missing.map(escapeHTML).join(", ")}</span></div>` : ""}</div></div>
-      <div class="decision-strip"><div><p class="section-kicker">Human decision</p><strong>${savedDecision ? `${escapeHTML(savedDecision.decision)} recorded` : "No final decision recorded"}</strong><small>${savedDecision?.date ? `Saved ${escapeHTML(savedDecision.date)}` : "Review the evidence and candidate-portfolio constraints first."}</small></div><div><button type="button" data-decision="Approved">Approve</button><button type="button" data-decision="Deferred">Defer</button><button type="button" data-decision="Rejected">Reject</button></div></div>`;
+      <div class="decision-strip"><div><p class="section-kicker">Human decision</p><strong>${savedDecision ? `${escapeHTML(savedDecision.decision)} recorded` : "No final decision recorded"}</strong><small>${savedDecision?.date ? `Scenario ${escapeHTML(savedDecision.scenario || "—")} · Saved ${escapeHTML(savedDecision.date)}` : "Review the evidence and candidate-portfolio constraints first."}</small></div><div><button type="button" data-decision="Approved">Approve</button><button type="button" data-decision="Deferred">Defer</button><button type="button" data-decision="Rejected">Reject</button></div></div>`;
   }
 
   $$('[data-criterion]').forEach((button) => button.addEventListener("click", () => {
@@ -592,7 +592,12 @@ function recordDecision(id, decision) {
     window.alert("Complete the reviewer evaluation before recording a final decision.");
     return;
   }
-  state.decisions[id] = { decision, date: new Date().toLocaleDateString("en-AU") };
+  const scenarioName = Object.entries(state.scenarios || {}).find(([, scenario]) => Array.isArray(scenario?.projectIds) && scenario.projectIds.includes(id))?.[0];
+  if (!scenarioName) {
+    window.alert("Save a Scenario A or B that includes this project before recording a decision.");
+    return;
+  }
+  state.decisions[id] = { decision, date: new Date().toLocaleDateString("en-AU"), scenario: scenarioName };
   storage.set(STORAGE.decisions, JSON.stringify(state.decisions));
   renderAll();
 }
@@ -883,6 +888,10 @@ function runTestAction(action) {
     return;
   }
   if (action === "decision") {
+    const testIds = ["test-service-hub", "test-accessibility-update"];
+    state.compared = new Set(testIds);
+    state.scenarios.A = { projectIds: testIds, budget: organisation.budget, staff: organisation.staff };
+    storage.set(STORAGE.scenarios, JSON.stringify(state.scenarios));
     state.selectedId = "test-service-hub";
     state.query = "";
     setActiveView("manager");
