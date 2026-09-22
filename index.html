@@ -25,7 +25,7 @@
       </a>
       <nav aria-label="Primary navigation">
         <a href="#approach">Approach</a>
-        <a href="#workspace">Review workspace</a>
+        <a href="#workspace">Portfolio workspace</a>
         <a href="#scope">Scope</a>
       </nav>
       <a class="header-cta" href="#workspace">Open workspace <span>↘</span></a>
@@ -52,8 +52,8 @@
 
         <div class="hero-bottom reveal reveal--copy">
           <p>
-            A clear place to find missing information, understand uncertainty, and prepare an
-            IT project proposal for human review.
+            Compare IT project proposals across five research-backed criteria, test portfolio
+            constraints, and keep the final decision with people.
           </p>
           <a class="circle-link" href="#approach" aria-label="Explore the approach">↓</a>
         </div>
@@ -62,10 +62,10 @@
       <section class="story-section" id="approach" aria-labelledby="approach-title">
         <div class="story-intro reveal">
           <p class="section-kicker">01 · How it works</p>
-          <h2 id="approach-title">Make every proposal easier to understand.</h2>
+          <h2 id="approach-title">One clear flow from proposal to portfolio.</h2>
           <p class="story-copy">
-            PPM brings the important questions into one clear flow: what is known, what is
-            missing, and what deserves a closer look.
+            The organisation sets its priorities and limits, reviewers assess each proposal,
+            and the Portfolio Manager compares trade-offs before making the final decision.
           </p>
         </div>
 
@@ -74,23 +74,23 @@
             <span class="card-index">01</span>
             <div class="orbit-mark" aria-hidden="true"><i></i><i></i><i></i></div>
             <div class="reveal">
-              <p>Decision logic</p>
-              <h3>One calm place to see the signal behind every proposal.</h3>
+              <p>Organisation setup</p>
+              <h3>Start with strategic objectives, budget, and staff capacity.</h3>
             </div>
           </article>
           <article class="principle-card principle-card--acid">
             <span class="card-index">02</span>
             <div class="reveal">
-              <p>Project Portfolio Management</p>
-              <h3>One clear view for better project decisions.</h3>
-              <small>Bring proposals, resources, risks, and expected benefits together before a human-led review.</small>
+              <p>Five-criterion review</p>
+              <h3>Give every project the same structured review.</h3>
+              <small>Record separate ratings and reasons for alignment, value, feasibility, risk manageability, and urgency.</small>
             </div>
           </article>
           <article class="principle-card principle-card--dark">
             <span class="card-index">03</span>
             <div class="reveal">
-              <p>Human in the loop</p>
-              <h3>Clear signals support better conversations.</h3>
+              <p>Portfolio decision</p>
+              <h3>Compare scenarios, check constraints, then decide.</h3>
             </div>
           </article>
         </div>
@@ -99,55 +99,130 @@
 
       <section class="workspace-section" id="workspace" aria-labelledby="workspace-title">
         <div class="workspace-heading reveal">
-          <p class="section-kicker">02 · Review workspace</p>
+          <p class="section-kicker">02 · Portfolio workspace</p>
           <div>
-            <h2 id="workspace-title">Find the proposal that needs your attention.</h2>
+            <h2 id="workspace-title">Compare the projects behind the portfolio.</h2>
             <p>
-              Search IT proposals, filter by readiness signal, and open a structured reviewer
-              view with the information that matters most.
+              Review five criterion ratings, shortlist two to four proposals, compare their
+              profiles, and test a candidate portfolio against budget and staff constraints.
             </p>
           </div>
         </div>
 
         <div class="review-app">
-          <div class="search-row">
-            <label class="search-box">
-              <span aria-hidden="true">⌕</span>
-              <input id="proposal-search" type="search" placeholder="Search by project, owner, or keyword" autocomplete="off" />
-              <kbd>⌘ K</kbd>
-            </label>
-            <div class="filter-row" role="group" aria-label="Filter proposals">
-              <button class="filter-chip is-active" type="button" data-filter="all">All</button>
-              <button class="filter-chip" type="button" data-filter="missing">Missing info</button>
-              <button class="filter-chip" type="button" data-filter="manual">Manual review</button>
-              <button class="filter-chip" type="button" data-filter="ready">Ready</button>
+          <div class="workspace-rolebar">
+            <div><p class="section-kicker">Working space</p><strong>One shared portfolio flow</strong></div>
+            <div class="role-tabs" role="tablist" aria-label="Workspace role">
+              <button type="button" role="tab" aria-selected="false" data-workspace-view-button="organisation">Organisation</button>
+              <button type="button" role="tab" aria-selected="false" data-workspace-view-button="proposer">Proposer</button>
+              <button type="button" role="tab" aria-selected="false" data-workspace-view-button="reviewer">Reviewer</button>
+              <button type="button" role="tab" aria-selected="true" data-workspace-view-button="manager">Portfolio manager</button>
             </div>
           </div>
 
-          <div class="review-layout">
-            <section class="results-panel" aria-labelledby="results-title">
-              <div class="panel-bar">
-                <p id="results-title"><strong id="result-count">6</strong> sample proposals</p>
-                <label>
-                  <span class="sr-only">Sort proposals</span>
-                  <select id="sort-select">
-                    <option value="updated">Recently updated</option>
-                    <option value="title">Project name</option>
-                    <option value="gaps">Most gaps</option>
-                  </select>
-                </label>
+          <section class="workspace-view setup-view" data-workspace-view="organisation" hidden aria-labelledby="organisation-title">
+            <div class="view-heading"><p class="section-kicker">Organisation setup</p><h3 id="organisation-title">Set the context before proposals arrive.</h3><p>These shared priorities and resource limits guide the proposal form and candidate scenarios.</p></div>
+            <form id="organisation-form" class="setup-form">
+              <label>Organisation or portfolio name<input id="org-name" name="name" maxlength="80" required /></label>
+              <div class="setup-form-grid">
+                <label>Strategic objective 1<input id="org-objective-1" name="objective1" maxlength="100" required /></label>
+                <label>Strategic objective 2<input id="org-objective-2" name="objective2" maxlength="100" required /></label>
+                <label>Strategic objective 3<input id="org-objective-3" name="objective3" maxlength="100" required /></label>
+                <label>Strategic objective 4<input id="org-objective-4" name="objective4" maxlength="100" required /></label>
+                <label>Portfolio budget ($M)<input id="org-budget" name="budget" type="number" min="0" step="0.1" required /></label>
+                <label>Available staff (FTE)<input id="org-staff" name="staff" type="number" min="1" step="1" required /></label>
               </div>
-              <div class="proposal-list" id="proposal-list" aria-live="polite"></div>
-              <div class="empty-state" id="empty-state" hidden>
-                <strong>No proposals found.</strong>
-                <p>Try another keyword or remove a filter.</p>
-              </div>
-            </section>
+              <div class="form-action-row"><button type="submit" class="solid-button">Save organisation setup</button><p id="organisation-message" class="save-message" role="status"></p></div>
+            </form>
+          </section>
 
-            <aside class="detail-panel" id="proposal-detail" aria-live="polite">
-              <div class="detail-empty">Select a proposal to view its review signals.</div>
-            </aside>
-          </div>
+          <section class="workspace-view proposer-view" data-workspace-view="proposer" hidden aria-labelledby="proposer-title">
+            <div class="view-heading"><p class="section-kicker">Proposal entry</p><h3 id="proposer-title">Give reviewers the information they need.</h3><p>Submit a standard IT project proposal. It stays awaiting review until all five criterion ratings and reasons are recorded.</p></div>
+            <form id="proposal-form" class="proposal-form">
+              <div class="proposal-form-grid">
+                <label>Project name<input name="title" maxlength="100" required /></label>
+                <label>Project owner<input name="owner" maxlength="80" required /></label>
+                <label class="wide-field">Project description<textarea name="summary" rows="4" maxlength="600" required></textarea></label>
+                <label>Primary strategic objective<select id="proposal-objective" name="objective" required></select></label>
+                <label>Expected benefits<textarea name="benefits" rows="3" maxlength="400" required></textarea></label>
+                <label>Estimated cost ($M)<input name="cost" type="number" min="0" step="0.1" required /></label>
+                <label>Staff required (FTE)<input name="staff" type="number" min="1" step="1" required /></label>
+                <label>Estimated timeline<input name="duration" maxlength="60" placeholder="e.g. 12 weeks" required /></label>
+                <label class="wide-field">Key risks or dependencies<textarea name="risks" rows="3" maxlength="400" required></textarea></label>
+              </div>
+              <div class="form-action-row"><button type="submit" class="solid-button">Submit proposal for review</button><p id="proposal-form-message" class="save-message" role="status"></p></div>
+            </form>
+          </section>
+
+          <section class="workspace-view reviewer-view" data-workspace-view="reviewer" hidden aria-labelledby="reviewer-title">
+            <div class="view-heading view-heading--split"><div><p class="section-kicker">Reviewer queue</p><h3 id="reviewer-title">Assess evidence, not a single total.</h3></div><p>Each project needs five 1–5 ratings and a short reason for every rating. The system does not calculate an overall score.</p></div>
+            <div class="review-queue" id="review-queue" aria-live="polite"></div>
+          </section>
+
+          <section class="workspace-view manager-view" data-workspace-view="manager" aria-labelledby="portfolio-manager-title">
+            <div class="workflow-strip" aria-label="Portfolio review workflow">
+              <span class="is-current"><b>1</b> Overview</span>
+              <span><b>2</b> Shortlist</span>
+              <span><b>3</b> Compare</span>
+              <span><b>4</b> Build scenario</span>
+              <span><b>5</b> Decide</span>
+            </div>
+
+            <div class="portfolio-summary" aria-label="Portfolio summary">
+              <article><span>Total proposals</span><strong id="summary-total">0</strong><small>in this browser</small></article>
+              <article><span>Evaluated</span><strong id="summary-evaluated">0</strong><small>ready for comparison</small></article>
+              <article><span>Awaiting review</span><strong id="summary-awaiting">0</strong><small>need reviewer evidence</small></article>
+              <article><span>Available budget</span><strong id="summary-budget">$0M</strong><small>from organisation setup</small></article>
+            </div>
+
+            <div class="portfolio-controls">
+              <label class="search-box search-box--compact">
+                <span aria-hidden="true">⌕</span>
+                <input id="proposal-search" type="search" placeholder="Search projects, owners, or objectives" autocomplete="off" />
+                <kbd>⌘ K</kbd>
+              </label>
+              <label>Objective<select id="objective-filter"><option value="all">All objectives</option></select></label>
+              <label>Feasibility<select id="feasibility-filter"><option value="0">Any score</option><option value="3">3 or higher</option><option value="4">4 or higher</option></select></label>
+              <label>Risk manageability<select id="risk-filter"><option value="0">Any score</option><option value="3">3 or higher</option><option value="4">4 or higher</option></select></label>
+              <label>Cost<select id="cost-filter"><option value="all">Any cost</option><option value="1">Up to $1M</option><option value="1.5">Up to $1.5M</option></select></label>
+              <label>Status<select id="status-filter"><option value="all">All statuses</option><option value="Submitted">Submitted</option><option value="Evaluated">Evaluated</option><option value="Under review">Under review</option><option value="Approved">Approved</option><option value="Deferred">Deferred</option><option value="Rejected">Rejected</option></select></label>
+            </div>
+
+            <div class="portfolio-layout">
+              <section class="portfolio-catalog-panel" aria-labelledby="results-title">
+                <div class="panel-bar">
+                  <p id="results-title"><strong id="result-count">0</strong> proposals shown</p>
+                  <label>Sort <select id="sort-select"><option value="title">Project name</option><option value="alignment">Strategic alignment</option><option value="feasibility">Feasibility</option><option value="cost">Lowest cost</option></select></label>
+                </div>
+                <div class="portfolio-card-list" id="proposal-list" aria-live="polite"></div>
+                <div class="empty-state" id="empty-state" hidden>
+                  <strong>No proposals found.</strong>
+                  <p>Try another keyword or remove a filter.</p>
+                </div>
+              </section>
+
+              <aside class="scenario-panel" aria-labelledby="scenario-title">
+                <div class="scenario-heading"><p class="section-kicker">Candidate portfolio</p><h3 id="scenario-title">Current scenario</h3></div>
+                <div class="scenario-context"><span id="scenario-organisation">Organisation setup</span><button type="button" class="text-button" data-open-organisation>Change limits</button></div>
+                <div class="scenario-selection" id="scenario-selection"><p>Select two to four evaluated projects from the cards.</p></div>
+                <div class="scenario-totals">
+                  <article><span>Total cost</span><strong id="scenario-cost">$0M</strong><small id="budget-check">Within $5M</small></article>
+                  <article><span>Required staff</span><strong id="scenario-staff">0 FTE</strong><small id="staff-check">Within 20 FTE</small></article>
+                </div>
+                <div class="constraint-result" id="constraint-result">Select projects to check constraints.</div>
+                <div class="scenario-actions">
+                  <button type="button" class="solid-button" id="open-compare" disabled>Compare selected</button>
+                  <div><button type="button" class="outline-button" data-save-scenario="A">Save as Scenario A</button><button type="button" class="outline-button" data-save-scenario="B">Save as Scenario B</button></div>
+                  <button type="button" class="text-button" id="clear-compare">Clear selection</button>
+                </div>
+                <div class="saved-scenarios" id="saved-scenarios"></div>
+              </aside>
+            </div>
+
+            <section class="project-insight" id="proposal-detail" aria-live="polite">
+              <div class="detail-empty">Select a project card to view its profile and reviewer rationale.</div>
+            </section>
+          </section>
         </div>
       </section>
 
@@ -162,11 +237,11 @@
             <div class="reveal">
               <h3>Built for IT project reviews</h3>
               <ul>
-                <li>IT project proposals only</li>
-                <li>Structured information review</li>
-                <li>Missing-information warnings</li>
-                <li>Risk-based review pathways</li>
-                <li>Human-led decision support</li>
+                <li>Standardised IT project proposals</li>
+                <li>Five-criterion reviewer evaluation</li>
+                <li>Radar-chart project comparison</li>
+                <li>Budget and staff constraint checks</li>
+                <li>Human approve, defer, or reject decision</li>
               </ul>
             </div>
           </article>
@@ -175,11 +250,11 @@
             <div class="reveal">
               <h3>Designed to keep decisions human</h3>
               <ul>
-                <li>Final criteria weights or scores</li>
-                <li>ROI and financial-return calculation</li>
-                <li>Automated approval or rejection</li>
+                <li>Single overall score or automatic ranking</li>
+                <li>Optimised portfolio recommendation</li>
+                <li>AI summaries or multi-reviewer analysis</li>
                 <li>Enterprise and external database integration</li>
-                <li>Live production deployment</li>
+                <li>Automated final decisions</li>
               </ul>
             </div>
           </article>
@@ -198,31 +273,28 @@
       </div>
     </footer>
 
-    <div class="compare-bar" id="compare-bar" hidden>
-      <div><strong id="compare-count">0</strong><span>selected to compare</span></div>
-      <div>
-        <button type="button" class="text-button" id="clear-compare">Clear</button>
-        <button type="button" class="solid-button" id="open-compare">Compare proposals</button>
-      </div>
-    </div>
-
     <dialog class="modal" id="compare-dialog">
       <div class="modal-header">
-        <div><p class="section-kicker">Side-by-side view</p><h2>Proposal comparison</h2></div>
+        <div><p class="section-kicker">Radar comparison</p><h2>Project profiles</h2></div>
         <button class="icon-button" type="button" data-close-dialog aria-label="Close comparison">×</button>
       </div>
-      <div class="compare-grid" id="compare-grid"></div>
+      <div class="radar-comparison">
+        <div class="radar-stage" id="comparison-radar"></div>
+        <div class="comparison-notes"><h3>How to read this view</h3><p>Each line shows one project across the five agreed criteria. Higher values indicate a stronger assessment. The chart does not calculate an overall score or choose a winner.</p><div id="comparison-legend"></div></div>
+      </div>
+      <div class="comparison-table-wrap"><table class="comparison-table"><thead><tr><th>Project</th><th>Alignment</th><th>Value</th><th>Feasibility</th><th>Risk</th><th>Urgency</th><th>Cost</th><th>Staff</th></tr></thead><tbody id="compare-grid"></tbody></table></div>
     </dialog>
 
     <dialog class="modal review-dialog" id="review-dialog">
       <div class="modal-header">
-        <div><p class="section-kicker">Reviewer workspace</p><h2 id="review-dialog-title">Review notes</h2></div>
+        <div><p class="section-kicker">Reviewer evaluation</p><h2 id="review-dialog-title">Review project</h2></div>
         <button class="icon-button" type="button" data-close-review aria-label="Close review">×</button>
       </div>
       <div class="review-form">
-        <div class="review-reminder"><strong>Human decision only</strong><span>No approval or ranking is generated by this prototype.</span></div>
-        <label>Reviewer note<textarea id="review-notes" rows="6" placeholder="Record questions, concerns, or information to request…"></textarea></label>
-        <button type="button" class="solid-button" id="save-note">Save note locally</button>
+        <div class="review-reminder"><strong>Five separate criteria</strong><span>Ratings describe the project profile. No overall score or automatic ranking is generated.</span></div>
+        <div class="review-score-form" id="review-score-form"></div>
+        <label>Reviewer rationale<textarea id="review-notes" rows="6" placeholder="Explain the ratings, evidence, concerns, or information to request…"></textarea></label>
+        <button type="button" class="solid-button" id="save-note">Save evaluation locally</button>
         <p class="save-message" id="save-message" role="status"></p>
       </div>
     </dialog>
