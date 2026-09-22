@@ -110,18 +110,25 @@
         </div>
 
         <div class="review-app">
-          <div class="workspace-rolebar">
-            <div><p class="section-kicker">Working space</p><strong>One shared portfolio flow</strong></div>
-            <div class="workspace-actions">
-              <div class="role-tabs" role="tablist" aria-label="Workspace role">
-                <button type="button" role="tab" aria-selected="false" data-workspace-view-button="organisation">Organisation</button>
-                <button type="button" role="tab" aria-selected="false" data-workspace-view-button="proposer">Proposer</button>
-                <button type="button" role="tab" aria-selected="false" data-workspace-view-button="reviewer">Reviewer</button>
-                <button type="button" role="tab" aria-selected="true" data-workspace-view-button="manager">Portfolio manager</button>
+          <div class="workspace-shell">
+            <aside class="workspace-sidebar" aria-label="Portfolio workspace navigation">
+              <a class="workspace-brand" href="#workspace" aria-label="PPM workspace home"><span class="workspace-brand-mark" aria-hidden="true"></span><span><strong>PPM</strong><small>Project Portfolio Management</small></span></a>
+              <p class="workspace-nav-label">Portfolio workspace</p>
+              <nav class="workspace-nav" aria-label="Portfolio workspace">
+                <button type="button" data-workspace-view-button="manager" aria-current="page"><span>01</span>Overview</button>
+                <button type="button" data-workspace-view-button="proposer"><span>02</span>Project proposals</button>
+                <button type="button" data-workspace-view-button="reviewer"><span>03</span>Evaluation</button>
+                <button type="button" data-workspace-view-button="comparison"><span>04</span>Comparison</button>
+                <button type="button" data-workspace-view-button="scenarios"><span>05</span>Scenarios</button>
+                <button type="button" data-workspace-view-button="decisions"><span>06</span>Decisions</button>
+                <button type="button" data-workspace-view-button="reports"><span>07</span>Portfolio snapshot</button>
+              </nav>
+              <div class="workspace-sidebar-bottom">
+                <button type="button" class="workspace-setting" data-workspace-view-button="organisation">Organisation settings <span aria-hidden="true">↗</span></button>
+                <button type="button" class="test-launch" id="open-test-mode">Test MVP <span aria-hidden="true">↗</span></button>
               </div>
-              <button type="button" class="test-launch" id="open-test-mode">Test MVP <span aria-hidden="true">↗</span></button>
-            </div>
-          </div>
+            </aside>
+            <div class="workspace-main">
 
           <aside class="test-mode-banner" id="test-mode-banner" hidden aria-label="MVP test mode">
             <div><strong>Test workspace</strong><span>Temporary test data only — your normal proposals are unchanged.</span></div>
@@ -246,6 +253,28 @@
               <div class="detail-empty">Select a project card to view its profile and reviewer rationale.</div>
             </section>
           </section>
+
+          <section class="workspace-view comparison-view" data-workspace-view="comparison" hidden aria-labelledby="comparison-view-title">
+            <div class="view-heading view-heading--split"><div><p class="section-kicker">Detailed comparison</p><h3 id="comparison-view-title">See the profile behind each shortlist.</h3></div><p>Select two to four evaluated projects. The radar chart is a visual comparison only; it does not choose a winner.</p></div>
+            <div class="comparison-workspace" id="comparison-workspace" aria-live="polite"></div>
+          </section>
+
+          <section class="workspace-view scenarios-view" data-workspace-view="scenarios" hidden aria-labelledby="scenarios-view-title">
+            <div class="view-heading view-heading--split"><div><p class="section-kicker">Candidate scenarios</p><h3 id="scenarios-view-title">Test a portfolio before making a decision.</h3></div><p>Build a temporary combination of evaluated projects, save it as Scenario A or B, and check its budget and staff requirements.</p></div>
+            <div class="scenario-workspace" id="scenario-workspace" aria-live="polite"></div>
+          </section>
+
+          <section class="workspace-view decisions-view" data-workspace-view="decisions" hidden aria-labelledby="decisions-view-title">
+            <div class="view-heading view-heading--split"><div><p class="section-kicker">Decision &amp; governance</p><h3 id="decisions-view-title">Keep the final call visible and human-led.</h3></div><p>A recorded decision must be linked to a saved candidate scenario. Use the project insight screen to review rationale and record an outcome.</p></div>
+            <div class="decision-workspace" id="decision-workspace" aria-live="polite"></div>
+          </section>
+
+          <section class="workspace-view reports-view" data-workspace-view="reports" hidden aria-labelledby="reports-view-title">
+            <div class="view-heading view-heading--split"><div><p class="section-kicker">Portfolio snapshot</p><h3 id="reports-view-title">A short view of the current portfolio.</h3></div><p>Use this as a discussion aid. It reflects only the proposals and scenarios saved in this browser.</p></div>
+            <div class="report-workspace" id="report-workspace" aria-live="polite"></div>
+          </section>
+            </div>
+          </div>
         </div>
       </section>
 
