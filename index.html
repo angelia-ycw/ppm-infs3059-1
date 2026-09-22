@@ -112,13 +112,21 @@
         <div class="review-app">
           <div class="workspace-rolebar">
             <div><p class="section-kicker">Working space</p><strong>One shared portfolio flow</strong></div>
-            <div class="role-tabs" role="tablist" aria-label="Workspace role">
-              <button type="button" role="tab" aria-selected="false" data-workspace-view-button="organisation">Organisation</button>
-              <button type="button" role="tab" aria-selected="false" data-workspace-view-button="proposer">Proposer</button>
-              <button type="button" role="tab" aria-selected="false" data-workspace-view-button="reviewer">Reviewer</button>
-              <button type="button" role="tab" aria-selected="true" data-workspace-view-button="manager">Portfolio manager</button>
+            <div class="workspace-actions">
+              <div class="role-tabs" role="tablist" aria-label="Workspace role">
+                <button type="button" role="tab" aria-selected="false" data-workspace-view-button="organisation">Organisation</button>
+                <button type="button" role="tab" aria-selected="false" data-workspace-view-button="proposer">Proposer</button>
+                <button type="button" role="tab" aria-selected="false" data-workspace-view-button="reviewer">Reviewer</button>
+                <button type="button" role="tab" aria-selected="true" data-workspace-view-button="manager">Portfolio manager</button>
+              </div>
+              <button type="button" class="test-launch" id="open-test-mode">Test MVP <span aria-hidden="true">↗</span></button>
             </div>
           </div>
+
+          <aside class="test-mode-banner" id="test-mode-banner" hidden aria-label="MVP test mode">
+            <div><strong>Test workspace</strong><span>Temporary test data only — your normal proposals are unchanged.</span></div>
+            <div><button type="button" class="text-button" id="reset-test-data">Reset test data</button><a class="text-button" id="exit-test-mode" href="./index.html#workspace">Exit test mode</a></div>
+          </aside>
 
           <section class="workspace-view setup-view" data-workspace-view="organisation" hidden aria-labelledby="organisation-title">
             <div class="view-heading"><p class="section-kicker">Organisation setup</p><h3 id="organisation-title">Set the context before proposals arrive.</h3><p>These shared priorities and resource limits guide the proposal form and candidate scenarios.</p></div>
@@ -157,6 +165,21 @@
           <section class="workspace-view reviewer-view" data-workspace-view="reviewer" hidden aria-labelledby="reviewer-title">
             <div class="view-heading view-heading--split"><div><p class="section-kicker">Reviewer queue</p><h3 id="reviewer-title">Assess evidence, not a single total.</h3></div><p>Each project needs five 1–5 ratings and a short reason for every rating. The system does not calculate an overall score.</p></div>
             <div class="review-queue" id="review-queue" aria-live="polite"></div>
+          </section>
+
+          <section class="workspace-view test-view" data-workspace-view="tests" hidden aria-labelledby="test-mode-title">
+            <div class="view-heading">
+              <p class="section-kicker">MVP test</p>
+              <h3 id="test-mode-title">Try the whole portfolio flow.</h3>
+              <p>Use the shortcuts below, then check the result on the real screens. This mode uses separate sample data in this browser tab, so it will not change your normal workspace.</p>
+            </div>
+            <div class="test-quick-checks">
+              <div><p class="section-kicker">Quick check</p><strong>Run a few safe browser checks first.</strong><span id="quick-check-summary" role="status">Not run yet</span></div>
+              <button type="button" class="solid-button" id="run-quick-checks">Run quick checks</button>
+            </div>
+            <div class="quick-check-results" id="quick-check-results" aria-live="polite"></div>
+            <div class="test-checklist-heading"><p class="section-kicker">Click-through checklist</p><p>Each shortcut opens or prepares the actual feature. Mark a step once you have seen the expected result.</p></div>
+            <div class="test-checklist" id="test-checklist"></div>
           </section>
 
           <section class="workspace-view manager-view" data-workspace-view="manager" aria-labelledby="portfolio-manager-title">

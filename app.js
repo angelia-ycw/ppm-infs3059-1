@@ -6,6 +6,9 @@ const CRITERIA = [
   { key: "urgency", label: "Time Criticality", short: "Urgency", low: "Can be deferred with little impact", high: "Must begin now to avoid severe impact" }
 ];
 
+const TEST_MODE = new URLSearchParams(window.location.search).has("mvpTest");
+const TEST_PREFIX = "ppm-mvp-test-v1:";
+
 const DEFAULT_ORGANISATION = {
   name: "IT investment portfolio",
   objectives: ["Improve Customer Experience", "Improve Operational Efficiency", "Improve Service Reliability", "Reduce Security Risk"],
@@ -106,6 +109,69 @@ const SAMPLE_PROPOSALS = [
   }
 ];
 
+const TEST_ORGANISATION = {
+  name: "MVP test portfolio",
+  objectives: ["Improve Customer Experience", "Improve Operational Efficiency", "Improve Service Reliability", "Reduce Security Risk"],
+  budget: 1.5,
+  staff: 4
+};
+
+const TEST_PROPOSALS = [
+  {
+    id: "test-service-hub", title: "Service Hub", owner: "Test Digital Team", category: "Service management",
+    objective: "Improve Operational Efficiency", duration: "12 weeks", cost: 0.6, staff: 2, status: "Evaluated",
+    summary: "A small test project for improving internal service requests and updates.",
+    benefits: "Faster request handling and clearer updates for staff.",
+    risks: "The data migration needs a staged handover.",
+    scores: { alignment: 4, value: 4, feasibility: 5, risk: 4, urgency: 3 },
+    rationales: {
+      alignment: "Supports the operational-efficiency objective.",
+      value: "Removes repeated manual request handling.",
+      feasibility: "The team has delivered a similar workflow before.",
+      risk: "A staged handover keeps the migration manageable.",
+      urgency: "Helpful this term, but not tied to a fixed deadline."
+    }, missing: []
+  },
+  {
+    id: "test-accessibility-update", title: "Accessibility Update", owner: "Test Student Experience", category: "Web platform",
+    objective: "Improve Customer Experience", duration: "10 weeks", cost: 0.7, staff: 1, status: "Evaluated",
+    summary: "A test update for keyboard access, contrast, and form feedback in a student-facing service.",
+    benefits: "A more inclusive experience and better accessibility readiness.",
+    risks: "A final audit may find a few extra pages to update.",
+    scores: { alignment: 5, value: 4, feasibility: 4, risk: 5, urgency: 4 },
+    rationales: {
+      alignment: "Directly supports an inclusive student experience.",
+      value: "Improves access for a broad group of users.",
+      feasibility: "The changes are small and well understood.",
+      risk: "Changes can be tested one page at a time.",
+      urgency: "There is a clear window before the next audit."
+    }, missing: []
+  },
+  {
+    id: "test-security-pilot", title: "Security Pilot", owner: "Test Cyber Security", category: "Security",
+    objective: "Reduce Security Risk", duration: "8 weeks", cost: 0.9, staff: 4, status: "Under review",
+    summary: "A test role-based access pilot for a small group of internal systems.",
+    benefits: "Clearer access controls and less manual access work.",
+    risks: "System interfaces and ownership still need confirmation.",
+    scores: { alignment: 5, value: 4, feasibility: 3, risk: 3, urgency: 5 },
+    rationales: {
+      alignment: "Directly supports the security objective.",
+      value: "Could reduce inappropriate permissions and manual work.",
+      feasibility: "Interfaces still need to be confirmed before wider rollout.",
+      risk: "A limited pilot contains the delivery risk.",
+      urgency: "It responds to a recent security finding."
+    }, missing: ["Interface confirmation"]
+  },
+  {
+    id: "test-awaiting-review", title: "Test proposal awaiting review", owner: "Test Project Owner", category: "IT project",
+    objective: "Improve Service Reliability", duration: "6 weeks", cost: 0.3, staff: 1, status: "Submitted",
+    summary: "Use this small proposal to test the reviewer validation and evaluation form.",
+    benefits: "A safe item for testing the review workflow.",
+    risks: "No major delivery risks are known at this early stage.",
+    scores: {}, rationales: {}, missing: []
+  }
+];
+
 const STORAGE = {
   organisation: "ppm-organisation",
   customProposals: "ppm-custom-proposals",
@@ -113,15 +179,23 @@ const STORAGE = {
   decisions: "ppm-decisions"
 };
 
+const activeStorage = TEST_MODE ? window.sessionStorage : window.localStorage;
+const scopedStorageKey = (key) => TEST_MODE ? `${TEST_PREFIX}${key}` : key;
+const storage = {
+  get: (key) => activeStorage.getItem(scopedStorageKey(key)),
+  set: (key, value) => activeStorage.setItem(scopedStorageKey(key), value),
+  remove: (key) => activeStorage.removeItem(scopedStorageKey(key))
+};
+
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
 function readStoredJSON(key, fallback) {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = storage.get(key);
     return raw ? JSON.parse(raw) : fallback;
   } catch {
-    localStorage.removeItem(key);
+    storage.remove(key);
     return fallback;
   }
 }
@@ -168,8 +242,9 @@ function normaliseOrganisation(raw) {
   };
 }
 
-let organisation = normaliseOrganisation(readStoredJSON(STORAGE.organisation, DEFAULT_ORGANISATION));
-const proposalMap = new Map(SAMPLE_PROPOSALS.map((proposal) => [proposal.id, normaliseProposal(proposal)]));
+let organisation = normaliseOrganisation(readStoredJSON(STORAGE.organisation, TEST_MODE ? TEST_ORGANISATION : DEFAULT_ORGANISATION));
+const initialProposals = TEST_MODE ? TEST_PROPOSALS : SAMPLE_PROPOSALS;
+const proposalMap = new Map(initialProposals.map((proposal) => [proposal.id, normaliseProposal(proposal)]));
 readStoredJSON(STORAGE.customProposals, []).forEach((proposal) => {
   const normalised = normaliseProposal(proposal);
   if (normalised.id) proposalMap.set(normalised.id, normalised);
@@ -188,7 +263,9 @@ const state = {
   selectedId: proposals[0]?.id || null,
   compared: new Set(),
   scenarios: readStoredJSON(STORAGE.scenarios, {}),
-  decisions: readStoredJSON(STORAGE.decisions, {})
+  decisions: readStoredJSON(STORAGE.decisions, {}),
+  quickChecks: {},
+  testProgress: TEST_MODE ? readStoredJSON("mvp-test-progress", {}) : {}
 };
 
 const listEl = $("#proposal-list");
@@ -230,11 +307,11 @@ function statusClass(status) {
 }
 
 function persistCustomProposals() {
-  localStorage.setItem(STORAGE.customProposals, JSON.stringify(proposals.filter((proposal) => proposal.isCustom)));
+  storage.set(STORAGE.customProposals, JSON.stringify(proposals.filter((proposal) => proposal.isCustom)));
 }
 
 function persistEvaluation(proposal) {
-  localStorage.setItem(`ppm-evaluation-${proposal.id}`, JSON.stringify({
+  storage.set(`ppm-evaluation-${proposal.id}`, JSON.stringify({
     scores: proposal.scores,
     rationales: proposal.rationales,
     status: proposal.status
@@ -373,12 +450,20 @@ function selectedProposals() {
   return proposals.filter((proposal) => state.compared.has(proposal.id) && isEvaluated(proposal));
 }
 
-function renderScenario() {
-  const selected = selectedProposals();
+function calculateScenario(selected, budget = organisation.budget, staff = organisation.staff) {
   const totalCost = selected.reduce((sum, proposal) => sum + proposal.cost, 0);
   const totalStaff = selected.reduce((sum, proposal) => sum + proposal.staff, 0);
-  const budgetOk = totalCost <= organisation.budget;
-  const staffOk = totalStaff <= organisation.staff;
+  return {
+    totalCost,
+    totalStaff,
+    budgetOk: totalCost <= budget,
+    staffOk: totalStaff <= staff
+  };
+}
+
+function renderScenario() {
+  const selected = selectedProposals();
+  const { totalCost, totalStaff, budgetOk, staffOk } = calculateScenario(selected);
 
   $("#scenario-selection").innerHTML = selected.length
     ? selected.map((proposal) => `<button type="button" data-remove-shortlist="${escapeHTML(proposal.id)}"><span>${escapeHTML(proposal.title)}</span><strong>${money(proposal.cost)} · ${proposal.staff} FTE</strong><i aria-hidden="true">×</i></button>`).join("")
@@ -411,7 +496,7 @@ function saveScenario(name) {
     budget: organisation.budget,
     staff: organisation.staff
   };
-  localStorage.setItem(STORAGE.scenarios, JSON.stringify(state.scenarios));
+  storage.set(STORAGE.scenarios, JSON.stringify(state.scenarios));
   renderSavedScenarios();
 }
 
@@ -508,7 +593,7 @@ function recordDecision(id, decision) {
     return;
   }
   state.decisions[id] = { decision, date: new Date().toLocaleDateString("en-AU") };
-  localStorage.setItem(STORAGE.decisions, JSON.stringify(state.decisions));
+  storage.set(STORAGE.decisions, JSON.stringify(state.decisions));
   renderAll();
 }
 
@@ -531,7 +616,7 @@ function openReview(id) {
     const score = proposal.scores[criterion.key];
     return `<label><span>${criterion.label}<small>1 — ${criterion.low}<br>5 — ${criterion.high}</small></span><select data-review-score="${criterion.key}" aria-label="Rating for ${criterion.label}" required><option value="">Choose</option>${[1, 2, 3, 4, 5].map((value) => `<option value="${value}" ${Number(score) === value ? "selected" : ""}>${value}/5</option>`).join("")}</select><input data-review-rationale="${criterion.key}" value="${escapeHTML(proposal.rationales[criterion.key] || "")}" aria-label="Rationale for ${criterion.label}" placeholder="Short evidence or reason" required></label>`;
   }).join("");
-  $("#review-notes").value = localStorage.getItem(`ppm-note-${id}`) || "";
+  $("#review-notes").value = storage.get(`ppm-note-${id}`) || "";
   $("#save-message").textContent = "";
   reviewDialog.showModal();
 }
@@ -560,7 +645,7 @@ function saveReview() {
   proposal.rationales = rationales;
   proposal.status = proposal.missing.length ? "Under review" : "Evaluated";
   persistEvaluation(proposal);
-  localStorage.setItem(`ppm-note-${id}`, $("#review-notes").value.trim());
+  storage.set(`ppm-note-${id}`, $("#review-notes").value.trim());
   $("#save-message").textContent = "Evaluation saved in this browser.";
   renderAll();
 }
@@ -574,16 +659,280 @@ function renderReviewQueue() {
   $$('[data-review-queue-id]').forEach((button) => button.addEventListener("click", () => openReview(button.dataset.reviewQueueId)));
 }
 
+const QUICK_CHECKS = [
+  {
+    id: "test-data",
+    title: "Test portfolio is ready",
+    detail: "Checks the four sample projects used by this walkthrough.",
+    run: () => ["test-service-hub", "test-accessibility-update", "test-security-pilot", "test-awaiting-review"].every((id) => proposals.some((proposal) => proposal.id === id))
+  },
+  {
+    id: "five-criteria",
+    title: "Five-criterion profiles load",
+    detail: "Checks three evaluated test projects have a rating and reason for every criterion.",
+    run: () => {
+      const evaluated = proposals.filter(isEvaluated);
+      return evaluated.length >= 3 && evaluated.every((proposal) => CRITERIA.every((criterion) => isScore(proposal.scores[criterion.key]) && hasRationale(proposal.rationales[criterion.key])));
+    }
+  },
+  {
+    id: "search-filter",
+    title: "Search finds the right project",
+    detail: "Checks the portfolio search can find Security Pilot.",
+    run: () => {
+      const previous = { query: state.query, objective: state.objective, feasibility: state.feasibility, risk: state.risk, cost: state.cost, status: state.status, sort: state.sort };
+      try {
+        Object.assign(state, { query: "security pilot", objective: "all", feasibility: 0, risk: 0, cost: "all", status: "all", sort: "title" });
+        const found = visibleProposals();
+        return found.length === 1 && found[0].id === "test-security-pilot";
+      } finally {
+        Object.assign(state, previous);
+      }
+    }
+  },
+  {
+    id: "scenario-math",
+    title: "Scenario totals and limits work",
+    detail: "Checks the two-project set fits and the three-project set raises both warnings.",
+    run: () => {
+      const twoProjects = proposals.filter((proposal) => ["test-service-hub", "test-accessibility-update"].includes(proposal.id));
+      const threeProjects = proposals.filter((proposal) => ["test-service-hub", "test-accessibility-update", "test-security-pilot"].includes(proposal.id));
+      const withinLimits = calculateScenario(twoProjects);
+      const overLimits = calculateScenario(threeProjects);
+      return Math.abs(withinLimits.totalCost - 1.3) < 0.0001 && withinLimits.totalStaff === 3 && withinLimits.budgetOk && withinLimits.staffOk
+        && Math.abs(overLimits.totalCost - 2.2) < 0.0001 && overLimits.totalStaff === 7 && !overLimits.budgetOk && !overLimits.staffOk;
+    }
+  },
+  {
+    id: "safe-session",
+    title: "Test saving is isolated",
+    detail: "Checks this walkthrough can save in the tab without using your normal workspace data.",
+    run: () => {
+      const key = "mvp-test-probe";
+      try {
+        storage.set(key, "ready");
+        return storage.get(key) === "ready";
+      } finally {
+        storage.remove(key);
+      }
+    }
+  },
+  {
+    id: "screen-controls",
+    title: "Main controls are available",
+    detail: "Checks proposal entry, reviewer evaluation, comparison, and scenario controls are on the page.",
+    run: () => Boolean($("#proposal-form") && $("#review-score-form") && $("#open-compare") && $("#proposal-list") && $("#scenario-selection"))
+  }
+];
+
+const TEST_STEPS = [
+  {
+    id: "portfolio",
+    title: "Check the portfolio overview",
+    copy: "Open the portfolio and use the search box to find a project.",
+    expected: "Four test projects are shown. Searching for Security Pilot leaves one result.",
+    action: "portfolio",
+    actionLabel: "Open portfolio"
+  },
+  {
+    id: "proposal",
+    title: "Submit a test proposal",
+    copy: "Enter a small IT project through the normal proposal form and submit it.",
+    expected: "The proposal moves to the Reviewer queue as Submitted.",
+    action: "proposal",
+    actionLabel: "Open proposal form"
+  },
+  {
+    id: "review",
+    title: "Test reviewer validation",
+    copy: "Open Test proposal awaiting review, try saving it blank, then add all five ratings and short reasons.",
+    expected: "The blank save shows a clear message. A complete review creates a profile and rationale.",
+    action: "review",
+    actionLabel: "Open reviewer queue"
+  },
+  {
+    id: "rationale",
+    title: "Open reviewer evidence",
+    copy: "Find Security Pilot and select Feasibility in its project detail.",
+    expected: "You can read the reviewer’s reason behind the 3/5 feasibility rating.",
+    action: "rationale",
+    actionLabel: "Find Security Pilot"
+  },
+  {
+    id: "comparison",
+    title: "Compare two shortlisted projects",
+    copy: "Prepare Service Hub and Accessibility Update, then select Compare selected.",
+    expected: "The overlay radar chart and legend show two project profiles.",
+    action: "comparison",
+    actionLabel: "Prepare comparison"
+  },
+  {
+    id: "constraints",
+    title: "Check portfolio limits",
+    copy: "Add Security Pilot to the prepared selection and review the scenario panel.",
+    expected: "The panel shows $2.2M and 7 FTE, with both limits flagged.",
+    action: "constraints",
+    actionLabel: "Show limit check"
+  },
+  {
+    id: "decision",
+    title: "Record a human decision",
+    copy: "Open Service Hub and choose Approve, Defer, or Reject after looking at its evidence.",
+    expected: "The decision is recorded in this test tab and remains after a refresh.",
+    action: "decision",
+    actionLabel: "Open decision"
+  }
+];
+
+function testStepProgress() {
+  return Object.values(state.testProgress).filter(Boolean).length;
+}
+
+function renderTestHarness() {
+  const banner = $("#test-mode-banner");
+  if (banner) banner.hidden = !TEST_MODE;
+  if (!TEST_MODE) return;
+
+  const results = Object.values(state.quickChecks);
+  const passed = results.filter((result) => result.passed).length;
+  $("#quick-check-summary").textContent = results.length ? `${passed} of ${QUICK_CHECKS.length} checks passed` : "Not run yet";
+  $("#quick-check-results").innerHTML = results.length
+    ? QUICK_CHECKS.map((check) => {
+      const result = state.quickChecks[check.id];
+      const stateLabel = result?.passed ? "Pass" : "Needs attention";
+      return `<article class="quick-check ${result?.passed ? "is-pass" : "is-fail"}"><span>${result?.passed ? "✓" : "!"}</span><div><strong>${escapeHTML(check.title)}</strong><p>${escapeHTML(result?.passed ? check.detail : result?.detail || "This check did not finish. Reset test data and run it again.")}</p></div><b>${stateLabel}</b></article>`;
+    }).join("")
+    : "";
+
+  $("#test-checklist").innerHTML = TEST_STEPS.map((step, index) => {
+    const completed = Boolean(state.testProgress[step.id]);
+    return `<article class="test-step ${completed ? "is-complete" : ""}"><span class="test-step-number">${String(index + 1).padStart(2, "0")}</span><div class="test-step-copy"><h4>${escapeHTML(step.title)}</h4><p>${escapeHTML(step.copy)}</p><small><strong>Check:</strong> ${escapeHTML(step.expected)}</small></div><div class="test-step-actions"><button type="button" class="outline-button" data-test-action="${escapeHTML(step.action)}">${escapeHTML(step.actionLabel)}</button><button type="button" class="test-mark-button" data-mark-test="${escapeHTML(step.id)}">${completed ? "Checked · undo" : "Mark checked"}</button></div></article>`;
+  }).join("");
+  $$('[data-test-action]').forEach((button) => button.addEventListener("click", () => runTestAction(button.dataset.testAction)));
+  $$('[data-mark-test]').forEach((button) => button.addEventListener("click", () => toggleTestStep(button.dataset.markTest)));
+}
+
+function runQuickChecks() {
+  if (!TEST_MODE) return;
+  state.quickChecks = {};
+  QUICK_CHECKS.forEach((check) => {
+    try {
+      state.quickChecks[check.id] = { passed: Boolean(check.run()) };
+    } catch {
+      state.quickChecks[check.id] = { passed: false, detail: "The browser could not complete this check." };
+    }
+  });
+  renderTestHarness();
+}
+
+function toggleTestStep(id) {
+  if (!TEST_MODE || !TEST_STEPS.some((step) => step.id === id)) return;
+  state.testProgress[id] = !state.testProgress[id];
+  storage.set("mvp-test-progress", JSON.stringify(state.testProgress));
+  renderTestHarness();
+}
+
+function focusAfterRender(selector) {
+  window.requestAnimationFrame(() => {
+    const target = $(selector);
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    target.focus?.({ preventScroll: true });
+  });
+}
+
+function runTestAction(action) {
+  if (!TEST_MODE) return;
+  if (action === "portfolio") {
+    state.query = "";
+    setActiveView("manager");
+    $("#proposal-search").value = "";
+    focusAfterRender("#proposal-search");
+    return;
+  }
+  if (action === "proposal") {
+    setActiveView("proposer");
+    focusAfterRender('#proposal-form input[name="title"]');
+    return;
+  }
+  if (action === "review") {
+    setActiveView("reviewer");
+    focusAfterRender('[data-review-queue-id="test-awaiting-review"]');
+    return;
+  }
+  if (action === "rationale") {
+    state.query = "Security Pilot";
+    state.selectedId = "test-security-pilot";
+    setActiveView("manager");
+    $("#proposal-search").value = state.query;
+    renderResults();
+    renderDetail();
+    focusAfterRender("#proposal-detail");
+    return;
+  }
+  if (action === "comparison" || action === "constraints") {
+    const ids = action === "comparison"
+      ? ["test-service-hub", "test-accessibility-update"]
+      : ["test-service-hub", "test-accessibility-update", "test-security-pilot"];
+    state.compared = new Set(ids);
+    state.selectedId = ids[0];
+    state.query = "";
+    setActiveView("manager");
+    $("#proposal-search").value = "";
+    focusAfterRender(action === "comparison" ? "#open-compare" : "#scenario-title");
+    return;
+  }
+  if (action === "decision") {
+    state.selectedId = "test-service-hub";
+    state.query = "";
+    setActiveView("manager");
+    $("#proposal-search").value = "";
+    focusAfterRender('[data-decision="Approved"]');
+  }
+}
+
+function openTestMode() {
+  if (TEST_MODE) {
+    setActiveView("tests");
+    return;
+  }
+  const url = new URL(window.location.href);
+  url.searchParams.set("mvpTest", "1");
+  url.hash = "workspace";
+  window.location.assign(url.toString());
+}
+
+function resetTestData() {
+  if (!TEST_MODE) return;
+  const testKeys = [];
+  for (let index = 0; index < window.sessionStorage.length; index += 1) {
+    const key = window.sessionStorage.key(index);
+    if (key?.startsWith(TEST_PREFIX)) testKeys.push(key);
+  }
+  testKeys.forEach((key) => window.sessionStorage.removeItem(key));
+  window.location.reload();
+}
+
+function configureTestMode() {
+  const exitUrl = new URL(window.location.href);
+  exitUrl.searchParams.delete("mvpTest");
+  exitUrl.hash = "workspace";
+  $("#exit-test-mode").href = exitUrl.toString();
+  $("#test-mode-banner").hidden = !TEST_MODE;
+}
+
 function setActiveView(view) {
-  const knownViews = ["organisation", "proposer", "reviewer", "manager"];
+  const knownViews = ["organisation", "proposer", "reviewer", "manager", "tests"];
   if (!knownViews.includes(view)) return;
   state.activeView = view;
   $$('[data-workspace-view]').forEach((section) => { section.hidden = section.dataset.workspaceView !== view; });
   $$('[data-workspace-view-button]').forEach((button) => { button.setAttribute("aria-selected", String(button.dataset.workspaceViewButton === view)); });
+  $("#open-test-mode").setAttribute("aria-pressed", String(view === "tests"));
   if (view === "manager") renderAll();
   if (view === "reviewer") renderReviewQueue();
   if (view === "organisation") renderOrganisationForm();
   if (view === "proposer") populateObjectives();
+  if (view === "tests") renderTestHarness();
 }
 
 function saveOrganisation(event) {
@@ -601,7 +950,7 @@ function saveOrganisation(event) {
     budget: numberOr($("#org-budget").value, DEFAULT_ORGANISATION.budget),
     staff: numberOr($("#org-staff").value, DEFAULT_ORGANISATION.staff)
   };
-  localStorage.setItem(STORAGE.organisation, JSON.stringify(organisation));
+  storage.set(STORAGE.organisation, JSON.stringify(organisation));
   renderOrganisationForm();
   populateObjectives();
   renderAll();
@@ -651,11 +1000,15 @@ function renderAll() {
   renderScenario();
   renderDetail();
   renderReviewQueue();
+  renderTestHarness();
 }
 
 function bindEvents() {
   $("#organisation-form").addEventListener("submit", saveOrganisation);
   $("#proposal-form").addEventListener("submit", submitProposal);
+  $("#open-test-mode").addEventListener("click", openTestMode);
+  $("#reset-test-data").addEventListener("click", resetTestData);
+  $("#run-quick-checks").addEventListener("click", runQuickChecks);
   $$('[data-workspace-view-button]').forEach((button) => button.addEventListener("click", () => setActiveView(button.dataset.workspaceViewButton)));
   $("#proposal-search").addEventListener("input", (event) => { state.query = event.target.value; renderResults(); });
   $("#objective-filter").addEventListener("change", (event) => { state.objective = event.target.value; renderResults(); });
@@ -682,9 +1035,10 @@ function bindEvents() {
 }
 
 loadStoredEvaluations();
+configureTestMode();
 bindEvents();
 renderAll();
-setActiveView("manager");
+setActiveView(TEST_MODE ? "tests" : "manager");
 
 document.body.classList.add("js-ready");
 const revealGroups = $$(".reveal-group");
