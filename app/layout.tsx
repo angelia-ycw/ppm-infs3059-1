@@ -9,16 +9,16 @@ export const metadata: Metadata = {
     title: 'PPM — Project Portfolio Management',
     description:
       'A structured workspace for clear, human-led review of IT project proposals.',
-    url: 'https://kjshoom.github.io/ppm-review-meeting-prototype/',
+    url: 'https://kjshoom.github.io/ppm-infs3059/',
     type: 'website',
-    images: ['https://kjshoom.github.io/ppm-review-meeting-prototype/public/og.png'],
+    images: ['https://kjshoom.github.io/ppm-infs3059/public/og.png'],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'PPM — Project Portfolio Management',
     description:
       'A structured workspace for clear, human-led review of IT project proposals.',
-    images: ['https://kjshoom.github.io/ppm-review-meeting-prototype/public/og.png'],
+    images: ['https://kjshoom.github.io/ppm-infs3059/public/og.png'],
   },
 };
 
