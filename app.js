@@ -1278,6 +1278,7 @@ function addRemovalControls() {
   }
   $$("[data-load-scenario]").forEach((loadButton) => {
     const name = loadButton.dataset.loadScenario;
+        const parent = loadButton.parentElement;
         if (!name || !parent || parent.querySelector('[data-ppm-remove-scenario="' + name + '"]')) return;
     
     const removeButton = ppmRemoveButton("Remove", "data-ppm-remove-scenario", name, "Remove Scenario " + name);
