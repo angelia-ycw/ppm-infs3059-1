@@ -426,7 +426,7 @@ function renderResults() {
     renderDetail();
     if (window.innerWidth < 900) detailEl.scrollIntoView({ behavior: "smooth", block: "start" });
   }));
-  $('[data-shortlist-id]').forEach((input) => input.addEventListener("change", () => toggleShortlist(input.dataset.shortlistId, input.checked)));
+  $$('[data-shortlist-id]').forEach((input) => input.addEventListener("change", () => toggleShortlist(input.dataset.shortlistId, input.checked)));
   bindCustomProposalDeleteButtons(listEl);
 }
 
@@ -618,7 +618,7 @@ function renderDetail() {
     $("#rationale-copy").textContent = proposal.rationales[criterion.key];
   }));
   $$('[data-open-review]').forEach((button) => button.addEventListener("click", () => openReview(button.dataset.openReview)));
-  $('[data-decision]').forEach((button) => button.addEventListener("click", () => recordDecision(proposal.id, button.dataset.decision)));
+  $$('[data-decision]').forEach((button) => button.addEventListener("click", () => recordDecision(proposal.id, button.dataset.decision)));
   bindCustomProposalDeleteButtons(detailEl);
 }
 
@@ -697,7 +697,7 @@ function renderReviewQueue() {
     const evaluated = isEvaluated(proposal);
     return `<article class="review-queue-card ${evaluated ? "" : "is-awaiting"}"><div class="review-queue-card-top"><p class="section-kicker">${evaluated ? "Evaluation recorded" : "Awaiting review"}</p><span class="status-pill ${statusClass(currentStatus(proposal))}">${escapeHTML(currentStatus(proposal))}</span></div><h4>${escapeHTML(proposal.title)}</h4><p>${escapeHTML(proposal.owner)} · ${escapeHTML(proposal.objective)} · ${money(proposal.cost)} · ${proposal.staff} FTE</p><div class="queue-profile">${evaluated ? "Five ratings and reviewer rationale available." : "Five ratings and five short rationales required."}</div><div class="review-queue-actions"><button type="button" class="outline-button" data-review-queue-id="${escapeHTML(proposal.id)}">${evaluated ? "Edit evaluation" : "Start evaluation"}</button>${proposal.isCustom ? `<button type="button" class="card-remove-button" data-delete-proposal="${escapeHTML(proposal.id)}">Remove added</button>` : ""}</div></article>`;
   }).join("");
-  $('[data-review-queue-id]').forEach((button) => button.addEventListener("click", () => openReview(button.dataset.reviewQueueId)));
+  $$('[data-review-queue-id]').forEach((button) => button.addEventListener("click", () => openReview(button.dataset.reviewQueueId)));
   bindCustomProposalDeleteButtons($("#review-queue"));
 }
 
