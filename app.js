@@ -1197,3 +1197,137 @@ function setActiveView(view) {
   if (view === "reports") renderReportWorkspace();
   if (view === "tests") renderTestHarness();
 }
+
+
+
+/* PPM browser-local removal controls */
+const PPM_REMOVED_PROPOSAL_KEY = "ppm-removed-proposals";
+const ppmRemovedProposalIds = new Set(readStoredJSON(PPM_REMOVED_PROPOSAL_KEY, []));
+
+function saveRemovedProposals() {
+  storage.set(PPM_REMOVED_PROPOSAL_KEY, JSON.stringify([...ppmRemovedProposalIds]));
+}
+
+function deleteProposal(id) {
+  const index = proposals.findIndex((proposal) => proposal.id === id);
+  const proposal = proposals[index];
+  if (!proposal) return;
+  if (!window.confirm("Remove “" + proposal.title + "” from this browser?")) return;
+  proposals.splice(index, 1);
+  ppmRemovedProposalIds.add(id);
+  state.compared.delete(id);
+  if (state.selectedId === id) state.selectedId = proposals[0] ? proposals[0].id : null;
+  Object.entries(state.scenarios || {}).forEach(([name, scenario]) => {
+    const ids = Array.isArray(scenario && scenario.projectIds) ? scenario.projectIds : [];
+    state.scenarios[name] = { ...scenario, projectIds: ids.filter((projectId) => projectId !== id) };
+  });
+  delete state.decisions[id];
+  persistCustomProposals();
+  saveRemovedProposals();
+  storage.set(STORAGE.scenarios, JSON.stringify(state.scenarios));
+  storage.set(STORAGE.decisions, JSON.stringify(state.decisions));
+  storage.remove("ppm-evaluation-" + id);
+  storage.remove("ppm-note-" + id);
+  renderAll();
+  if (state.activeView === "comparison") renderComparisonWorkspace();
+  if (state.activeView === "scenarios") renderScenarioWorkspace();
+  if (state.activeView === "decisions") renderDecisionWorkspace();
+  if (state.activeView === "reports") renderReportWorkspace();
+}
+
+function deleteScenario(name) {
+  if (!state.scenarios[name]) return;
+  if (!window.confirm("Remove Scenario " + name + " from this browser?")) return;
+  delete state.scenarios[name];
+  storage.set(STORAGE.scenarios, JSON.stringify(state.scenarios));
+  renderSavedScenarios();
+  if (state.activeView === "scenarios") renderScenarioWorkspace();
+  if (state.activeView === "decisions") renderDecisionWorkspace();
+  if (state.activeView === "reports") renderReportWorkspace();
+}
+
+function ppmRemoveButton(label, attribute, value, ariaLabel) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "card-remove-button";
+  button.textContent = label;
+  button.setAttribute(attribute, value);
+  button.setAttribute("aria-label", ariaLabel);
+  return button;
+}
+
+function addRemovalControls() {
+  $$(".portfolio-card").forEach((card) => {
+    const id = card.dataset.projectId;
+    const actions = card.querySelector(".portfolio-card-actions");
+    if (id && actions && !actions.querySelector("[data-delete-proposal], [data-ppm-remove-proposal]")) {
+      actions.append(ppmRemoveButton("Remove", "data-ppm-remove-proposal", id, "Remove proposal"));
+    }
+  });
+  $$(".review-queue-card").forEach((card) => {
+    const title = card.querySelector("h4") && card.querySelector("h4").textContent;
+    const proposal = proposals.find((item) => item.title === title);
+    const actions = card.querySelector(".review-queue-actions");
+    if (proposal && actions && !actions.querySelector("[data-delete-proposal], [data-ppm-remove-proposal]")) {
+      actions.append(ppmRemoveButton("Remove", "data-ppm-remove-proposal", proposal.id, "Remove proposal"));
+    }
+  });
+  const detailActions = $(".insight-header > div:last-child");
+  if (detailActions && state.selectedId && !detailActions.querySelector("[data-delete-proposal], [data-ppm-remove-proposal]")) {
+    detailActions.append(ppmRemoveButton("Remove", "data-ppm-remove-proposal", state.selectedId, "Remove proposal"));
+  }
+  $$("[data-load-scenario]").forEach((loadButton) => {
+    const name = loadButton.dataset.loadScenario;
+        if (!name || !parent || parent.querySelector('[data-ppm-remove-scenario="' + name + '"]')) return;
+    
+    const removeButton = ppmRemoveButton("Remove", "data-ppm-remove-scenario", name, "Remove Scenario " + name);
+    removeButton.classList.add("ppm-scenario-remove");
+    loadButton.insertAdjacentElement("afterend", removeButton);
+  });
+}
+
+function applyPersistedProposalRemovals() {
+  if (!ppmRemovedProposalIds.size) return;
+  for (let index = proposals.length - 1; index >= 0; index -= 1) {
+    if (ppmRemovedProposalIds.has(proposals[index].id)) proposals.splice(index, 1);
+  }
+  state.compared = new Set([...state.compared].filter((id) => proposals.some((proposal) => proposal.id === id)));
+  Object.entries(state.scenarios || {}).forEach(([name, scenario]) => {
+    const ids = Array.isArray(scenario && scenario.projectIds) ? scenario.projectIds : [];
+    state.scenarios[name] = { ...scenario, projectIds: ids.filter((id) => proposals.some((proposal) => proposal.id === id)) };
+  });
+  if (!proposals.some((proposal) => proposal.id === state.selectedId)) state.selectedId = proposals[0] ? proposals[0].id : null;
+  persistCustomProposals();
+  storage.set(STORAGE.scenarios, JSON.stringify(state.scenarios));
+}
+
+document.addEventListener("click", (event) => {
+  const proposalButton = event.target.closest("[data-ppm-remove-proposal], [data-delete-proposal]");
+  if (proposalButton) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    event.stopPropagation();
+    deleteProposal(proposalButton.dataset.ppmRemoveProposal || proposalButton.dataset.deleteProposal);
+    return;
+  }
+  const scenarioButton = event.target.closest("[data-ppm-remove-scenario]");
+  if (scenarioButton) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    event.stopPropagation();
+    deleteScenario(scenarioButton.dataset.ppmRemoveScenario);
+  }
+}, true);
+
+const ppmRemovalStyle = document.createElement("style");
+ppmRemovalStyle.textContent = ".card-remove-button{margin-left:8px}.ppm-scenario-remove{margin:8px 10px 8px 0}.saved-scenario-card .ppm-scenario-remove{margin:12px 0 0}";
+document.head.append(ppmRemovalStyle);
+const ppmRemovalObserver = new MutationObserver(() => requestAnimationFrame(addRemovalControls));
+ppmRemovalObserver.observe(document.body, { childList: true, subtree: true });
+applyPersistedProposalRemovals();
+renderAll();
+if (state.activeView === "comparison") renderComparisonWorkspace();
+if (state.activeView === "scenarios") renderScenarioWorkspace();
+if (state.activeView === "decisions") renderDecisionWorkspace();
+if (state.activeView === "reports") renderReportWorkspace();
+addRemovalControls();
