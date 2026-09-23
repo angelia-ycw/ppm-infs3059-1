@@ -411,7 +411,7 @@ function renderResults() {
         <input class="shortlist-checkbox" type="checkbox" data-shortlist-id="${escapeHTML(proposal.id)}" aria-label="Shortlist ${escapeHTML(proposal.title)}" ${state.compared.has(proposal.id) ? "checked" : ""} ${evaluated ? "" : "disabled"} />
       </label>
       <div class="portfolio-card-main">
-        <div class="portfolio-card-topline"><div><span class="objective-tag">${escapeHTML(proposal.objective)}</span><span class="objective-tag">${escapeHTML(proposal.category)}</span></div><span class="status-pill ${statusClass(status)}">${escapeHTML(status)}</span></div>
+        <div class="portfolio-card-topline"><div><span class="objective-tag">${escapeHTML(proposal.objective)}</span><span class="objective-tag">${escapeHTML(proposal.category)}</span></div><div class="portfolio-card-actions"><span class="status-pill ${statusClass(status)}">${escapeHTML(status)}</span>${proposal.isCustom ? `<button type="button" class="card-remove-button" data-delete-proposal="${escapeHTML(proposal.id)}" aria-label="Remove added proposal ${escapeHTML(proposal.title)}">Remove added</button>` : ""}</div></div>
         <button type="button" class="portfolio-card-title" data-select-id="${escapeHTML(proposal.id)}">${escapeHTML(proposal.title)}</button>
         <p class="portfolio-summary-copy">${escapeHTML(proposal.summary)}</p>
         <div class="portfolio-meta"><span>${escapeHTML(proposal.owner)}</span><span>${escapeHTML(proposal.duration)}</span><strong>${money(proposal.cost)}</strong><strong>${proposal.staff} FTE</strong></div>
@@ -426,7 +426,8 @@ function renderResults() {
     renderDetail();
     if (window.innerWidth < 900) detailEl.scrollIntoView({ behavior: "smooth", block: "start" });
   }));
-  $$('[data-shortlist-id]').forEach((input) => input.addEventListener("change", () => toggleShortlist(input.dataset.shortlistId, input.checked)));
+  $('[data-shortlist-id]').forEach((input) => input.addEventListener("change", () => toggleShortlist(input.dataset.shortlistId, input.checked)));
+  bindCustomProposalDeleteButtons(listEl);
 }
 
 function toggleShortlist(id, shouldAdd) {
@@ -444,6 +445,40 @@ function toggleShortlist(id, shouldAdd) {
   renderSummary();
   renderResults();
   renderScenario();
+  if (state.activeView === "comparison") renderComparisonWorkspace();
+  if (state.activeView === "scenarios") renderScenarioWorkspace();
+}
+
+function bindCustomProposalDeleteButtons(scope) {
+  if (!scope) return;
+  scope.querySelectorAll('[data-delete-proposal]').forEach((button) => {
+    button.addEventListener("click", () => deleteCustomProposal(button.dataset.deleteProposal));
+  });
+}
+
+function deleteCustomProposal(id) {
+  const proposalIndex = proposals.findIndex((proposal) => proposal.id === id);
+  const proposal = proposals[proposalIndex];
+  if (!proposal?.isCustom) return;
+  if (!window.confirm(`Remove “${proposal.title}” from this browser?`)) return;
+  proposals.splice(proposalIndex, 1);
+  state.compared.delete(id);
+  if (state.selectedId === id) state.selectedId = proposals[0]?.id || null;
+  Object.entries(state.scenarios || {}).forEach(([name, scenario]) => {
+    const projectIds = Array.isArray(scenario?.projectIds) ? scenario.projectIds : [];
+    state.scenarios[name] = { ...scenario, projectIds: projectIds.filter((projectId) => projectId !== id) };
+  });
+  delete state.decisions[id];
+  persistCustomProposals();
+  storage.set(STORAGE.scenarios, JSON.stringify(state.scenarios));
+  storage.set(STORAGE.decisions, JSON.stringify(state.decisions));
+  storage.remove(`ppm-evaluation-${id}`);
+  storage.remove(`ppm-note-${id}`);
+  renderAll();
+  if (state.activeView === "comparison") renderComparisonWorkspace();
+  if (state.activeView === "scenarios") renderScenarioWorkspace();
+  if (state.activeView === "decisions") renderDecisionWorkspace();
+  if (state.activeView === "reports") renderReportWorkspace();
 }
 
 function selectedProposals() {
@@ -565,7 +600,7 @@ function renderDetail() {
   }
   const savedDecision = state.decisions[proposal.id];
   const status = currentStatus(proposal);
-  const detailHeader = `<div class="insight-header"><div><p class="section-kicker">Project insight</p><h3>${escapeHTML(proposal.title)}</h3><p>${escapeHTML(proposal.owner)} · ${escapeHTML(proposal.objective)} · ${money(proposal.cost)} · ${proposal.staff} FTE · ${escapeHTML(proposal.duration)}</p></div><div><span class="status-pill ${statusClass(status)}">${escapeHTML(status)}</span><button type="button" class="outline-button" data-open-review="${escapeHTML(proposal.id)}">${isEvaluated(proposal) ? "Edit evaluation" : "Start evaluation"}</button></div></div>`;
+  const detailHeader = `<div class="insight-header"><div><p class="section-kicker">Project insight</p><h3>${escapeHTML(proposal.title)}</h3><p>${escapeHTML(proposal.owner)} · ${escapeHTML(proposal.objective)} · ${money(proposal.cost)} · ${proposal.staff} FTE · ${escapeHTML(proposal.duration)}</p></div><div><span class="status-pill ${statusClass(status)}">${escapeHTML(status)}</span><button type="button" class="outline-button" data-open-review="${escapeHTML(proposal.id)}">${isEvaluated(proposal) ? "Edit evaluation" : "Start evaluation"}</button>${proposal.isCustom ? `<button type="button" class="card-remove-button" data-delete-proposal="${escapeHTML(proposal.id)}">Remove added</button>` : ""}</div></div>`;
 
   if (!isEvaluated(proposal)) {
     detailEl.innerHTML = `${detailHeader}${detailsOverview(proposal)}<div class="pending-evaluation"><div><p class="section-kicker">Next step</p><h4>Ready for a five-criterion review.</h4></div><div><p>Record ratings and a short reason for strategic alignment, expected business value, delivery feasibility, risk manageability, and time criticality. A radar profile appears only after all five are complete.</p><button type="button" class="solid-button" data-open-review="${escapeHTML(proposal.id)}">Review this proposal</button></div></div>`;
@@ -583,7 +618,8 @@ function renderDetail() {
     $("#rationale-copy").textContent = proposal.rationales[criterion.key];
   }));
   $$('[data-open-review]').forEach((button) => button.addEventListener("click", () => openReview(button.dataset.openReview)));
-  $$('[data-decision]').forEach((button) => button.addEventListener("click", () => recordDecision(proposal.id, button.dataset.decision)));
+  $('[data-decision]').forEach((button) => button.addEventListener("click", () => recordDecision(proposal.id, button.dataset.decision)));
+  bindCustomProposalDeleteButtons(detailEl);
 }
 
 function recordDecision(id, decision) {
@@ -659,9 +695,10 @@ function renderReviewQueue() {
   const ordered = [...proposals].sort((a, b) => Number(isEvaluated(a)) - Number(isEvaluated(b)) || a.title.localeCompare(b.title));
   $("#review-queue").innerHTML = ordered.map((proposal) => {
     const evaluated = isEvaluated(proposal);
-    return `<article class="review-queue-card ${evaluated ? "" : "is-awaiting"}"><div class="review-queue-card-top"><p class="section-kicker">${evaluated ? "Evaluation recorded" : "Awaiting review"}</p><span class="status-pill ${statusClass(currentStatus(proposal))}">${escapeHTML(currentStatus(proposal))}</span></div><h4>${escapeHTML(proposal.title)}</h4><p>${escapeHTML(proposal.owner)} · ${escapeHTML(proposal.objective)} · ${money(proposal.cost)} · ${proposal.staff} FTE</p><div class="queue-profile">${evaluated ? "Five ratings and reviewer rationale available." : "Five ratings and five short rationales required."}</div><button type="button" class="outline-button" data-review-queue-id="${escapeHTML(proposal.id)}">${evaluated ? "Edit evaluation" : "Start evaluation"}</button></article>`;
+    return `<article class="review-queue-card ${evaluated ? "" : "is-awaiting"}"><div class="review-queue-card-top"><p class="section-kicker">${evaluated ? "Evaluation recorded" : "Awaiting review"}</p><span class="status-pill ${statusClass(currentStatus(proposal))}">${escapeHTML(currentStatus(proposal))}</span></div><h4>${escapeHTML(proposal.title)}</h4><p>${escapeHTML(proposal.owner)} · ${escapeHTML(proposal.objective)} · ${money(proposal.cost)} · ${proposal.staff} FTE</p><div class="queue-profile">${evaluated ? "Five ratings and reviewer rationale available." : "Five ratings and five short rationales required."}</div><div class="review-queue-actions"><button type="button" class="outline-button" data-review-queue-id="${escapeHTML(proposal.id)}">${evaluated ? "Edit evaluation" : "Start evaluation"}</button>${proposal.isCustom ? `<button type="button" class="card-remove-button" data-delete-proposal="${escapeHTML(proposal.id)}">Remove added</button>` : ""}</div></article>`;
   }).join("");
-  $$('[data-review-queue-id]').forEach((button) => button.addEventListener("click", () => openReview(button.dataset.reviewQueueId)));
+  $('[data-review-queue-id]').forEach((button) => button.addEventListener("click", () => openReview(button.dataset.reviewQueueId)));
+  bindCustomProposalDeleteButtons($("#review-queue"));
 }
 
 const QUICK_CHECKS = [
