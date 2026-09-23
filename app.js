@@ -6,6 +6,64 @@ const CRITERIA = [
   { key: "urgency", label: "Time Criticality", short: "Urgency", low: "Can be deferred with little impact", high: "Must begin now to avoid severe impact" }
 ];
 
+const REVIEW_SCORING_GUIDES = {
+  alignment: {
+    title: "Strategic Alignment",
+    labels: ["Very Low", "Low", "Moderate", "High", "Very High"],
+    descriptions: [
+      "The project has no clear connection to the organisation’s stated strategic objectives, or conflicts with them.",
+      "The project has an indirect or weak connection to the organisation’s stated strategic objectives.",
+      "The project clearly supports a stated strategic objective, but has limited alignment with current strategic priorities.",
+      "The project directly supports a current strategic priority and clearly explains how its intended outcomes contribute to that priority.",
+      "The project directly supports a top strategic priority, with clear evidence that its intended outcomes would make a substantial contribution to achieving that priority."
+    ]
+  },
+  value: {
+    title: "Organisational Value / Expected Benefits",
+    labels: ["Very Low", "Low", "Moderate", "High", "Very High"],
+    descriptions: [
+      "The project is expected to provide little or no improvement over the current situation.",
+      "The project is expected to provide small improvements, with limited financial or non-financial benefits.",
+      "The project is expected to provide meaningful improvements, with clear financial or non-financial benefits.",
+      "The project is expected to provide substantial improvements, with major financial or non-financial benefits.",
+      "The project is expected to provide exceptionally large improvements, with extensive financial or non-financial benefits."
+    ]
+  },
+  feasibility: {
+    title: "Delivery Feasibility",
+    labels: ["Very Low", "Low", "Moderate", "High", "Very High"],
+    descriptions: [
+      "Essential technical capabilities, skills, or resources are unavailable, with no credible plan to obtain them within the proposed timeframe.",
+      "Major gaps in technical capabilities, skills, or resources remain, and plans to address them are incomplete or unconfirmed.",
+      "Some capability or resource gaps remain, but there is a realistic plan to address them within the proposed timeframe.",
+      "Most required capabilities and resources are confirmed. Only minor gaps remain, with clear arrangements to address them before they are needed.",
+      "All essential capabilities, resources, and operational arrangements are confirmed for the proposed timeframe, with no significant execution gaps identified."
+    ]
+  },
+  risk: {
+    title: "Risk",
+    labels: ["Very High Risk", "High Risk", "Moderate Risk", "Low Risk", "Very Low Risk"],
+    descriptions: [
+      "The project presents very high overall risk, considering the likelihood and potential impact of adverse events.",
+      "The project presents high overall risk, with significant concerns about the likelihood or potential impact of adverse events.",
+      "The project presents moderate overall risk, with concerns that require monitoring and mitigation.",
+      "The project presents low overall risk, with limited concerns about the likelihood and potential impact of adverse events.",
+      "The project presents very low overall risk, with adverse events assessed as unlikely and their potential impact as minor."
+    ]
+  },
+  urgency: {
+    title: "Time Criticality / Urgency",
+    labels: ["Very Low", "Low", "Moderate", "High", "Very High"],
+    descriptions: [
+      "The project can be deferred beyond the current planning cycle with negligible consequences. No pressing deadline or time-sensitive opportunity is identified.",
+      "The project can be deferred to a later planning cycle with minor consequences. There is considerable flexibility in when work needs to begin.",
+      "The project should begin within the current planning cycle. Some delay is manageable, but further postponement would cause meaningful operational impacts or lost opportunities.",
+      "The project needs to begin soon to meet an important deadline or opportunity window. There is little scheduling flexibility, and further delay would have substantial consequences.",
+      "The project needs to begin immediately to avoid missing a critical deadline or opportunity window. Further delay would have severe consequences for the organisation."
+    ]
+  }
+};
+
 const TEST_MODE = new URLSearchParams(window.location.search).has("mvpTest");
 const TEST_PREFIX = "ppm-mvp-test-v1:";
 
@@ -653,9 +711,29 @@ function openReview(id) {
   if (!proposal) return;
   reviewDialog.dataset.proposalId = id;
   $("#review-dialog-title").textContent = proposal.title;
-  $("#review-score-form").innerHTML = CRITERIA.map((criterion) => {
+  $("#review-score-form").innerHTML = CRITERIA.map((criterion, criterionIndex) => {
     const score = proposal.scores[criterion.key];
-    return `<label><span>${criterion.label}<small>1 — ${criterion.low}<br>5 — ${criterion.high}</small></span><select data-review-score="${criterion.key}" aria-label="Rating for ${criterion.label}" required><option value="">Choose</option>${[1, 2, 3, 4, 5].map((value) => `<option value="${value}" ${Number(score) === value ? "selected" : ""}>${value}/5</option>`).join("")}</select><input data-review-rationale="${criterion.key}" value="${escapeHTML(proposal.rationales[criterion.key] || "")}" aria-label="Rationale for ${criterion.label}" placeholder="Short evidence or reason" required></label>`;
+    const guide = REVIEW_SCORING_GUIDES[criterion.key];
+    const isRisk = criterion.key === "risk";
+    const ratingCards = guide.labels.map((label, index) => {
+      const value = index + 1;
+      return `<label class="review-rating-card"><input type="radio" name="review-score-${criterion.key}" data-review-score="${criterion.key}" value="${value}" ${Number(score) === value ? "checked" : ""} aria-label="${escapeHTML(guide.title)}: ${value}, ${escapeHTML(label)}" required><span class="review-rating-copy"><strong>${value}</strong><small>${escapeHTML(label)}</small></span></label>`;
+    }).join("");
+    const guideItems = guide.descriptions.map((description, index) => {
+      const value = index + 1;
+      const scoreLabel = isRisk ? `${value} — ${guide.labels[index]}` : String(value);
+      return `<li><strong>${escapeHTML(scoreLabel)}</strong><span>${escapeHTML(description)}</span></li>`;
+    }).join("");
+    const riskNotice = isRisk ? '<p class="risk-direction-note"><strong>Risk scoring direction</strong><span>Higher score means lower and more manageable risk.</span></p>' : "";
+    return `<section class="review-criterion-card ${isRisk ? "is-risk" : ""}" aria-labelledby="review-criterion-${criterion.key}">
+      <div class="review-criterion-heading">
+        <div><span class="criterion-number">0${criterionIndex + 1}</span><h3 id="review-criterion-${criterion.key}">${escapeHTML(guide.title)}</h3></div>
+        ${riskNotice}
+      </div>
+      <div class="review-rating-options" role="radiogroup" aria-label="${escapeHTML(guide.title)} rating">${ratingCards}</div>
+      <label class="review-rationale-field"><span>Rationale <small>Required</small></span><textarea data-review-rationale="${criterion.key}" rows="3" aria-label="Rationale for ${escapeHTML(guide.title)}" placeholder="Add short evidence or a reason for this rating" required>${escapeHTML(proposal.rationales[criterion.key] || "")}</textarea></label>
+      <details class="scoring-guide"><summary><span>Scoring guide</span><small>View the formal 1–5 rubric</small></summary><ol>${guideItems}</ol></details>
+    </section>`;
   }).join("");
   $("#review-notes").value = storage.get(`ppm-note-${id}`) || "";
   $("#save-message").textContent = "";
@@ -670,10 +748,10 @@ function saveReview() {
   const rationales = {};
   let complete = true;
   CRITERIA.forEach((criterion) => {
-    const scoreInput = $(`[data-review-score="${criterion.key}"]`);
+    const scoreInput = $(`[data-review-score="${criterion.key}"]:checked`);
     const rationaleInput = $(`[data-review-rationale="${criterion.key}"]`);
-    const score = Number(scoreInput.value);
-    const rationale = rationaleInput.value.trim();
+    const score = scoreInput ? Number(scoreInput.value) : Number.NaN;
+    const rationale = rationaleInput ? rationaleInput.value.trim() : "";
     if (!isScore(score) || !rationale) complete = false;
     scores[criterion.key] = score;
     rationales[criterion.key] = rationale;
