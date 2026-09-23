@@ -808,3 +808,11 @@ body.js-ready .reveal-group.is-visible .reveal { transition-delay: 0ms; }
 .comparison-score-table .score-high,
 .comparison-score-table .score-medium,
 .comparison-score-table .score-low { background: transparent; color: var(--ink); }
+
+
+/* Added proposals can be removed locally without changing sample records. */
+.portfolio-card-actions { justify-content: flex-end; }
+.card-remove-button { min-height: 22px; border: 0; border-bottom: 1px solid currentColor; background: transparent; padding: 0; color: #696962; cursor: pointer; font: inherit; font-size: 8px; font-weight: 850; letter-spacing: .035em; line-height: 1; text-decoration: none; text-transform: uppercase; }
+.card-remove-button:hover { color: var(--ink); }
+.review-queue-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 13px; margin-top: auto; }
+.review-queue-actions .outline-button { margin-top: 0; }
