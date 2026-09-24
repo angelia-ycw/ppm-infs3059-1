@@ -74,98 +74,73 @@ const DEFAULT_ORGANISATION = {
   staff: 20
 };
 
-const SAMPLE_PROPOSALS = [
+const DEMO_PROPOSALS = [
   {
-    id: "service-desk", title: "Internal Service Desk Upgrade", owner: "Digital Services", category: "Service management",
-    objective: "Improve Operational Efficiency", duration: "16 weeks", cost: 0.8, staff: 4, status: "Evaluated",
-    summary: "Replace the current service desk workflow with a simpler request and incident experience for staff.",
-    benefits: "Shorter handling time, clearer request updates, and a simpler staff support experience.",
-    risks: "Data migration must be staged and the old service needs to run in parallel during transition.",
-    scores: { alignment: 5, value: 4, feasibility: 4, risk: 4, urgency: 3 },
+    id: "project-a", title: "Project A", owner: "Project Team A", category: "IT project", scenarioGroup: "A",
+    objective: "Improve Customer Experience", duration: "12 weeks", cost: 0.8, staff: 3, status: "Evaluated",
+    summary: "Example proposal A for demonstrating the portfolio review workflow.",
+    benefits: "Shows how a reviewed proposal can be shortlisted, compared, and included in a candidate portfolio.",
+    risks: "Example delivery assumptions must be replaced when the team enters the real proposal.",
+    scores: { alignment: 4, value: 4, feasibility: 5, risk: 4, urgency: 3 },
     rationales: {
-      alignment: "Directly supports the organisation's operational-efficiency objective.",
-      value: "Expected to reduce handling time and improve staff experience.",
-      feasibility: "The existing platform can be upgraded with a small internal team.",
-      risk: "Migration is staged and the service can run in parallel during transition.",
-      urgency: "Useful this year, but there is no fixed external deadline."
+      alignment: "The example supports a stated strategic objective.",
+      value: "The expected benefit is clear enough for an initial comparison.",
+      feasibility: "The example assumes the required capability is available.",
+      risk: "The example risks appear manageable with normal controls.",
+      urgency: "The example can be planned within the current cycle."
     }, missing: []
   },
   {
-    id: "network-refresh", title: "Campus Network Refresh", owner: "Infrastructure Team", category: "Infrastructure",
-    objective: "Improve Service Reliability", duration: "24 weeks", cost: 1.4, staff: 6, status: "Evaluated",
-    summary: "Refresh ageing network equipment across two teaching buildings with a staged migration plan.",
-    benefits: "Fewer outages, lower maintenance effort, and reliable connectivity for teaching spaces.",
-    risks: "Cutover windows and device lead times require early coordination with suppliers and building teams.",
-    scores: { alignment: 4, value: 4, feasibility: 5, risk: 4, urgency: 5 },
+    id: "project-b", title: "Project B", owner: "Project Team B", category: "IT project", scenarioGroup: "A",
+    objective: "Improve Operational Efficiency", duration: "16 weeks", cost: 1.1, staff: 4, status: "Evaluated",
+    summary: "Example proposal B for demonstrating the portfolio review workflow.",
+    benefits: "Provides a second project profile for comparing cost, resources, and reviewer evidence.",
+    risks: "Example dependencies must be confirmed when the team enters the real proposal.",
+    scores: { alignment: 5, value: 4, feasibility: 3, risk: 3, urgency: 4 },
     rationales: {
-      alignment: "Supports service reliability and technology renewal priorities.",
-      value: "Reduces outages and avoids increasing maintenance effort.",
-      feasibility: "The infrastructure team has delivered similar refreshes before.",
-      risk: "A staged cutover and rollback plan reduce delivery risk.",
-      urgency: "Several devices reach end of support this year."
+      alignment: "The example is closely aligned with an operational priority.",
+      value: "The example describes a useful operational improvement.",
+      feasibility: "Some delivery assumptions still need confirmation.",
+      risk: "Dependencies require active monitoring and mitigation.",
+      urgency: "The example should begin within the current planning cycle."
     }, missing: []
   },
   {
-    id: "portal-accessibility", title: "Student Portal Accessibility", owner: "Student Experience", category: "Web platform",
-    objective: "Improve Customer Experience", duration: "12 weeks", cost: 0.6, staff: 3, status: "Evaluated",
-    summary: "Improve keyboard navigation, contrast, screen-reader support, and form feedback in the student portal.",
-    benefits: "A more inclusive portal experience for students and improved accessibility compliance readiness.",
-    risks: "The final audit may identify additional pages, so the team needs a small delivery buffer.",
-    scores: { alignment: 5, value: 5, feasibility: 4, risk: 5, urgency: 4 },
+    id: "project-c", title: "Project C", owner: "Project Team C", category: "IT project", scenarioGroup: "B",
+    objective: "Improve Service Reliability", duration: "14 weeks", cost: 0.9, staff: 3, status: "Evaluated",
+    summary: "Example proposal C for demonstrating the portfolio review workflow.",
+    benefits: "Shows an alternative candidate portfolio with a different five-criterion profile.",
+    risks: "Example service assumptions must be replaced with evidence from the real proposal.",
+    scores: { alignment: 4, value: 3, feasibility: 4, risk: 5, urgency: 4 },
     rationales: {
-      alignment: "Strongly supports inclusive and accessible digital services.",
-      value: "Benefits a broad student group and improves compliance readiness.",
-      feasibility: "Work is well understood, although the final audit may add items.",
-      risk: "Changes are incremental and can be tested page by page.",
-      urgency: "The next accessibility audit creates a clear planning window."
+      alignment: "The example supports the service-reliability objective.",
+      value: "The expected benefit is moderate and clearly described.",
+      feasibility: "The example assumes a practical delivery approach.",
+      risk: "The example has few unresolved delivery risks.",
+      urgency: "The timing matters within the current planning cycle."
     }, missing: []
   },
   {
-    id: "iam-pilot", title: "Identity & Access Management Pilot", owner: "Cyber Security", category: "Security",
-    objective: "Reduce Security Risk", duration: "10 weeks", cost: 1.1, staff: 5, status: "Under review",
-    summary: "Pilot a role-based access model for a limited set of internal systems before wider rollout.",
-    benefits: "Reduced manual access work, clearer controls, and fewer inappropriate permissions.",
-    risks: "Interfaces and identity-data ownership need clarification before any wider rollout.",
-    scores: { alignment: 5, value: 4, feasibility: 3, risk: 3, urgency: 5 },
+    id: "project-d", title: "Project D", owner: "Project Team D", category: "IT project", scenarioGroup: "B",
+    objective: "Reduce Security Risk", duration: "20 weeks", cost: 1.3, staff: 5, status: "Evaluated",
+    summary: "Example proposal D for demonstrating the portfolio review workflow.",
+    benefits: "Provides a contrasting candidate for scenario and constraint checking.",
+    risks: "Example technical and resource assumptions must be validated before a real decision.",
+    scores: { alignment: 5, value: 5, feasibility: 3, risk: 3, urgency: 5 },
     rationales: {
-      alignment: "Directly supports the security and governance roadmap.",
-      value: "Could reduce manual access work and inappropriate permissions.",
-      feasibility: "Interfaces and identity-data ownership still need clarification.",
-      risk: "A limited pilot contains risk, but integration assumptions are unresolved.",
-      urgency: "Recent audit findings make the pilot time-critical."
-    }, missing: ["Integration dependencies", "Identity-data ownership"]
-  },
-  {
-    id: "backup-consolidation", title: "Cloud Backup Consolidation", owner: "Platform Operations", category: "Cloud operations",
-    objective: "Improve Service Reliability", duration: "18 weeks", cost: 0.9, staff: 4, status: "Evaluated",
-    summary: "Consolidate three backup tools into a common operating model and documented recovery process.",
-    benefits: "Less duplicated tooling and a more consistent recovery process across services.",
-    risks: "Recovery testing must pass before each legacy backup tool can be retired.",
-    scores: { alignment: 4, value: 4, feasibility: 4, risk: 4, urgency: 4 },
-    rationales: {
-      alignment: "Supports platform simplification and resilience objectives.",
-      value: "Reduces tool duplication and improves recovery consistency.",
-      feasibility: "Skills and migration stages are documented.",
-      risk: "Recovery testing is included before each legacy tool is retired.",
-      urgency: "Two supplier agreements renew within the planning period."
+      alignment: "The example directly supports a security objective.",
+      value: "The example describes a substantial organisational benefit.",
+      feasibility: "Specialist capacity needs to be confirmed.",
+      risk: "Technical dependencies require active management.",
+      urgency: "The example represents a time-critical need."
     }, missing: []
-  },
-  {
-    id: "asset-dashboard", title: "IT Asset Lifecycle Dashboard", owner: "Technology Portfolio", category: "Data & reporting",
-    objective: "Improve Operational Efficiency", duration: "14 weeks", cost: 0.5, staff: 3, status: "Under review",
-    summary: "Create a consolidated view of device age, ownership, support status, and replacement timing.",
-    benefits: "Improved replacement planning and a shared view of technology asset ownership.",
-    risks: "Source-system data quality may make the first dashboard misleading without remediation work.",
-    scores: { alignment: 4, value: 3, feasibility: 3, risk: 3, urgency: 3 },
-    rationales: {
-      alignment: "Supports better technology planning and asset governance.",
-      value: "Value depends on consistent use by operational teams.",
-      feasibility: "Source systems exist, but their data quality has not been profiled.",
-      risk: "The dashboard may be misleading until ownership data is improved.",
-      urgency: "There is no fixed deadline, though replacement planning is approaching."
-    }, missing: ["Data-quality assessment", "Success measures"]
   }
 ];
+
+const DEFAULT_SCENARIOS = {
+  A: { projectIds: ["project-a", "project-b"], budget: DEFAULT_ORGANISATION.budget, staff: DEFAULT_ORGANISATION.staff },
+  B: { projectIds: ["project-c", "project-d"], budget: DEFAULT_ORGANISATION.budget, staff: DEFAULT_ORGANISATION.staff }
+};
 
 const TEST_ORGANISATION = {
   name: "MVP test portfolio",
@@ -232,9 +207,9 @@ const TEST_PROPOSALS = [
 
 const STORAGE = {
   organisation: "ppm-organisation",
-  customProposals: "ppm-custom-proposals",
-  scenarios: "ppm-scenarios",
-  decisions: "ppm-decisions"
+  customProposals: "ppm-v2-custom-proposals",
+  scenarios: "ppm-v2-scenarios",
+  decisions: "ppm-v2-decisions"
 };
 
 const activeStorage = TEST_MODE ? window.sessionStorage : window.localStorage;
@@ -284,7 +259,8 @@ function normaliseProposal(raw) {
     scores: raw.scores && typeof raw.scores === "object" ? { ...raw.scores } : {},
     rationales: raw.rationales && typeof raw.rationales === "object" ? { ...raw.rationales } : {},
     missing: Array.isArray(raw.missing) ? raw.missing.map(String) : [],
-    isCustom: Boolean(raw.isCustom)
+    isCustom: Boolean(raw.isCustom),
+    scenarioGroup: raw.scenarioGroup === "A" || raw.scenarioGroup === "B" ? raw.scenarioGroup : ""
   };
 }
 
@@ -301,7 +277,7 @@ function normaliseOrganisation(raw) {
 }
 
 let organisation = normaliseOrganisation(readStoredJSON(STORAGE.organisation, TEST_MODE ? TEST_ORGANISATION : DEFAULT_ORGANISATION));
-const initialProposals = TEST_MODE ? TEST_PROPOSALS : SAMPLE_PROPOSALS;
+const initialProposals = TEST_MODE ? TEST_PROPOSALS : DEMO_PROPOSALS;
 const proposalMap = new Map(initialProposals.map((proposal) => [proposal.id, normaliseProposal(proposal)]));
 readStoredJSON(STORAGE.customProposals, []).forEach((proposal) => {
   const normalised = normaliseProposal(proposal);
@@ -320,7 +296,7 @@ const state = {
   sort: "title",
   selectedId: proposals[0]?.id || null,
   compared: new Set(),
-  scenarios: readStoredJSON(STORAGE.scenarios, {}),
+  scenarios: TEST_MODE ? readStoredJSON(STORAGE.scenarios, {}) : structuredClone(DEFAULT_SCENARIOS),
   decisions: readStoredJSON(STORAGE.decisions, {}),
   quickChecks: {},
   testProgress: TEST_MODE ? readStoredJSON("mvp-test-progress", {}) : {}
@@ -334,6 +310,15 @@ const reviewDialog = $("#review-dialog");
 
 function money(value) {
   return `$${Number(value).toFixed(1).replace(".0", "")}M`;
+}
+
+function scenarioLabel(proposal) {
+  return proposal.scenarioGroup ? `Scenario ${proposal.scenarioGroup}` : "Not assigned";
+}
+
+function scenarioLink(proposal) {
+  if (!proposal.scenarioGroup) return '<span class="comparison-scenario-unassigned">Not assigned</span>';
+  return '<a class="comparison-scenario-link" href="#scenario-' + proposal.scenarioGroup + '" data-open-project-scenario="' + proposal.scenarioGroup + '">Scenario ' + proposal.scenarioGroup + '</a>';
 }
 
 function isScore(value) {
@@ -469,7 +454,7 @@ function renderResults() {
         <input class="shortlist-checkbox" type="checkbox" data-shortlist-id="${escapeHTML(proposal.id)}" aria-label="Shortlist ${escapeHTML(proposal.title)}" ${state.compared.has(proposal.id) ? "checked" : ""} ${evaluated ? "" : "disabled"} />
       </label>
       <div class="portfolio-card-main">
-        <div class="portfolio-card-topline"><div><span class="objective-tag">${escapeHTML(proposal.objective)}</span><span class="objective-tag">${escapeHTML(proposal.category)}</span></div><div class="portfolio-card-actions"><span class="status-pill ${statusClass(status)}">${escapeHTML(status)}</span>${proposal.isCustom ? `<button type="button" class="card-remove-button" data-delete-proposal="${escapeHTML(proposal.id)}" aria-label="Remove added proposal ${escapeHTML(proposal.title)}">Remove added</button>` : ""}</div></div>
+        <div class="portfolio-card-topline"><div><span class="objective-tag">${escapeHTML(proposal.objective)}</span><span class="objective-tag">${escapeHTML(scenarioLabel(proposal))}</span></div><div class="portfolio-card-actions"><span class="status-pill ${statusClass(status)}">${escapeHTML(status)}</span>${proposal.isCustom ? `<button type="button" class="card-remove-button" data-delete-proposal="${escapeHTML(proposal.id)}" aria-label="Remove added proposal ${escapeHTML(proposal.title)}">Remove added</button>` : ""}</div></div>
         <button type="button" class="portfolio-card-title" data-select-id="${escapeHTML(proposal.id)}">${escapeHTML(proposal.title)}</button>
         <p class="portfolio-summary-copy">${escapeHTML(proposal.summary)}</p>
         <div class="portfolio-meta"><span>${escapeHTML(proposal.owner)}</span><span>${escapeHTML(proposal.duration)}</span><strong>${money(proposal.cost)}</strong><strong>${proposal.staff} FTE</strong></div>
@@ -578,24 +563,9 @@ function renderScenario() {
   renderSavedScenarios();
 }
 
-function saveScenario(name) {
-  const selected = selectedProposals();
-  if (!selected.length) {
-    window.alert("Select at least one evaluated project before saving a scenario.");
-    return;
-  }
-  state.scenarios[name] = {
-    projectIds: selected.map((proposal) => proposal.id),
-    budget: organisation.budget,
-    staff: organisation.staff
-  };
-  storage.set(STORAGE.scenarios, JSON.stringify(state.scenarios));
-  renderSavedScenarios();
-}
-
 function renderSavedScenarios() {
   const entries = Object.entries(state.scenarios || {});
-  $("#saved-scenarios").innerHTML = entries.length ? `<h4>Saved scenarios</h4>${entries.map(([name, scenario]) => {
+  $("#saved-scenarios").innerHTML = entries.length ? `<h4>Defined scenarios</h4>${entries.map(([name, scenario]) => {
     const ids = Array.isArray(scenario.projectIds) ? scenario.projectIds : [];
     const projects = proposals.filter((proposal) => ids.includes(proposal.id) && isEvaluated(proposal));
     const cost = projects.reduce((sum, proposal) => sum + proposal.cost, 0);
@@ -658,7 +628,7 @@ function renderDetail() {
   }
   const savedDecision = state.decisions[proposal.id];
   const status = currentStatus(proposal);
-  const detailHeader = `<div class="insight-header"><div><p class="section-kicker">Project insight</p><h3>${escapeHTML(proposal.title)}</h3><p>${escapeHTML(proposal.owner)} · ${escapeHTML(proposal.objective)} · ${money(proposal.cost)} · ${proposal.staff} FTE · ${escapeHTML(proposal.duration)}</p></div><div><span class="status-pill ${statusClass(status)}">${escapeHTML(status)}</span><button type="button" class="outline-button" data-open-review="${escapeHTML(proposal.id)}">${isEvaluated(proposal) ? "Edit evaluation" : "Start evaluation"}</button>${proposal.isCustom ? `<button type="button" class="card-remove-button" data-delete-proposal="${escapeHTML(proposal.id)}">Remove added</button>` : ""}</div></div>`;
+  const detailHeader = `<div class="insight-header"><div><p class="section-kicker">Project insight</p><h3>${escapeHTML(proposal.title)}</h3><p>${escapeHTML(proposal.owner)} · ${escapeHTML(proposal.objective)} · ${money(proposal.cost)} · ${proposal.staff} FTE · ${escapeHTML(proposal.duration)}</p></div><div><span class="objective-tag">${escapeHTML(scenarioLabel(proposal))}</span><span class="status-pill ${statusClass(status)}">${escapeHTML(status)}</span><button type="button" class="outline-button" data-open-review="${escapeHTML(proposal.id)}">${isEvaluated(proposal) ? "Edit evaluation" : "Start evaluation"}</button>${proposal.isCustom ? `<button type="button" class="card-remove-button" data-delete-proposal="${escapeHTML(proposal.id)}">Remove added</button>` : ""}</div></div>`;
 
   if (!isEvaluated(proposal)) {
     detailEl.innerHTML = `${detailHeader}${detailsOverview(proposal)}<div class="pending-evaluation"><div><p class="section-kicker">Next step</p><h4>Ready for a five-criterion review.</h4></div><div><p>Record ratings and a short reason for strategic alignment, expected business value, delivery feasibility, risk manageability, and time criticality. A radar profile appears only after all five are complete.</p><button type="button" class="solid-button" data-open-review="${escapeHTML(proposal.id)}">Review this proposal</button></div></div>`;
@@ -688,22 +658,12 @@ function recordDecision(id, decision) {
   }
   const scenarioName = Object.entries(state.scenarios || {}).find(([, scenario]) => Array.isArray(scenario?.projectIds) && scenario.projectIds.includes(id))?.[0];
   if (!scenarioName) {
-    window.alert("Save a Scenario A or B that includes this project before recording a decision.");
+    window.alert("This proposal has not been assigned to Scenario A or B yet.");
     return;
   }
   state.decisions[id] = { decision, date: new Date().toLocaleDateString("en-AU"), scenario: scenarioName };
   storage.set(STORAGE.decisions, JSON.stringify(state.decisions));
   renderAll();
-}
-
-function openComparison() {
-  const selected = selectedProposals();
-  if (selected.length < 2) return;
-  $("#comparison-radar").innerHTML = radarSVG(selected);
-  const colours = ["#1176d4", "#7b42d1", "#1c9d57", "#e47816"];
-  $("#comparison-legend").innerHTML = selected.map((proposal, index) => `<span><i style="background:${colours[index]}"></i>${escapeHTML(proposal.title)}</span>`).join("");
-  $("#compare-grid").innerHTML = selected.map((proposal) => `<tr><th>${escapeHTML(proposal.title)}</th>${CRITERIA.map((criterion) => `<td><span class="score-cell ${scoreClass(proposal.scores[criterion.key])}">${proposal.scores[criterion.key]}</span></td>`).join("")}<td>${money(proposal.cost)}</td><td>${proposal.staff} FTE</td></tr>`).join("");
-  compareDialog.showModal();
 }
 
 function openReview(id) {
@@ -1045,20 +1005,6 @@ function configureTestMode() {
   $("#test-mode-banner").hidden = !TEST_MODE;
 }
 
-function setActiveView(view) {
-  const knownViews = ["organisation", "proposer", "reviewer", "manager", "tests"];
-  if (!knownViews.includes(view)) return;
-  state.activeView = view;
-  $$('[data-workspace-view]').forEach((section) => { section.hidden = section.dataset.workspaceView !== view; });
-  $$('[data-workspace-view-button]').forEach((button) => { button.setAttribute("aria-selected", String(button.dataset.workspaceViewButton === view)); });
-  $("#open-test-mode").setAttribute("aria-pressed", String(view === "tests"));
-  if (view === "manager") renderAll();
-  if (view === "reviewer") renderReviewQueue();
-  if (view === "organisation") renderOrganisationForm();
-  if (view === "proposer") populateObjectives();
-  if (view === "tests") renderTestHarness();
-}
-
 function saveOrganisation(event) {
   event.preventDefault();
   const form = event.currentTarget;
@@ -1104,7 +1050,8 @@ function submitProposal(event) {
     scores: {},
     rationales: {},
     missing: [],
-    isCustom: true
+    isCustom: true,
+    scenarioGroup: ""
   });
   proposals.unshift(proposal);
   state.selectedId = proposal.id;
@@ -1143,7 +1090,7 @@ function bindEvents() {
   $("#sort-select").addEventListener("change", (event) => { state.sort = event.target.value; renderResults(); });
   $("#clear-compare").addEventListener("click", () => { state.compared.clear(); renderAll(); });
   $("#open-compare").addEventListener("click", openComparison);
-  $$('[data-save-scenario]').forEach((button) => button.addEventListener("click", () => saveScenario(button.dataset.saveScenario)));
+  $$('[data-open-scenarios]').forEach((button) => button.addEventListener("click", () => setActiveView("scenarios")));
   $$('[data-open-organisation]').forEach((button) => button.addEventListener("click", () => setActiveView("organisation")));
   $("[data-close-dialog]").addEventListener("click", () => compareDialog.close());
   $("[data-close-review]").addEventListener("click", () => reviewDialog.close());
@@ -1200,7 +1147,7 @@ function renderComparisonWorkspace() {
     workspace.querySelector("[data-open-overview]").addEventListener("click", () => setActiveView("manager"));
     return;
   }
-  const cards = selected.map((proposal) => '<article><span class="objective-tag">' + escapeHTML(proposal.objective) + '</span><h4>' + escapeHTML(proposal.title) + '</h4><p>' + money(proposal.cost) + ' · ' + proposal.staff + ' FTE · ' + escapeHTML(proposal.duration) + '</p><button type="button" data-remove-comparison-project="' + escapeHTML(proposal.id) + '">Remove</button></article>').join("");
+  const cards = selected.map((proposal) => '<article><span class="objective-tag">' + escapeHTML(proposal.objective) + '</span><h4>' + escapeHTML(proposal.title) + '</h4><p>' + money(proposal.cost) + ' · ' + proposal.staff + ' FTE · ' + scenarioLink(proposal) + '</p><button type="button" data-remove-comparison-project="' + escapeHTML(proposal.id) + '">Remove</button></article>').join("");
   const strengths = CRITERIA.map((criterion) => {
     const highest = Math.max(...selected.map((proposal) => Number(proposal.scores[criterion.key])));
     const names = selected.filter((proposal) => Number(proposal.scores[criterion.key]) === highest).map((proposal) => proposal.title).join(", ");
@@ -1208,29 +1155,44 @@ function renderComparisonWorkspace() {
   }).join("");
   const legend = selected.map((proposal, index) => '<span><i class="legend-colour-' + index + '"></i>' + escapeHTML(proposal.title) + '</span>').join("");
   const header = CRITERIA.map((criterion) => '<th>' + escapeHTML(criterion.short) + '</th>').join("");
-  const rows = selected.map((proposal) => '<tr><th>' + escapeHTML(proposal.title) + '</th>' + CRITERIA.map((criterion) => '<td><span class="score-cell ' + scoreClass(proposal.scores[criterion.key]) + '">' + proposal.scores[criterion.key] + '</span></td>').join("") + '<td>' + money(proposal.cost) + '</td><td>' + proposal.staff + ' FTE</td></tr>').join("");
-  workspace.innerHTML = '<div class="comparison-selected-strip">' + cards + '</div><div class="comparison-stage"><section class="comparison-radar-panel"><div class="comparison-panel-heading"><p class="section-kicker">Five-criterion profile</p><strong>Overlay view</strong></div><div class="workspace-radar">' + radarSVG(selected) + '</div><div class="workspace-legend">' + legend + '</div></section><aside class="comparison-tradeoffs"><p class="section-kicker">Recorded strengths</p><h4>Read the trade-offs, not a winner.</h4><p>The chart helps the Portfolio Manager discuss the highest recorded ratings, cost, resource limits, and reviewer evidence.</p><ul>' + strengths + '</ul><button type="button" class="outline-button" data-open-scenarios>Build a scenario</button></aside></div><div class="comparison-score-table"><div class="comparison-panel-heading"><p class="section-kicker">Side-by-side detail</p><button type="button" class="text-button" data-open-overview>Change shortlist</button></div><div class="comparison-table-wrap"><table class="comparison-table"><thead><tr><th>Project</th>' + header + '<th>Cost</th><th>Staff</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+  const rows = selected.map((proposal) => '<tr><th>' + escapeHTML(proposal.title) + '</th>' + CRITERIA.map((criterion) => '<td><span class="score-cell ' + scoreClass(proposal.scores[criterion.key]) + '">' + proposal.scores[criterion.key] + '</span></td>').join("") + '<td>' + money(proposal.cost) + '</td><td>' + proposal.staff + ' FTE</td><td>' + scenarioLink(proposal) + '</td></tr>').join("");
+  workspace.innerHTML = '<div class="comparison-selected-strip">' + cards + '</div><div class="comparison-stage"><section class="comparison-radar-panel"><div class="comparison-panel-heading"><p class="section-kicker">Five-criterion profile</p><strong>Overlay view</strong></div><div class="workspace-radar">' + radarSVG(selected) + '</div><div class="workspace-legend">' + legend + '</div></section><aside class="comparison-tradeoffs"><p class="section-kicker">Recorded strengths</p><h4>Read the trade-offs, not a winner.</h4><p>The chart helps the Portfolio Manager discuss the highest recorded ratings, cost, resource limits, and reviewer evidence.</p><ul>' + strengths + '</ul><button type="button" class="outline-button" data-open-scenarios>View assigned scenarios</button></aside></div><div class="comparison-score-table"><div class="comparison-panel-heading"><p class="section-kicker">Side-by-side detail</p><button type="button" class="text-button" data-open-overview>Change shortlist</button></div><div class="comparison-table-wrap"><table class="comparison-table"><thead><tr><th>Project</th>' + header + '<th>Cost</th><th>Staff</th><th>Scenario</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
   workspace.querySelectorAll("[data-remove-comparison-project]").forEach((button) => button.addEventListener("click", () => toggleShortlist(button.dataset.removeComparisonProject, false)));
   workspace.querySelectorAll("[data-open-overview]").forEach((button) => button.addEventListener("click", () => setActiveView("manager")));
   workspace.querySelector("[data-open-scenarios]").addEventListener("click", () => setActiveView("scenarios"));
+  workspace.querySelectorAll("[data-open-project-scenario]").forEach((link) => link.addEventListener("click", (event) => {
+    event.preventDefault();
+    const name = link.dataset.openProjectScenario;
+    setActiveView("scenarios");
+    requestAnimationFrame(() => document.querySelector(`[data-scenario-card="${name}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }));
 }
 
 function renderScenarioWorkspace() {
   const workspace = $("#scenario-workspace");
   if (!workspace) return;
-  const selected = selectedProposals();
-  const totals = calculateScenario(selected);
-  const pickList = proposals.filter(isEvaluated).map((proposal) => '<button type="button" class="scenario-pick ' + (state.compared.has(proposal.id) ? "is-picked" : "") + '" data-scenario-toggle="' + escapeHTML(proposal.id) + '"><span class="scenario-pick-check">' + (state.compared.has(proposal.id) ? "✓" : "+") + '</span><span><strong>' + escapeHTML(proposal.title) + '</strong><small>' + escapeHTML(proposal.objective) + ' · ' + money(proposal.cost) + ' · ' + proposal.staff + ' FTE</small></span></button>').join("") || '<p class="workspace-list-empty">No evaluated proposals are ready to add.</p>';
-  const currentProjects = selected.length ? selected.map((proposal) => '<span>' + escapeHTML(proposal.title) + '<button type="button" aria-label="Remove project" data-remove-scenario-project="' + escapeHTML(proposal.id) + '">×</button></span>').join("") : '<p>Select evaluated proposals from the list.</p>';
-  const candidateState = !selected.length ? "Choose projects to check the portfolio limits." : totals.budgetOk && totals.staffOk ? "This candidate is within both organisation limits." : (!totals.budgetOk ? "Budget limit exceeded. " : "") + (!totals.staffOk ? "Staff capacity exceeded." : "");
-  const saved = ["A", "B"].map((name) => { const summary = state.scenarios[name] && scenarioSummary(state.scenarios[name]); return summary ? '<article class="saved-scenario-card ' + (summary.budgetOk && summary.staffOk ? "is-feasible" : "is-warning") + '"><p class="section-kicker">Scenario ' + name + '</p><h4>' + (summary.budgetOk && summary.staffOk ? "Within limits" : "Needs revision") + '</h4><dl><div><dt>Projects</dt><dd>' + summary.projects.length + '</dd></div><div><dt>Cost</dt><dd>' + money(summary.totalCost) + '</dd></div><div><dt>Staff</dt><dd>' + summary.totalStaff + ' FTE</dd></div></dl><p>' + escapeHTML(summary.projects.map((project) => project.title).join(", ")) + '</p><button type="button" class="text-button" data-load-scenario="' + name + '">Load Scenario ' + name + '</button></article>' : '<article class="saved-scenario-card is-empty"><p class="section-kicker">Scenario ' + name + '</p><h4>Not saved yet.</h4><p>Save a temporary candidate set to review it later.</p></article>'; }).join("");
-  workspace.innerHTML = '<div class="scenario-builder"><section class="scenario-project-picker"><div class="comparison-panel-heading"><div><p class="section-kicker">Evaluated proposals</p><strong>Choose up to four projects</strong></div><button type="button" class="text-button" data-open-overview>Filter in overview</button></div><div class="scenario-pick-list">' + pickList + '</div></section><aside class="scenario-current-panel"><p class="section-kicker">Current selection</p><h4>' + (selected.length ? selected.length + ' project' + (selected.length === 1 ? "" : "s") + ' selected' : "Start a candidate set") + '</h4><div class="scenario-current-projects">' + currentProjects + '</div><div class="scenario-constraint-grid"><article><span>Total cost</span><strong>' + money(totals.totalCost) + '</strong><small class="' + (totals.budgetOk ? "check-ok" : "check-warning") + '">' + (totals.budgetOk ? "Within " + money(organisation.budget) : money(totals.totalCost - organisation.budget) + " over budget") + '</small></article><article><span>Required staff</span><strong>' + totals.totalStaff + ' FTE</strong><small class="' + (totals.staffOk ? "check-ok" : "check-warning") + '">' + (totals.staffOk ? "Within " + organisation.staff + " FTE" : totals.totalStaff - organisation.staff + " FTE over capacity") + '</small></article></div><div class="scenario-status ' + (selected.length && totals.budgetOk && totals.staffOk ? "is-feasible" : selected.length ? "is-warning" : "") + '">' + candidateState + '</div><div class="scenario-current-actions"><button type="button" class="solid-button" data-save-scenario-view="A">Save as Scenario A</button><button type="button" class="outline-button" data-save-scenario-view="B">Save as Scenario B</button><button type="button" class="text-button" data-open-comparison-view ' + (selected.length < 2 ? "disabled" : "") + '">Compare selected</button></div></aside></div><div class="scenario-saved-grid">' + saved + '</div>';
-  workspace.querySelectorAll("[data-scenario-toggle]").forEach((button) => button.addEventListener("click", () => toggleShortlist(button.dataset.scenarioToggle, !state.compared.has(button.dataset.scenarioToggle))));
-  workspace.querySelectorAll("[data-remove-scenario-project]").forEach((button) => button.addEventListener("click", () => toggleShortlist(button.dataset.removeScenarioProject, false)));
-  workspace.querySelectorAll("[data-save-scenario-view]").forEach((button) => button.addEventListener("click", () => { saveScenario(button.dataset.saveScenarioView); renderScenarioWorkspace(); renderDecisionWorkspace(); renderReportWorkspace(); }));
-  workspace.querySelectorAll("[data-load-scenario]").forEach((button) => button.addEventListener("click", () => { const scenario = state.scenarios[button.dataset.loadScenario]; state.compared = new Set((scenario.projectIds || []).filter((id) => proposals.some((proposal) => proposal.id === id && isEvaluated(proposal)))); renderAll(); renderScenarioWorkspace(); }));
-  workspace.querySelector("[data-open-overview]").addEventListener("click", () => setActiveView("manager"));
-  const compare = workspace.querySelector("[data-open-comparison-view]"); if (!compare.disabled) compare.addEventListener("click", () => setActiveView("comparison"));
+
+  const scenarioCards = ["A", "B"].map((name) => {
+    const assigned = proposals.filter((proposal) => proposal.scenarioGroup === name);
+    const summary = scenarioSummary(state.scenarios[name] || { projectIds: [] });
+    const status = summary.budgetOk && summary.staffOk ? "Within limits" : "Needs revision";
+    const projects = assigned.map((proposal) => '<button type="button" class="scenario-source-project" data-view-scenario-project="' + escapeHTML(proposal.id) + '"><span class="scenario-pick-check">' + name + '</span><span><strong>' + escapeHTML(proposal.title) + '</strong><small>' + escapeHTML(proposal.objective) + ' · ' + money(proposal.cost) + ' · ' + proposal.staff + ' FTE</small></span><em>View</em></button>').join("") || '<p class="workspace-list-empty">No proposals are assigned to Scenario ' + name + '.</p>';
+    return '<article class="saved-scenario-card ' + (summary.budgetOk && summary.staffOk ? "is-feasible" : "is-warning") + '" data-scenario-card="' + name + '" id="scenario-' + name + '"><p class="section-kicker">Scenario ' + name + '</p><h4>' + assigned.length + ' assigned proposal' + (assigned.length === 1 ? '' : 's') + '</h4><dl><div><dt>Cost</dt><dd>' + money(summary.totalCost) + '</dd></div><div><dt>Staff</dt><dd>' + summary.totalStaff + ' FTE</dd></div><div><dt>Status</dt><dd>' + status + '</dd></div></dl><div class="scenario-source-list">' + projects + '</div><div class="saved-scenario-actions"><button type="button" class="text-button" data-load-scenario="' + name + '">Compare Scenario ' + name + '</button></div></article>';
+  }).join("");
+
+  const unassigned = proposals.filter((proposal) => !proposal.scenarioGroup);
+  const unassignedPanel = '<section class="workspace-empty"><p class="section-kicker">Not assigned</p><h4>' + (unassigned.length ? unassigned.length + ' proposal' + (unassigned.length === 1 ? '' : 's') + ' waiting for a rule' : 'New proposals will wait here.') + '</h4><p>The team has not decided which proposal conditions lead to Scenario A or Scenario B, so manual entries are not classified automatically.</p>' + (unassigned.length ? '<div class="scenario-source-list">' + unassigned.map((proposal) => '<button type="button" class="scenario-source-project" data-view-scenario-project="' + escapeHTML(proposal.id) + '"><span class="scenario-pick-check">—</span><span><strong>' + escapeHTML(proposal.title) + '</strong><small>' + escapeHTML(proposal.objective) + ' · ' + money(proposal.cost) + ' · ' + proposal.staff + ' FTE</small></span><em>View</em></button>').join("") + '</div>' : '') + '</section>';
+
+  workspace.innerHTML = '<div class="scenario-saved-grid">' + scenarioCards + '</div>' + unassignedPanel;
+  workspace.querySelectorAll("[data-view-scenario-project]").forEach((button) => button.addEventListener("click", () => {
+    state.selectedId = button.dataset.viewScenarioProject;
+    setActiveView("manager");
+  }));
+  workspace.querySelectorAll("[data-load-scenario]").forEach((button) => button.addEventListener("click", () => {
+    const scenario = state.scenarios[button.dataset.loadScenario];
+    state.compared = new Set((scenario?.projectIds || []).filter((id) => proposals.some((proposal) => proposal.id === id && isEvaluated(proposal))));
+    setActiveView("comparison");
+  }));
 }
 
 function renderDecisionWorkspace() {
@@ -1238,7 +1200,7 @@ function renderDecisionWorkspace() {
   if (!workspace) return;
   const outcomes = ["Approved", "Deferred", "Rejected"];
   const columns = outcomes.map((outcome) => { const records = proposals.filter((proposal) => state.decisions[proposal.id] && state.decisions[proposal.id].decision === outcome); const cards = records.map((proposal) => '<article><p class="section-kicker">Scenario ' + escapeHTML(state.decisions[proposal.id].scenario || "—") + '</p><h4>' + escapeHTML(proposal.title) + '</h4><p>' + escapeHTML(proposal.summary) + '</p><button type="button" class="text-button" data-open-decision-project="' + escapeHTML(proposal.id) + '">Review rationale</button></article>').join("") || '<div class="decision-empty">No ' + outcome.toLowerCase() + ' projects recorded yet.</div>'; return '<section class="decision-column"><header><span class="status-pill">' + outcome + '</span><strong>' + records.length + '</strong></header>' + cards + '</section>'; }).join("");
-  workspace.innerHTML = '<div class="decision-status-row"><article><span>Saved scenarios</span><strong>' + Object.keys(state.scenarios || {}).length + '</strong><small>available for decision context</small></article><article><span>Recorded decisions</span><strong>' + Object.keys(state.decisions || {}).length + '</strong><small>kept in this browser</small></article><article><span>Next step</span><strong>Review evidence</strong><small>then make a human decision</small></article></div><div class="decision-board">' + columns + '</div><div class="decision-audit-note"><p class="section-kicker">Decision trail</p><p>Decisions stay connected to the reviewer rationale and candidate scenario. The final outcome remains human-led.</p><button type="button" class="outline-button" data-open-overview>Open portfolio overview</button></div>';
+  workspace.innerHTML = '<div class="decision-status-row"><article><span>Defined scenarios</span><strong>' + Object.keys(state.scenarios || {}).length + '</strong><small>available for decision context</small></article><article><span>Recorded decisions</span><strong>' + Object.keys(state.decisions || {}).length + '</strong><small>kept in this browser</small></article><article><span>Next step</span><strong>Review evidence</strong><small>then make a human decision</small></article></div><div class="decision-board">' + columns + '</div><div class="decision-audit-note"><p class="section-kicker">Decision trail</p><p>Decisions stay connected to the reviewer rationale and assigned scenario. The final outcome remains human-led.</p><button type="button" class="outline-button" data-open-overview>Open portfolio overview</button></div>';
   workspace.querySelectorAll("[data-open-decision-project]").forEach((button) => button.addEventListener("click", () => { state.selectedId = button.dataset.openDecisionProject; setActiveView("manager"); }));
   workspace.querySelector("[data-open-overview]").addEventListener("click", () => setActiveView("manager"));
 }
@@ -1248,8 +1210,8 @@ function renderReportWorkspace() {
   if (!workspace) return;
   const evaluated = proposals.filter(isEvaluated);
   const objectives = [...new Set(proposals.map((proposal) => proposal.objective).filter(Boolean))];
-  const scenarios = Object.entries(state.scenarios || {}).map(([name, scenario]) => { const summary = scenarioSummary(scenario); return '<article><p class="section-kicker">Scenario ' + escapeHTML(name) + '</p><strong>' + (summary.budgetOk && summary.staffOk ? "Within limits" : "Needs revision") + '</strong><span>' + summary.projects.length + ' projects · ' + money(summary.totalCost) + ' · ' + summary.totalStaff + ' FTE</span></article>'; }).join("") || '<article><p class="section-kicker">Candidate scenarios</p><strong>None saved</strong><span>Build a scenario to compare cost and staff requirements.</span></article>';
-  workspace.innerHTML = '<div class="report-metrics"><article><span>Proposals</span><strong>' + proposals.length + '</strong><small>' + evaluated.length + ' evaluated</small></article><article><span>Strategic objectives</span><strong>' + objectives.length + '</strong><small>' + escapeHTML(objectives.join(" · ") || "Not set") + '</small></article><article><span>Organisation limits</span><strong>' + money(organisation.budget) + '</strong><small>' + organisation.staff + ' FTE available</small></article></div><div class="report-scenarios"><div><p class="section-kicker">Saved scenario check</p><h4>Portfolio discussion notes</h4></div>' + scenarios + '</div><div class="report-note"><p class="section-kicker">What this page does</p><p>A compact local snapshot for the team discussion. It does not calculate an automatic recommendation or replace reviewer rationale.</p><button type="button" class="solid-button" data-open-scenarios>Review scenarios</button></div>';
+  const scenarios = Object.entries(state.scenarios || {}).map(([name, scenario]) => { const summary = scenarioSummary(scenario); return '<article><p class="section-kicker">Scenario ' + escapeHTML(name) + '</p><strong>' + (summary.budgetOk && summary.staffOk ? "Within limits" : "Needs revision") + '</strong><span>' + summary.projects.length + ' projects · ' + money(summary.totalCost) + ' · ' + summary.totalStaff + ' FTE</span></article>'; }).join("") || '<article><p class="section-kicker">Portfolio scenarios</p><strong>Not configured</strong><span>Scenario definitions are not available.</span></article>';
+  workspace.innerHTML = '<div class="report-metrics"><article><span>Proposals</span><strong>' + proposals.length + '</strong><small>' + evaluated.length + ' evaluated</small></article><article><span>Strategic objectives</span><strong>' + objectives.length + '</strong><small>' + escapeHTML(objectives.join(" · ") || "Not set") + '</small></article><article><span>Organisation limits</span><strong>' + money(organisation.budget) + '</strong><small>' + organisation.staff + ' FTE available</small></article></div><div class="report-scenarios"><div><p class="section-kicker">Defined scenario check</p><h4>Portfolio discussion notes</h4></div>' + scenarios + '</div><div class="report-note"><p class="section-kicker">What this page does</p><p>A compact local snapshot for the team discussion. It does not calculate an automatic recommendation or replace reviewer rationale.</p><button type="button" class="solid-button" data-open-scenarios>Review scenarios</button></div>';
   workspace.querySelector("[data-open-scenarios]").addEventListener("click", () => setActiveView("scenarios"));
 }
 
@@ -1279,7 +1241,7 @@ function setActiveView(view) {
 
 
 /* PPM browser-local removal controls */
-const PPM_REMOVED_PROPOSAL_KEY = "ppm-removed-proposals";
+const PPM_REMOVED_PROPOSAL_KEY = "ppm-v2-removed-proposals";
 const ppmRemovedProposalIds = new Set(readStoredJSON(PPM_REMOVED_PROPOSAL_KEY, []));
 
 function saveRemovedProposals() {
@@ -1308,17 +1270,6 @@ function deleteProposal(id) {
   storage.remove("ppm-note-" + id);
   renderAll();
   if (state.activeView === "comparison") renderComparisonWorkspace();
-  if (state.activeView === "scenarios") renderScenarioWorkspace();
-  if (state.activeView === "decisions") renderDecisionWorkspace();
-  if (state.activeView === "reports") renderReportWorkspace();
-}
-
-function deleteScenario(name) {
-  if (!state.scenarios[name]) return;
-  if (!window.confirm("Remove Scenario " + name + " from this browser?")) return;
-  delete state.scenarios[name];
-  storage.set(STORAGE.scenarios, JSON.stringify(state.scenarios));
-  renderSavedScenarios();
   if (state.activeView === "scenarios") renderScenarioWorkspace();
   if (state.activeView === "decisions") renderDecisionWorkspace();
   if (state.activeView === "reports") renderReportWorkspace();
@@ -1354,15 +1305,6 @@ function addRemovalControls() {
   if (detailActions && state.selectedId && !detailActions.querySelector("[data-delete-proposal], [data-ppm-remove-proposal]")) {
     detailActions.append(ppmRemoveButton("Remove", "data-ppm-remove-proposal", state.selectedId, "Remove proposal"));
   }
-  $$("[data-load-scenario]").forEach((loadButton) => {
-    const name = loadButton.dataset.loadScenario;
-        const parent = loadButton.parentElement;
-        if (!name || !parent || parent.querySelector('[data-ppm-remove-scenario="' + name + '"]')) return;
-    
-    const removeButton = ppmRemoveButton("Remove", "data-ppm-remove-scenario", name, "Remove Scenario " + name);
-    removeButton.classList.add("ppm-scenario-remove");
-    loadButton.insertAdjacentElement("afterend", removeButton);
-  });
 }
 
 function applyPersistedProposalRemovals() {
@@ -1389,17 +1331,10 @@ document.addEventListener("click", (event) => {
     deleteProposal(proposalButton.dataset.ppmRemoveProposal || proposalButton.dataset.deleteProposal);
     return;
   }
-  const scenarioButton = event.target.closest("[data-ppm-remove-scenario]");
-  if (scenarioButton) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    event.stopPropagation();
-    deleteScenario(scenarioButton.dataset.ppmRemoveScenario);
-  }
 }, true);
 
 const ppmRemovalStyle = document.createElement("style");
-ppmRemovalStyle.textContent = ".card-remove-button{margin-left:8px}.ppm-scenario-remove{margin:8px 10px 8px 0}.saved-scenario-card .ppm-scenario-remove{margin:12px 0 0}";
+ppmRemovalStyle.textContent = ".card-remove-button{margin-left:8px}";
 document.head.append(ppmRemovalStyle);
 const ppmRemovalObserver = new MutationObserver(() => requestAnimationFrame(addRemovalControls));
 ppmRemovalObserver.observe(document.body, { childList: true, subtree: true });
