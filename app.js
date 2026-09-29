@@ -243,6 +243,7 @@ const STORAGE = {
   activeAccount: "ppm-v2-active-account",
   organisation: "ppm-organisation",
   customProposals: "ppm-v2-custom-proposals",
+  shortlist: "ppm-v2-shortlist",
   scenarios: "ppm-v2-scenarios",
   decisions: "ppm-v2-decisions",
   scenarioDecisions: "ppm-v2-scenario-decisions"
@@ -366,6 +367,7 @@ readStoredJSON(STORAGE.customProposals, []).forEach((proposal) => {
   if (normalised.id) proposalMap.set(normalised.id, normalised);
 });
 const proposals = Array.from(proposalMap.values());
+const storedShortlistIds = readStoredJSON(STORAGE.shortlist, []);
 const storedAccounts = normaliseAccounts(readStoredJSON(STORAGE.accounts, []));
 const storedActiveAccountId = String(readStoredJSON(STORAGE.activeAccount, "") || "");
 
@@ -381,8 +383,9 @@ const state = {
   cost: "all",
   status: "all",
   sort: "title",
-  selectedId: proposals[0]?.id || null,
+  selectedId: null,
   compared: new Set(),
+  shortlisted: new Set((Array.isArray(storedShortlistIds) ? storedShortlistIds : []).map(String).filter((id) => proposals.some((proposal) => proposal.id === id))),
   scenarios: readStoredJSON(STORAGE.scenarios, structuredClone(DEFAULT_SCENARIOS)),
   activeScenarioName: "A",
   portfolioReviewScenarioName: null,
@@ -682,7 +685,7 @@ function renderResults() {
     const evaluated = isEvaluated(proposal);
     const status = currentStatus(proposal);
     return `<tr class="${proposal.id === state.selectedId ? "is-selected" : ""}" data-project-id="${escapeHTML(proposal.id)}">
-      <td class="shortlist-table-cell"><label class="table-shortlist-control" title="${evaluated ? "Add to comparison shortlist" : "Complete reviewer evaluation before shortlisting"}"><input type="checkbox" data-shortlist-id="${escapeHTML(proposal.id)}" aria-label="Shortlist ${escapeHTML(proposal.title)}" ${state.compared.has(proposal.id) ? "checked" : ""} ${evaluated ? "" : "disabled"} /><span class="sr-only">Select ${escapeHTML(proposal.title)}</span></label></td>
+      <td class="shortlist-table-cell"><label class="table-shortlist-control" title="${evaluated ? "Select for comparison" : "Complete reviewer evaluation before comparison"}"><input type="checkbox" data-comparison-id="${escapeHTML(proposal.id)}" aria-label="Select ${escapeHTML(proposal.title)} for comparison" ${state.compared.has(proposal.id) ? "checked" : ""} ${evaluated ? "" : "disabled"} /><span class="sr-only">Select ${escapeHTML(proposal.title)} for comparison</span></label></td>
       <th scope="row"><strong>${escapeHTML(proposal.title)}</strong><small>${escapeHTML(proposal.owner)}</small></th>
       <td><span class="table-objective">${escapeHTML(proposal.objective)}</span></td>
       ${CRITERIA.map((criterion) => `<td class="criterion-table-cell" data-label="${escapeHTML(criterion.label)}">${overviewScoreCell(proposal, criterion)}</td>`).join("")}
@@ -691,19 +694,20 @@ function renderResults() {
       <td><div class="table-row-actions"><button type="button" class="text-button" data-select-id="${escapeHTML(proposal.id)}">View details</button>${proposal.isCustom ? `<button type="button" class="card-remove-button" data-delete-proposal="${escapeHTML(proposal.id)}" aria-label="Delete proposal ${escapeHTML(proposal.title)}">Delete proposal</button>` : ""}</div></td>
     </tr>`;
   }).join("");
-  listEl.innerHTML = visible.length ? `<table class="portfolio-project-table"><thead><tr><th scope="col"><span class="sr-only">Shortlist</span></th><th scope="col">Project name</th><th scope="col">Primary strategic objective</th>${CRITERIA.map((criterion) => `<th scope="col">${escapeHTML(criterion.label)}</th>`).join("")}<th scope="col">Estimated cost</th><th scope="col">Evaluation status</th><th scope="col">Details</th></tr></thead><tbody>${rows}</tbody></table>` : "";
+  listEl.innerHTML = visible.length ? `<table class="portfolio-project-table"><thead><tr><th scope="col"><span class="sr-only">Select for comparison</span></th><th scope="col">Project name</th><th scope="col">Primary strategic objective</th>${CRITERIA.map((criterion) => `<th scope="col">${escapeHTML(criterion.label)}</th>`).join("")}<th scope="col">Estimated cost</th><th scope="col">Evaluation status</th><th scope="col">Details</th></tr></thead><tbody>${rows}</tbody></table>` : "";
 
   $$('[data-select-id]').forEach((button) => button.addEventListener("click", () => {
     state.selectedId = button.dataset.selectId;
     renderResults();
     renderDetail();
-    if (window.innerWidth < 900) detailEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    detailEl.focus({ preventScroll: true });
+    detailEl.scrollIntoView({ behavior: "smooth", block: "start" });
   }));
-  $$('[data-shortlist-id]').forEach((input) => input.addEventListener("change", () => toggleShortlist(input.dataset.shortlistId, input.checked)));
+  $$('[data-comparison-id]').forEach((input) => input.addEventListener("change", () => toggleComparisonSelection(input.dataset.comparisonId, input.checked)));
   bindCustomProposalDeleteButtons(listEl);
 }
 
-function toggleShortlist(id, shouldAdd) {
+function toggleComparisonSelection(id, shouldAdd) {
   const proposal = proposals.find((item) => item.id === id);
   if (!proposal || !isEvaluated(proposal)) {
     window.alert("Complete the five-criterion review before comparing this proposal.");
@@ -723,6 +727,28 @@ function toggleShortlist(id, shouldAdd) {
   if (state.activeView === "scenarios") renderScenarioWorkspace();
 }
 
+function persistFormalShortlist() {
+  storage.set(STORAGE.shortlist, JSON.stringify([...state.shortlisted]));
+}
+
+function shortlistedProposals() {
+  return proposals.filter((proposal) => state.shortlisted.has(proposal.id) && isEvaluated(proposal));
+}
+
+function toggleFormalShortlist(id, shouldAdd) {
+  const proposal = proposals.find((item) => item.id === id);
+  if (!proposal || !isEvaluated(proposal)) {
+    window.alert("Complete the five-criterion review before adding this proposal to the Shortlist.");
+    return;
+  }
+  if (shouldAdd) state.shortlisted.add(id);
+  else state.shortlisted.delete(id);
+  persistFormalShortlist();
+  renderShortlistWorkspace();
+  if (state.activeView === "comparison") renderComparisonWorkspace();
+  if (state.activeView === "scenarios") renderScenarioWorkspace();
+}
+
 function bindCustomProposalDeleteButtons(scope) {
   if (!scope) return;
   scope.querySelectorAll('[data-delete-proposal]').forEach((button) => {
@@ -737,13 +763,15 @@ function deleteCustomProposal(id) {
   if (!window.confirm(`Remove “${proposal.title}” from this browser?`)) return;
   proposals.splice(proposalIndex, 1);
   state.compared.delete(id);
-  if (state.selectedId === id) state.selectedId = proposals[0]?.id || null;
+  state.shortlisted.delete(id);
+  if (state.selectedId === id) state.selectedId = null;
   Object.entries(state.scenarios || {}).forEach(([name, scenario]) => {
     const projectIds = Array.isArray(scenario?.projectIds) ? scenario.projectIds : [];
     state.scenarios[name] = { ...scenario, projectIds: projectIds.filter((projectId) => projectId !== id) };
   });
   delete state.decisions[id];
   persistCustomProposals();
+  persistFormalShortlist();
   storage.set(STORAGE.scenarios, JSON.stringify(state.scenarios));
   storage.set(STORAGE.decisions, JSON.stringify(state.decisions));
   storage.remove(`ppm-evaluation-${id}`);
@@ -775,7 +803,7 @@ function renderScenario() {
   const { totalCost, totalStaff, budgetOk, staffOk } = calculateScenario(selected);
 
   $("#scenario-selection").innerHTML = selected.length
-    ? selected.map((proposal) => `<button type="button" data-remove-shortlist="${escapeHTML(proposal.id)}"><span>${escapeHTML(proposal.title)}</span><strong>${money(proposal.cost)} · ${proposal.staff} FTE</strong><i aria-hidden="true">×</i></button>`).join("")
+    ? selected.map((proposal) => `<button type="button" data-remove-comparison="${escapeHTML(proposal.id)}"><span>${escapeHTML(proposal.title)}</span><strong>${money(proposal.cost)} · ${proposal.staff} FTE</strong><i aria-hidden="true">×</i></button>`).join("")
     : "<p>Select two to four evaluated projects from the table.</p>";
   $("#scenario-cost").textContent = money(totalCost);
   $("#scenario-staff").textContent = `${totalStaff} FTE`;
@@ -790,7 +818,7 @@ function renderScenario() {
       ? "<strong>Feasible candidate</strong><span>The current selection is within both organisation limits.</span>"
       : `<strong>Needs revision</strong><span>${!budgetOk ? "Budget limit exceeded. " : ""}${!staffOk ? "Staff capacity exceeded." : ""}</span>`;
   $("#open-compare").disabled = selected.length < 2;
-  $$('[data-remove-shortlist]').forEach((button) => button.addEventListener("click", () => toggleShortlist(button.dataset.removeShortlist, false)));
+  $$('[data-remove-comparison]').forEach((button) => button.addEventListener("click", () => toggleComparisonSelection(button.dataset.removeComparison, false)));
   renderSavedScenarios();
 }
 
@@ -807,10 +835,8 @@ function renderSavedScenarios() {
     return `<button type="button" data-load-scenario="${escapeHTML(name)}"><span>Scenario ${escapeHTML(name)}</span><small>${projects.length} projects · ${money(cost)} · ${staff} FTE</small><strong>${feasible ? "Feasible" : "Needs revision"}</strong></button>`;
   }).join("")}` : "";
   $$('[data-load-scenario]').forEach((button) => button.addEventListener("click", () => {
-    const scenario = state.scenarios[button.dataset.loadScenario];
-    const ids = Array.isArray(scenario?.projectIds) ? scenario.projectIds : [];
-    state.compared = new Set(ids.filter((id) => proposals.some((proposal) => proposal.id === id && isEvaluated(proposal))));
-    renderAll();
+    state.activeScenarioName = button.dataset.loadScenario;
+    setActiveView("scenarios");
   }));
 }
 
@@ -854,12 +880,17 @@ function detailsOverview(proposal) {
 function renderDetail() {
   const proposal = proposals.find((item) => item.id === state.selectedId);
   if (!proposal) {
-    detailEl.innerHTML = '<div class="detail-empty">Select a project card to view its profile and reviewer rationale.</div>';
+    detailEl.hidden = true;
+    detailEl.innerHTML = "";
+    detailEl.closest('[data-workspace-view="manager"]')?.classList.remove("is-detail-open");
     return;
   }
+  detailEl.hidden = false;
+  detailEl.tabIndex = -1;
+  detailEl.closest('[data-workspace-view="manager"]')?.classList.add("is-detail-open");
   const savedDecision = state.decisions[proposal.id];
   const status = currentStatus(proposal);
-  const detailHeader = `<div class="insight-header"><div><p class="section-kicker">Project insight</p><h3>${escapeHTML(proposal.title)}</h3><p>${escapeHTML(proposal.owner)} · ${escapeHTML(proposal.objective)} · ${money(proposal.cost)} · ${proposal.staff} FTE · ${escapeHTML(proposal.duration)}</p></div><div><span class="objective-tag">${escapeHTML(scenarioLabel(proposal))}</span><span class="status-pill ${statusClass(status)}">${escapeHTML(status)}</span><button type="button" class="outline-button" data-open-review="${escapeHTML(proposal.id)}">${isEvaluated(proposal) ? "Edit evaluation" : "Start evaluation"}</button>${proposal.isCustom ? `<button type="button" class="card-remove-button" data-delete-proposal="${escapeHTML(proposal.id)}">Remove added</button>` : ""}</div></div>`;
+  const detailHeader = `<button type="button" class="project-detail-back" data-close-project-detail>← Back to Project Overview</button><div class="insight-header"><div><p class="section-kicker">Project insight</p><h3>${escapeHTML(proposal.title)}</h3><p>${escapeHTML(proposal.owner)} · ${escapeHTML(proposal.objective)} · ${money(proposal.cost)} · ${proposal.staff} FTE · ${escapeHTML(proposal.duration)}</p></div><div><span class="objective-tag">${escapeHTML(scenarioLabel(proposal))}</span><span class="status-pill ${statusClass(status)}">${escapeHTML(status)}</span><button type="button" class="outline-button" data-open-review="${escapeHTML(proposal.id)}">${isEvaluated(proposal) ? "Edit evaluation" : "Start evaluation"}</button>${proposal.isCustom ? `<button type="button" class="card-remove-button" data-delete-proposal="${escapeHTML(proposal.id)}">Remove added</button>` : ""}</div></div>`;
 
   if (!isEvaluated(proposal)) {
     detailEl.innerHTML = `${detailHeader}${detailsOverview(proposal)}<div class="pending-evaluation"><div><p class="section-kicker">Next step</p><h4>Ready for a five-criterion review.</h4></div><div><p>Record ratings and a short reason for strategic alignment, expected business value, delivery feasibility, risk manageability, and time criticality. A radar profile appears only after all five are complete.</p><button type="button" class="solid-button" data-open-review="${escapeHTML(proposal.id)}">Review this proposal</button></div></div>`;
@@ -878,7 +909,18 @@ function renderDetail() {
   }));
   $$('[data-open-review]').forEach((button) => button.addEventListener("click", () => openReview(button.dataset.openReview)));
   $$('[data-decision]').forEach((button) => button.addEventListener("click", () => recordDecision(proposal.id, button.dataset.decision)));
+  $('[data-close-project-detail]')?.addEventListener("click", closeProjectDetail);
   bindCustomProposalDeleteButtons(detailEl);
+}
+
+function closeProjectDetail() {
+  const previousId = state.selectedId;
+  state.selectedId = null;
+  renderDetail();
+  renderResults();
+  const returnButton = previousId ? document.querySelector(`[data-select-id="${CSS.escape(previousId)}"]`) : null;
+  (returnButton || listEl).focus?.({ preventScroll: true });
+  document.querySelector('.portfolio-catalog-panel')?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function recordDecision(id, decision) {
@@ -1071,7 +1113,7 @@ const TEST_STEPS = [
   },
   {
     id: "comparison",
-    title: "Compare two shortlisted projects",
+    title: "Compare two evaluated projects",
     copy: "Prepare Service Hub and Accessibility Update, then select Compare selected.",
     expected: "The overlay radar chart and legend show two project profiles.",
     action: "comparison",
@@ -1196,6 +1238,8 @@ function runTestAction(action) {
   if (action === "decision") {
     const testIds = ["test-service-hub", "test-accessibility-update"];
     state.compared = new Set(testIds);
+    testIds.forEach((id) => state.shortlisted.add(id));
+    persistFormalShortlist();
     state.scenarios.A = { projectIds: testIds, budget: organisation.budget, staff: organisation.staff };
     storage.set(STORAGE.scenarios, JSON.stringify(state.scenarios));
     state.selectedId = "test-service-hub";
@@ -1429,7 +1473,10 @@ function bindEvents() {
   $("#open-test-mode").addEventListener("click", openTestMode);
   $("#reset-test-data").addEventListener("click", resetTestData);
   $("#run-quick-checks").addEventListener("click", runQuickChecks);
-  $$('[data-workspace-view-button]').forEach((button) => button.addEventListener("click", () => setActiveView(button.dataset.workspaceViewButton)));
+  $$('[data-workspace-view-button]').forEach((button) => button.addEventListener("click", () => {
+    if (button.dataset.workspaceViewButton === "manager") state.selectedId = null;
+    setActiveView(button.dataset.workspaceViewButton);
+  }));
   $("#proposal-search").addEventListener("input", (event) => { state.query = event.target.value; renderResults(); });
   $("#objective-filter").addEventListener("change", (event) => { state.objective = event.target.value; renderResults(); });
   $("#feasibility-filter").addEventListener("change", (event) => { state.feasibility = Number(event.target.value); renderResults(); });
@@ -1440,6 +1487,7 @@ function bindEvents() {
   $("#clear-compare").addEventListener("click", () => { state.compared.clear(); renderAll(); });
   $("#open-compare").addEventListener("click", openComparison);
   $$('[data-open-comparison]').forEach((button) => button.addEventListener("click", () => setActiveView("comparison")));
+  $$('[data-open-shortlist]').forEach((button) => button.addEventListener("click", () => setActiveView("shortlist")));
   $$('[data-open-insights]').forEach((button) => button.addEventListener("click", () => setActiveView("insights")));
   $$('[data-open-scenarios]').forEach((button) => button.addEventListener("click", () => setActiveView("scenarios")));
   $$('[data-open-organisation]').forEach((button) => button.addEventListener("click", () => setActiveView("organisation")));
@@ -1450,6 +1498,7 @@ function bindEvents() {
   document.addEventListener("keydown", (event) => {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
       event.preventDefault();
+      state.selectedId = null;
       setActiveView("manager");
       $("#proposal-search").focus();
     }
@@ -1502,14 +1551,13 @@ function scenarioNameExists(candidate, exceptName = "") {
 function renderShortlistWorkspace() {
   const workspace = $("#shortlist-workspace");
   if (!workspace) return;
-  const evaluated = proposals.filter(isEvaluated);
-  const selected = selectedProposals();
-  const cards = evaluated.map((proposal) => '<article class="shortlist-project-card ' + (state.compared.has(proposal.id) ? 'is-selected' : '') + '"><div><span class="objective-tag">' + escapeHTML(proposal.objective) + '</span><h4>' + escapeHTML(proposal.title) + '</h4><p>' + escapeHTML(proposal.owner) + ' · ' + money(proposal.cost) + ' · ' + proposal.staff + ' FTE</p></div>' + assessmentProfile(proposal) + '<button type="button" class="' + (state.compared.has(proposal.id) ? 'text-button' : 'solid-button') + '" data-shortlist-page-toggle="' + escapeHTML(proposal.id) + '">' + (state.compared.has(proposal.id) ? 'Remove from shortlist' : 'Add to shortlist') + '</button></article>').join("");
-  workspace.innerHTML = '<section class="shortlist-summary"><div><p class="section-kicker">Current shortlist</p><h4>' + selected.length + ' of 4 projects selected</h4><p>Select two to four evaluated projects before opening the comparison.</p></div><div><button type="button" class="solid-button" data-shortlist-open-comparison>Open Comparison</button><button type="button" class="outline-button" data-shortlist-back-overview>Back to Project Overview</button></div></section>' + (cards ? '<div class="shortlist-project-grid">' + cards + '</div>' : '<div class="workspace-empty"><p class="section-kicker">Shortlist</p><h4>No evaluated projects yet.</h4><p>Complete a five-criterion evaluation before adding projects to the shortlist.</p><button type="button" class="solid-button" data-shortlist-open-evaluation>Open Project Evaluation</button></div>');
-  workspace.querySelectorAll('[data-shortlist-page-toggle]').forEach((button) => button.addEventListener("click", () => toggleShortlist(button.dataset.shortlistPageToggle, !state.compared.has(button.dataset.shortlistPageToggle))));
-  workspace.querySelector('[data-shortlist-open-comparison]')?.addEventListener("click", () => setActiveView("comparison"));
+  const shortlisted = shortlistedProposals();
+  const cards = shortlisted.map((proposal) => '<article class="shortlist-project-card is-selected"><div><span class="objective-tag">' + escapeHTML(proposal.objective) + '</span><h4>' + escapeHTML(proposal.title) + '</h4><p>' + escapeHTML(proposal.owner) + ' · ' + money(proposal.cost) + ' · ' + proposal.staff + ' FTE</p></div>' + assessmentProfile(proposal) + '<button type="button" class="text-button" data-remove-formal-shortlist="' + escapeHTML(proposal.id) + '">Remove from Shortlist</button></article>').join("");
+  workspace.innerHTML = '<section class="shortlist-summary"><div><p class="section-kicker">Formal Shortlist</p><h4>' + shortlisted.length + ' project' + (shortlisted.length === 1 ? '' : 's') + ' retained</h4><p>Projects are added manually after comparison. This saved list has no four-project limit.</p></div><div><button type="button" class="solid-button" data-shortlist-open-builder>Build Candidate Portfolio</button><button type="button" class="outline-button" data-shortlist-open-comparison>Open Comparison</button></div></section>' + (cards ? '<div class="shortlist-project-grid">' + cards + '</div>' : '<div class="workspace-empty"><p class="section-kicker">Formal Shortlist</p><h4>No projects have been shortlisted yet.</h4><p>Compare two to four evaluated proposals, then manually add suitable projects here.</p><button type="button" class="solid-button" data-shortlist-open-comparison>Open Comparison</button><button type="button" class="text-button" data-shortlist-back-overview>Go to Project Overview</button></div>');
+  workspace.querySelectorAll('[data-remove-formal-shortlist]').forEach((button) => button.addEventListener("click", () => toggleFormalShortlist(button.dataset.removeFormalShortlist, false)));
+  workspace.querySelectorAll('[data-shortlist-open-comparison]').forEach((button) => button.addEventListener("click", () => setActiveView("comparison")));
+  workspace.querySelector('[data-shortlist-open-builder]')?.addEventListener("click", () => setActiveView("scenarios"));
   workspace.querySelector('[data-shortlist-back-overview]')?.addEventListener("click", () => setActiveView("manager"));
-  workspace.querySelector('[data-shortlist-open-evaluation]')?.addEventListener("click", () => setActiveView("reviewer"));
 }
 
 function renderCriterionInsights() {
@@ -1533,12 +1581,12 @@ function renderComparisonWorkspace() {
   if (!workspace) return;
   const selected = selectedProposals();
   if (selected.length < 2) {
-    workspace.innerHTML = '<div class="workspace-empty"><p class="section-kicker">Comparison set</p><h4>' + (selected.length || "No") + ' project' + (selected.length === 1 ? "" : "s") + ' selected</h4><p>Shortlist two to four evaluated proposals before opening the radar comparison.</p><button type="button" class="solid-button" data-open-shortlist>Open Shortlist</button><button type="button" class="text-button" data-open-overview>Back to Project Overview</button></div>';
+    workspace.innerHTML = '<div class="workspace-empty"><p class="section-kicker">Comparison selection</p><h4>' + (selected.length || "No") + ' project' + (selected.length === 1 ? "" : "s") + ' selected</h4><p>Select two to four fully evaluated proposals in Project Overview before opening the radar comparison.</p><button type="button" class="solid-button" data-open-overview>Go to Project Overview</button><button type="button" class="text-button" data-open-shortlist>View formal Shortlist</button></div>';
     workspace.querySelector("[data-open-shortlist]").addEventListener("click", () => setActiveView("shortlist"));
     workspace.querySelector("[data-open-overview]").addEventListener("click", () => setActiveView("manager"));
     return;
   }
-  const cards = selected.map((proposal) => '<article><span class="objective-tag">' + escapeHTML(proposal.objective) + '</span><h4>' + escapeHTML(proposal.title) + '</h4><p>' + money(proposal.cost) + ' · ' + proposal.staff + ' FTE · ' + scenarioLink(proposal) + '</p><button type="button" data-remove-comparison-project="' + escapeHTML(proposal.id) + '">Remove</button></article>').join("");
+  const cards = selected.map((proposal) => '<article><span class="objective-tag">' + escapeHTML(proposal.objective) + '</span><h4>' + escapeHTML(proposal.title) + '</h4><p>' + money(proposal.cost) + ' · ' + proposal.staff + ' FTE · ' + scenarioLink(proposal) + '</p><div class="comparison-card-actions"><button type="button" class="comparison-shortlist-action ' + (state.shortlisted.has(proposal.id) ? 'is-added' : '') + '" data-add-formal-shortlist="' + escapeHTML(proposal.id) + '" ' + (state.shortlisted.has(proposal.id) ? 'disabled' : '') + '>' + (state.shortlisted.has(proposal.id) ? 'In Shortlist' : 'Add to Shortlist') + '</button><button type="button" data-remove-comparison-project="' + escapeHTML(proposal.id) + '">Remove from comparison</button></div></article>').join("");
   const strengths = CRITERIA.map((criterion) => {
     const highest = Math.max(...selected.map((proposal) => Number(proposal.scores[criterion.key])));
     const names = selected.filter((proposal) => Number(proposal.scores[criterion.key]) === highest).map((proposal) => proposal.title).join(", ");
@@ -1547,11 +1595,11 @@ function renderComparisonWorkspace() {
   const legend = selected.map((proposal, index) => '<span><i class="legend-colour-' + index + '"></i>' + escapeHTML(proposal.title) + '</span>').join("");
   const header = CRITERIA.map((criterion) => '<th>' + escapeHTML(criterion.short) + '</th>').join("");
   const rows = selected.map((proposal) => '<tr><th>' + escapeHTML(proposal.title) + '</th>' + CRITERIA.map((criterion) => '<td><span class="score-cell ' + scoreClass(proposal.scores[criterion.key]) + '">' + proposal.scores[criterion.key] + '</span></td>').join("") + '<td>' + money(proposal.cost) + '</td><td>' + proposal.staff + ' FTE</td><td>' + scenarioLink(proposal) + '</td></tr>').join("");
-  workspace.innerHTML = '<div class="comparison-selected-strip">' + cards + '</div><div class="comparison-stage"><section class="comparison-radar-panel"><div class="comparison-panel-heading"><p class="section-kicker">Five-criterion profile</p><strong>Overlay view</strong></div><div class="workspace-radar">' + radarSVG(selected) + '</div><div class="workspace-legend">' + legend + '</div></section><aside class="comparison-tradeoffs"><p class="section-kicker">Recorded strengths</p><h4>Read the trade-offs, not a winner.</h4><p>The chart helps the Portfolio Manager discuss the highest recorded ratings, cost, resource limits, and reviewer evidence.</p><ul>' + strengths + '</ul><button type="button" class="outline-button" data-open-scenarios>View assigned scenarios</button></aside></div><div class="comparison-score-table"><div class="comparison-panel-heading"><p class="section-kicker">Side-by-side detail</p><div><button type="button" class="text-button" data-open-shortlist>Change shortlist</button><button type="button" class="text-button" data-open-overview>Back to Project Overview</button></div></div><div class="comparison-table-wrap"><table class="comparison-table"><thead><tr><th>Project</th>' + header + '<th>Cost</th><th>Staff</th><th>Scenario</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
-  workspace.querySelectorAll("[data-remove-comparison-project]").forEach((button) => button.addEventListener("click", () => toggleShortlist(button.dataset.removeComparisonProject, false)));
+  workspace.innerHTML = '<div class="comparison-selected-strip">' + cards + '</div><div class="comparison-stage"><section class="comparison-radar-panel"><div class="comparison-panel-heading"><p class="section-kicker">Five-criterion profile</p><strong>Overlay view</strong></div><div class="workspace-radar">' + radarSVG(selected) + '</div><div class="workspace-legend">' + legend + '</div></section><aside class="comparison-tradeoffs"><p class="section-kicker">Recorded strengths</p><h4>Read the trade-offs, not a winner.</h4><p>The chart helps the Portfolio Manager discuss the highest recorded ratings, cost, resource limits, and reviewer evidence.</p><ul>' + strengths + '</ul><button type="button" class="outline-button" data-open-shortlist>View formal Shortlist</button></aside></div><div class="comparison-score-table"><div class="comparison-panel-heading"><p class="section-kicker">Side-by-side detail</p><div><button type="button" class="text-button" data-open-overview>Change comparison selection</button><button type="button" class="text-button" data-open-shortlist>View formal Shortlist</button></div></div><div class="comparison-table-wrap"><table class="comparison-table"><thead><tr><th>Project</th>' + header + '<th>Cost</th><th>Staff</th><th>Scenario</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+  workspace.querySelectorAll("[data-add-formal-shortlist]").forEach((button) => button.addEventListener("click", () => toggleFormalShortlist(button.dataset.addFormalShortlist, true)));
+  workspace.querySelectorAll("[data-remove-comparison-project]").forEach((button) => button.addEventListener("click", () => toggleComparisonSelection(button.dataset.removeComparisonProject, false)));
   workspace.querySelectorAll("[data-open-overview]").forEach((button) => button.addEventListener("click", () => setActiveView("manager")));
   workspace.querySelectorAll("[data-open-shortlist]").forEach((button) => button.addEventListener("click", () => setActiveView("shortlist")));
-  workspace.querySelector("[data-open-scenarios]").addEventListener("click", () => setActiveView("scenarios"));
   workspace.querySelectorAll("[data-open-project-scenario]").forEach((link) => link.addEventListener("click", (event) => {
     event.preventDefault();
     const name = link.dataset.openProjectScenario;
@@ -1575,17 +1623,17 @@ function renderScenarioWorkspace() {
   const scenario = state.scenarios[name] || { projectIds: [], budget: organisation.budget, staff: organisation.staff };
   const summary = scenarioSummary({ ...scenario, budget: organisation.budget, staff: organisation.staff });
   const selectedIds = new Set(summary.projects.map((proposal) => proposal.id));
-  const available = selectedProposals().filter((proposal) => !selectedIds.has(proposal.id));
+  const available = shortlistedProposals().filter((proposal) => !selectedIds.has(proposal.id));
   const costRemaining = summary.budget - summary.totalCost;
   const staffRemaining = summary.staff - summary.totalStaff;
   const displayName = scenarioDisplayName(name);
   const isProtectedScenario = name === 'A' || name === 'B';
   const tabs = scenarioNames.map((scenarioName) => '<button type="button" class="' + (scenarioName === name ? 'is-active' : '') + '" data-edit-scenario="' + escapeHTML(scenarioName) + '" aria-pressed="' + (scenarioName === name) + '">' + escapeHTML(scenarioDisplayName(scenarioName)) + '</button>').join("");
   const availableCards = available.map((proposal) => '<article class="scenario-project-card"><div><h4>' + escapeHTML(proposal.title) + '</h4><span class="objective-tag">' + escapeHTML(proposal.objective) + '</span><p>' + money(proposal.cost) + ' · ' + proposal.staff + ' FTE</p></div><button type="button" class="solid-button" data-add-to-scenario="' + escapeHTML(proposal.id) + '">Add</button></article>').join("") || '<div class="scenario-column-empty"><strong>No available shortlisted projects.</strong><p>Add evaluated projects on the Shortlist page, or all currently shortlisted projects are already in this scenario.</p><button type="button" class="text-button" data-scenario-open-shortlist>Open Shortlist</button></div>';
-  const currentCards = summary.projects.map((proposal) => '<article class="scenario-project-card"><div><h4>' + escapeHTML(proposal.title) + '</h4><span class="objective-tag">' + escapeHTML(proposal.objective) + '</span><p>' + money(proposal.cost) + ' · ' + proposal.staff + ' FTE</p></div><button type="button" class="text-button" data-remove-from-scenario="' + escapeHTML(proposal.id) + '">Remove</button></article>').join("") || '<div class="scenario-column-empty"><strong>' + escapeHTML(displayName) + ' is empty.</strong><p>Add a project from the current working shortlist.</p></div>';
+  const currentCards = summary.projects.map((proposal) => '<article class="scenario-project-card"><div><h4>' + escapeHTML(proposal.title) + '</h4><span class="objective-tag">' + escapeHTML(proposal.objective) + '</span><p>' + money(proposal.cost) + ' · ' + proposal.staff + ' FTE</p></div><button type="button" class="text-button" data-remove-from-scenario="' + escapeHTML(proposal.id) + '">Remove</button></article>').join("") || '<div class="scenario-column-empty"><strong>' + escapeHTML(displayName) + ' is empty.</strong><p>Add a project from the saved formal Shortlist.</p></div>';
   const constraintClass = summary.budgetOk && summary.staffOk ? 'is-feasible' : 'is-warning';
 
-  workspace.innerHTML = '<div class="scenario-builder-toolbar"><div class="scenario-editor-tabs" aria-label="Choose a scenario">' + tabs + '<button type="button" class="scenario-new-button" data-create-scenario>+ New Scenario</button></div><div class="scenario-toolbar-actions">' + (isProtectedScenario ? '' : '<button type="button" class="text-button" data-rename-active-scenario>Rename</button><button type="button" class="text-button scenario-delete-button" data-delete-active-scenario>Delete</button>') + '<button type="button" class="outline-button" data-save-active-scenario>Save ' + escapeHTML(displayName) + '</button><button type="button" class="solid-button" data-open-portfolio-review>Proceed to Portfolio Review</button></div></div><p class="scenario-data-note"><strong>Candidate source:</strong> the current comparison shortlist (maximum four evaluated projects). This prototype does not yet store a separate organisation-wide shortlist.</p><div class="scenario-builder-grid"><section class="scenario-builder-column"><header><p class="section-kicker">Available shortlisted projects</p><h4>' + available.length + ' available</h4></header><div class="scenario-project-list">' + availableCards + '</div></section><section class="scenario-builder-column"><header><p class="section-kicker">Currently editing</p><h4>' + escapeHTML(displayName) + '</h4><span>' + summary.projects.length + ' project' + (summary.projects.length === 1 ? '' : 's') + ' included</span></header><div class="scenario-project-list">' + currentCards + '</div></section><aside class="scenario-summary-panel ' + constraintClass + '"><header><p class="section-kicker">Scenario summary</p><h4>' + (summary.budgetOk && summary.staffOk ? 'Within limits' : 'Constraints exceeded') + '</h4></header><div class="scenario-summary-metric"><span>Budget usage</span><strong>' + money(summary.totalCost) + ' <small>of ' + money(summary.budget) + '</small></strong><div class="scenario-meter"><i style="width:' + Math.min(summary.budget ? summary.totalCost / summary.budget * 100 : summary.totalCost ? 100 : 0, 100) + '%"></i></div><p class="' + (summary.budgetOk ? 'check-ok' : 'check-warning') + '">' + (summary.budgetOk ? money(Math.max(0, costRemaining)) + ' remaining' : money(Math.abs(costRemaining)) + ' over budget') + '</p></div><div class="scenario-summary-metric"><span>Total staff capacity</span><strong>' + summary.totalStaff + ' FTE <small>of ' + summary.staff + ' FTE</small></strong><div class="scenario-meter"><i style="width:' + Math.min(summary.staff ? summary.totalStaff / summary.staff * 100 : summary.totalStaff ? 100 : 0, 100) + '%"></i></div><p class="' + (summary.staffOk ? 'check-ok' : 'check-warning') + '">' + (summary.staffOk ? Math.max(0, staffRemaining) + ' FTE remaining' : Math.abs(staffRemaining) + ' FTE over capacity') + '</p></div><div class="scenario-constraint-summary"><strong>' + (summary.budgetOk && summary.staffOk ? 'Feasible candidate' : 'Needs revision') + '</strong><p>' + (summary.budgetOk && summary.staffOk ? 'The current scenario is within the saved budget and total FTE limits.' : (!summary.budgetOk ? 'The investment budget is exceeded. ' : '') + (!summary.staffOk ? 'The total staff capacity is exceeded.' : '')) + '</p></div><small class="scenario-capacity-note">Projects currently provide total FTE only. No resource-type usage is inferred.</small></aside></div>';
+  workspace.innerHTML = '<div class="scenario-builder-toolbar"><div class="scenario-editor-tabs" aria-label="Choose a scenario">' + tabs + '<button type="button" class="scenario-new-button" data-create-scenario>+ New Scenario</button></div><div class="scenario-toolbar-actions">' + (isProtectedScenario ? '' : '<button type="button" class="text-button" data-rename-active-scenario>Rename</button><button type="button" class="text-button scenario-delete-button" data-delete-active-scenario>Delete</button>') + '<button type="button" class="outline-button" data-save-active-scenario>Save ' + escapeHTML(displayName) + '</button><button type="button" class="solid-button" data-open-portfolio-review>Proceed to Portfolio Review</button></div></div><p class="scenario-data-note"><strong>Candidate source:</strong> the saved formal Shortlist. Existing scenario projects remain available even if they are not currently shortlisted.</p><div class="scenario-builder-grid"><section class="scenario-builder-column"><header><p class="section-kicker">Available shortlisted projects</p><h4>' + available.length + ' available</h4></header><div class="scenario-project-list">' + availableCards + '</div></section><section class="scenario-builder-column"><header><p class="section-kicker">Currently editing</p><h4>' + escapeHTML(displayName) + '</h4><span>' + summary.projects.length + ' project' + (summary.projects.length === 1 ? '' : 's') + ' included</span></header><div class="scenario-project-list">' + currentCards + '</div></section><aside class="scenario-summary-panel ' + constraintClass + '"><header><p class="section-kicker">Scenario summary</p><h4>' + (summary.budgetOk && summary.staffOk ? 'Within limits' : 'Constraints exceeded') + '</h4></header><div class="scenario-summary-metric"><span>Budget usage</span><strong>' + money(summary.totalCost) + ' <small>of ' + money(summary.budget) + '</small></strong><div class="scenario-meter"><i style="width:' + Math.min(summary.budget ? summary.totalCost / summary.budget * 100 : summary.totalCost ? 100 : 0, 100) + '%"></i></div><p class="' + (summary.budgetOk ? 'check-ok' : 'check-warning') + '">' + (summary.budgetOk ? money(Math.max(0, costRemaining)) + ' remaining' : money(Math.abs(costRemaining)) + ' over budget') + '</p></div><div class="scenario-summary-metric"><span>Total staff capacity</span><strong>' + summary.totalStaff + ' FTE <small>of ' + summary.staff + ' FTE</small></strong><div class="scenario-meter"><i style="width:' + Math.min(summary.staff ? summary.totalStaff / summary.staff * 100 : summary.totalStaff ? 100 : 0, 100) + '%"></i></div><p class="' + (summary.staffOk ? 'check-ok' : 'check-warning') + '">' + (summary.staffOk ? Math.max(0, staffRemaining) + ' FTE remaining' : Math.abs(staffRemaining) + ' FTE over capacity') + '</p></div><div class="scenario-constraint-summary"><strong>' + (summary.budgetOk && summary.staffOk ? 'Feasible candidate' : 'Needs revision') + '</strong><p>' + (summary.budgetOk && summary.staffOk ? 'The current scenario is within the saved budget and total FTE limits.' : (!summary.budgetOk ? 'The investment budget is exceeded. ' : '') + (!summary.staffOk ? 'The total staff capacity is exceeded.' : '')) + '</p></div><small class="scenario-capacity-note">Projects currently provide total FTE only. No resource-type usage is inferred.</small></aside></div>';
 
   workspace.querySelectorAll('[data-edit-scenario]').forEach((button) => button.addEventListener('click', () => { state.activeScenarioName = button.dataset.editScenario; renderScenarioWorkspace(); }));
   workspace.querySelector('[data-create-scenario]')?.addEventListener('click', createScenario);
@@ -1664,7 +1712,7 @@ function updateActiveScenarioProject(projectId, shouldAdd) {
   const ids = new Set(Array.isArray(current.projectIds) ? current.projectIds : []);
   const proposal = proposals.find((item) => item.id === projectId);
   if (shouldAdd) {
-    if (!proposal || !state.compared.has(projectId) || !isEvaluated(proposal)) return;
+    if (!proposal || !state.shortlisted.has(projectId) || !isEvaluated(proposal)) return;
     ids.add(projectId);
   } else {
     ids.delete(projectId);
@@ -1874,13 +1922,15 @@ function deleteProposal(id) {
   proposals.splice(index, 1);
   ppmRemovedProposalIds.add(id);
   state.compared.delete(id);
-  if (state.selectedId === id) state.selectedId = proposals[0] ? proposals[0].id : null;
+  state.shortlisted.delete(id);
+  if (state.selectedId === id) state.selectedId = null;
   Object.entries(state.scenarios || {}).forEach(([name, scenario]) => {
     const ids = Array.isArray(scenario && scenario.projectIds) ? scenario.projectIds : [];
     state.scenarios[name] = { ...scenario, projectIds: ids.filter((projectId) => projectId !== id) };
   });
   delete state.decisions[id];
   persistCustomProposals();
+  persistFormalShortlist();
   saveRemovedProposals();
   storage.set(STORAGE.scenarios, JSON.stringify(state.scenarios));
   storage.set(STORAGE.decisions, JSON.stringify(state.decisions));
@@ -1931,12 +1981,14 @@ function applyPersistedProposalRemovals() {
     if (ppmRemovedProposalIds.has(proposals[index].id)) proposals.splice(index, 1);
   }
   state.compared = new Set([...state.compared].filter((id) => proposals.some((proposal) => proposal.id === id)));
+  state.shortlisted = new Set([...state.shortlisted].filter((id) => proposals.some((proposal) => proposal.id === id)));
   Object.entries(state.scenarios || {}).forEach(([name, scenario]) => {
     const ids = Array.isArray(scenario && scenario.projectIds) ? scenario.projectIds : [];
     state.scenarios[name] = { ...scenario, projectIds: ids.filter((id) => proposals.some((proposal) => proposal.id === id)) };
   });
-  if (!proposals.some((proposal) => proposal.id === state.selectedId)) state.selectedId = proposals[0] ? proposals[0].id : null;
+  if (!proposals.some((proposal) => proposal.id === state.selectedId)) state.selectedId = null;
   persistCustomProposals();
+  persistFormalShortlist();
   storage.set(STORAGE.scenarios, JSON.stringify(state.scenarios));
 }
 
