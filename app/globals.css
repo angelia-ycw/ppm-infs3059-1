@@ -442,7 +442,10 @@ body.js-ready .reveal-group.is-visible .reveal { transition-delay: 0ms; }
 .saved-scenarios small { grid-row: 2; color: var(--muted); font-size: 8px; }
 .saved-scenarios strong { grid-row: span 2; align-self: center; color: var(--success); font-size: 8px; }
 
-.project-insight { min-height: 560px; background: white; padding: clamp(24px, 3vw, 42px); }
+.manager-view.is-detail-open > :not(.project-insight) { display: none; }
+.project-insight { background: white; padding: clamp(24px, 3vw, 42px); }
+.project-detail-back { min-height: 42px; margin-bottom: 28px; border: 1px solid var(--ink); background: white; padding: 0 15px; color: var(--ink); cursor: pointer; font-size: 11px; font-weight: 850; }
+.project-detail-back:hover, .project-detail-back:focus-visible { background: var(--yellow); }
 .insight-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
 .insight-header .section-kicker { margin-bottom: 8px; }
 .insight-header h3 { margin: 0; font-size: clamp(30px, 3.2vw, 48px); letter-spacing: -.06em; line-height: .95; }
@@ -989,7 +992,11 @@ body.js-ready .reveal-group.is-visible .reveal { transition-delay: 0ms; }
 .comparison-selected-strip p { margin: 0; color: var(--muted); font-size: 9px; font-weight: 700; line-height: 1.45; }
 .comparison-scenario-link { color: var(--ink); font-weight: 850; text-decoration: underline; text-underline-offset: 3px; }
 .comparison-scenario-unassigned { color: var(--muted); font-weight: 750; }
-.comparison-selected-strip button { position: absolute; right: 11px; bottom: 10px; border: 0; background: transparent; color: var(--muted); cursor: pointer; font: inherit; font-size: 8px; font-weight: 850; text-decoration: underline; text-underline-offset: 3px; }
+.comparison-card-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.comparison-selected-strip .comparison-card-actions button { position: static; min-height: 34px; border: 1px solid var(--ink); background: white; color: var(--ink); padding: 6px 9px; cursor: pointer; font: inherit; font-size: 8px; font-weight: 850; text-decoration: none; }
+.comparison-selected-strip .comparison-card-actions button:hover { background: var(--yellow); }
+.comparison-selected-strip .comparison-card-actions .comparison-shortlist-action { background: var(--ink); color: white; }
+.comparison-selected-strip .comparison-card-actions .comparison-shortlist-action.is-added { border-color: #397047; background: #e3f1e5; color: #24542f; cursor: default; }
 .comparison-stage { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(270px, .65fr); gap: 9px; }
 .comparison-radar-panel, .comparison-tradeoffs, .comparison-score-table { border: 1px solid var(--ink); background: white; }
 .comparison-radar-panel { padding: 22px; }

@@ -15,7 +15,7 @@
     <meta name="twitter:image" content="public/og.png" />
     <title>PPM — Project Portfolio Management</title>
     <link rel="icon" href="public/favicon.svg" />
-    <link rel="stylesheet" href="app/globals.css?v=20260928account-v1" />
+    <link rel="stylesheet" href="app/globals.css?v=20260929project-detail-v1" />
   </head>
   <body>
     <main id="app">
@@ -33,11 +33,12 @@
                 <button type="button" data-workspace-view-button="reviewer"><span>03</span>Project Evaluation</button>
                 <button type="button" data-workspace-view-button="manager"><span>04</span>Project Overview</button>
                 <p class="workspace-nav-group-label">Project Analysis</p>
-                <button type="button" data-workspace-view-button="shortlist"><span>05</span>Shortlist</button>
+                <button type="button" data-workspace-view-button="comparison"><span>05</span>Comparison</button>
+                <button type="button" data-workspace-view-button="shortlist"><span>06</span>Shortlist</button>
                 <p class="workspace-nav-group-label">Portfolio Selection</p>
-                <button type="button" data-workspace-view-button="scenarios"><span>06</span>Build Candidate Portfolio</button>
-                <button type="button" data-workspace-view-button="reports"><span>07</span>Portfolio Review</button>
-                <button type="button" data-workspace-view-button="decisions"><span>08</span>Decisions</button>
+                <button type="button" data-workspace-view-button="scenarios"><span>07</span>Build Candidate Portfolio</button>
+                <button type="button" data-workspace-view-button="reports"><span>08</span>Portfolio Review</button>
+                <button type="button" data-workspace-view-button="decisions"><span>09</span>Decisions</button>
               </nav>
               <div class="workspace-sidebar-bottom">
                 <div class="sidebar-account-summary" id="sidebar-account-summary" aria-live="polite"></div>
@@ -169,10 +170,11 @@
             <div class="view-heading view-heading--split overview-view-heading"><div><p class="section-kicker">Project Overview</p><h3 id="portfolio-manager-title">Review the current proposal pipeline.</h3></div><div class="overview-view-actions"><button type="button" class="solid-button" data-open-comparison>Open Comparison</button><button type="button" class="outline-button" data-open-insights>View Criterion Insights</button></div></div>
             <div class="workflow-strip" aria-label="Portfolio review workflow">
               <span class="is-current"><b>1</b> Overview</span>
-              <span><b>2</b> Shortlist</span>
-              <span><b>3</b> Compare</span>
-              <span><b>4</b> Review scenarios</span>
-              <span><b>5</b> Decide</span>
+              <span><b>2</b> Comparison</span>
+              <span><b>3</b> Shortlist</span>
+              <span><b>4</b> Build portfolio</span>
+              <span><b>5</b> Portfolio review</span>
+              <span><b>6</b> Decide</span>
             </div>
 
             <div class="portfolio-summary" aria-label="Portfolio summary">
@@ -215,7 +217,7 @@
                   <div class="readiness-bar" aria-hidden="true"><i id="readiness-evaluated-bar"></i><i id="readiness-review-bar"></i><i id="readiness-submitted-bar"></i></div>
                   <dl><div><dt><i class="readiness-dot is-evaluated"></i>Evaluated</dt><dd id="readiness-evaluated">0</dd></div><div><dt><i class="readiness-dot is-review"></i>Under review</dt><dd id="readiness-review">0</dd></div><div><dt><i class="readiness-dot is-submitted"></i>Submitted</dt><dd id="readiness-submitted">0</dd></div></dl>
                 </section>
-                <div class="scenario-heading"><p class="section-kicker">Comparison shortlist</p><h3 id="scenario-title">Current selection</h3></div>
+                <div class="scenario-heading"><p class="section-kicker">Comparison selection</p><h3 id="scenario-title">Current comparison</h3></div>
                 <div class="scenario-context"><span id="scenario-organisation">Organisation setup</span><button type="button" class="text-button" data-open-organisation>Change limits</button></div>
                 <div class="scenario-selection" id="scenario-selection"><p>Select two to four evaluated projects from the table.</p></div>
                 <div class="scenario-totals">
@@ -225,25 +227,23 @@
                 <div class="constraint-result" id="constraint-result">Select projects to check constraints.</div>
                 <div class="scenario-actions">
                   <button type="button" class="solid-button" id="open-compare" disabled>Compare selected</button>
-                  <button type="button" class="outline-button" data-open-scenarios>View Scenario A and B</button>
+                  <button type="button" class="outline-button" data-open-shortlist>View formal Shortlist</button>
                   <button type="button" class="text-button" id="clear-compare">Clear selection</button>
                 </div>
                 <div class="saved-scenarios" id="saved-scenarios"></div>
               </aside>
             </div>
 
-            <section class="project-insight" id="proposal-detail" aria-live="polite">
-              <div class="detail-empty">Select a project card to view its profile and reviewer rationale.</div>
-            </section>
+            <section class="project-insight" id="proposal-detail" aria-live="polite" hidden></section>
           </section>
 
           <section class="workspace-view shortlist-view" data-workspace-view="shortlist" hidden aria-labelledby="shortlist-view-title">
-            <div class="view-heading view-heading--split"><div><p class="section-kicker">Shortlist</p><h3 id="shortlist-view-title">Choose projects for comparison.</h3></div><p>Use the existing evaluated-project selection. This working shortlist does not calculate a total score or rank projects.</p></div>
+            <div class="view-heading view-heading--split"><div><p class="section-kicker">Formal candidate list</p><h3 id="shortlist-view-title">Shortlist projects after comparison.</h3></div><p>This saved list contains only projects manually retained after comparison. It has no four-project limit and does not calculate a total score or rank projects.</p></div>
             <div class="shortlist-workspace" id="shortlist-workspace" aria-live="polite"></div>
           </section>
 
           <section class="workspace-view comparison-view" data-workspace-view="comparison" hidden aria-labelledby="comparison-view-title">
-            <div class="view-heading view-heading--split"><div><p class="section-kicker">Detailed comparison</p><h3 id="comparison-view-title">See the profile behind each shortlist.</h3></div><p>Select two to four evaluated projects. The radar chart is a visual comparison only; it does not choose a winner.</p></div>
+            <div class="view-heading view-heading--split"><div><p class="section-kicker">Detailed comparison</p><h3 id="comparison-view-title">Compare the current project selection.</h3></div><p>Select two to four evaluated projects in Project Overview. After reviewing the radar chart, manually add suitable projects to the formal Shortlist.</p></div>
             <div class="comparison-workspace" id="comparison-workspace" aria-live="polite"></div>
           </section>
 
@@ -253,7 +253,7 @@
           </section>
 
           <section class="workspace-view scenarios-view" data-workspace-view="scenarios" hidden aria-labelledby="scenarios-view-title">
-            <div class="view-heading view-heading--split"><div><p class="section-kicker">Portfolio selection</p><h3 id="scenarios-view-title">Build Candidate Portfolio</h3></div><p>Create and review candidate portfolios using the projects in the current working shortlist.</p></div>
+            <div class="view-heading view-heading--split"><div><p class="section-kicker">Portfolio selection</p><h3 id="scenarios-view-title">Build Candidate Portfolio</h3></div><p>Create and review candidate portfolios using projects from the saved formal Shortlist.</p></div>
             <div class="scenario-workspace" id="scenario-workspace" aria-live="polite"></div>
           </section>
 
@@ -299,7 +299,7 @@
       </div>
     </dialog>
 
-    <script src="app.js?v=20260928account-v1"></script>
+    <script src="app.js?v=20260929project-detail-v1"></script>
     <script src="public/test-feedback.js"></script>
   </body>
 </html>
