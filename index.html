@@ -15,12 +15,99 @@
     <meta name="twitter:image" content="public/og.png" />
     <title>PPM — Project Portfolio Management</title>
     <link rel="icon" href="public/favicon.svg" />
-    <link rel="stylesheet" href="app/globals.css?v=20260929project-detail-v1" />
+    <link rel="stylesheet" href="app/globals.css?v=20260930-intro-v1" />
   </head>
   <body>
     <main id="app">
-      <section class="workspace-section" id="workspace" aria-labelledby="workspace-title">
-        <h1 class="sr-only" id="workspace-title">Project Portfolio Management workspace</h1>
+      <div class="intro-site" id="top">
+        <header class="site-header intro-header">
+          <a class="wordmark" href="#top" aria-label="PPM introduction">
+            <span class="wordmark-dot" aria-hidden="true"></span>
+            <span>PPM</span>
+          </a>
+          <nav aria-label="Introduction navigation">
+            <a href="#top">Overview</a>
+            <a href="#approach">How it works</a>
+          </nav>
+          <a class="header-cta" href="#workspace" data-enter-workspace>Try the prototype <span aria-hidden="true">↘</span></a>
+        </header>
+
+        <section class="hero" aria-labelledby="hero-title">
+          <div class="hero-meta" aria-label="Project information">
+            <span>INFS3059</span>
+            <span>IT PROJECT PORTFOLIO</span>
+          </div>
+
+          <div class="hero-stage">
+            <h1 class="hero-title reveal reveal--hero" id="hero-title">
+              <span>PROJECT</span>
+              <span>PORTFOLIO</span>
+              <span>MANAGEMENT</span>
+            </h1>
+
+            <div class="folder-scene reveal reveal--folder" aria-hidden="true">
+              <img class="folder-visual" src="public/folder-reference-yellow-small.png" alt="" width="900" height="477" decoding="async" />
+            </div>
+          </div>
+
+          <div class="hero-bottom reveal reveal--copy">
+            <p>
+              Bring proposals, reviewer evidence, project comparisons, and portfolio constraints
+              into one human-led decision process.
+            </p>
+            <div class="hero-actions">
+              <a class="hero-try-button" href="#workspace" data-enter-workspace>Try the prototype <span aria-hidden="true">↘</span></a>
+              <a class="circle-link" href="#approach" aria-label="Explore how the prototype works">↓</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="story-section" id="approach" aria-labelledby="approach-title">
+          <div class="story-intro reveal">
+            <p class="section-kicker">How it works</p>
+            <h2 id="approach-title">One clear flow from proposal to portfolio.</h2>
+            <p class="story-copy">
+              Set the investment context, evaluate each proposal using the same five criteria,
+              then compare candidate portfolios before a person records the final decision.
+            </p>
+          </div>
+
+          <div class="principle-grid reveal-group">
+            <article class="principle-card principle-card--wide">
+              <span class="card-index">01</span>
+              <div class="orbit-mark" aria-hidden="true"><i></i><i></i><i></i></div>
+              <div class="reveal">
+                <p>Investment context</p>
+                <h3>Start with objectives, budget, and staff capacity.</h3>
+              </div>
+            </article>
+            <article class="principle-card principle-card--acid">
+              <span class="card-index">02</span>
+              <div class="reveal">
+                <p>Structured evaluation</p>
+                <h3>Review every proposal against five shared criteria.</h3>
+                <small>Keep the rating and reviewer rationale together so the evidence stays visible.</small>
+              </div>
+            </article>
+            <article class="principle-card principle-card--dark">
+              <span class="card-index">03</span>
+              <div class="reveal">
+                <p>Portfolio decision</p>
+                <h3>Compare trade-offs, check constraints, then decide.</h3>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="intro-cta reveal" aria-labelledby="intro-cta-title">
+          <p class="section-kicker">Interactive prototype</p>
+          <h2 id="intro-cta-title">Explore the complete portfolio workflow.</h2>
+          <a class="intro-cta-button" href="#workspace" data-enter-workspace>Try the prototype <span aria-hidden="true">↘</span></a>
+        </section>
+      </div>
+
+      <section class="workspace-section" id="workspace" tabindex="-1" aria-labelledby="workspace-title">
+        <h2 class="sr-only" id="workspace-title">Project Portfolio Management workspace</h2>
         <div class="review-app">
           <div class="workspace-shell">
             <aside class="workspace-sidebar" aria-label="Portfolio workspace navigation">
@@ -299,7 +386,7 @@
       </div>
     </dialog>
 
-    <script src="app.js?v=20260929project-detail-v1"></script>
+    <script src="app.js?v=20260930-intro-v1"></script>
     <script src="public/test-feedback.js"></script>
   </body>
 </html>
