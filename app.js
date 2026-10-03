@@ -1465,6 +1465,14 @@ function renderAll() {
 }
 
 function bindEvents() {
+  $$('[data-enter-workspace]').forEach((link) => link.addEventListener("click", (event) => {
+    event.preventDefault();
+    setActiveView("account");
+    if (window.location.hash !== "#workspace") window.history.pushState(null, "", "#workspace");
+    const workspace = $("#workspace");
+    workspace.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    workspace.focus({ preventScroll: true });
+  }));
   $("#account-form").addEventListener("submit", saveAccount);
   $("#new-account").addEventListener("click", prepareNewAccount);
   $("#organisation-form").addEventListener("submit", saveOrganisation);
