@@ -64,9 +64,10 @@ const REVIEW_SCORING_GUIDES = {
   }
 };
 
-const TEST_MODE = window.PPMGuestDemo !== true && new URLSearchParams(window.location.search).has("mvpTest");
-const GUEST_DEMO = window.PPMGuestDemo === true;
+const TEST_MODE = new URLSearchParams(window.location.search).has("mvpTest");
+const GUEST_DEMO = !TEST_MODE && window.PPMGuestDemo === true;
 const TEST_PREFIX = "ppm-mvp-test-v1:";
+window.PPMTestMode = TEST_MODE;
 
 const DEFAULT_ORGANISATION = {
   name: "Demo IT Portfolio 2026",
@@ -178,8 +179,18 @@ const DEFAULT_SCENARIOS = {
 
 const TEST_ORGANISATION = {
   name: "MVP test portfolio",
+  startDate: "2026-10-01",
+  endDate: "2027-01-13",
+  businessUnit: "Test IT team",
+  planningHorizon: "Test planning cycle",
   objectives: ["Improve Customer Experience", "Improve Operational Efficiency", "Improve Service Reliability", "Reduce Security Risk"],
   budget: 1.5,
+  resources: [
+    { name: "Developers", fte: 2 },
+    { name: "Data Analysts", fte: 1 },
+    { name: "Cybersecurity Specialists", fte: 1 },
+    { name: "Project Managers", fte: 0 }
+  ],
   staff: 4
 };
 
@@ -239,6 +250,11 @@ const TEST_PROPOSALS = [
   }
 ];
 
+const TEST_SCENARIOS = {
+  A: { id: "test-scenario-a", projectIds: ["test-service-hub", "test-accessibility-update"], budget: TEST_ORGANISATION.budget, staff: TEST_ORGANISATION.staff },
+  B: { id: "test-scenario-b", projectIds: ["test-service-hub", "test-accessibility-update", "test-security-pilot"], budget: TEST_ORGANISATION.budget, staff: TEST_ORGANISATION.staff }
+};
+
 const STORAGE = {
   accounts: "ppm-v2-prototype-accounts",
   activeAccount: "ppm-v2-active-account",
@@ -268,6 +284,16 @@ const storage = {
     }
   }
 };
+
+// Test identities and data live only under the test prefix in this tab.
+// Do not copy the signed-in user, demo selection, or saved workspace into here.
+if (TEST_MODE) {
+  let role = storage.get("mvp-test-role");
+  if (!["Project Proposer", "Reviewer", "Portfolio Manager"].includes(role)) role = "Portfolio Manager";
+  storage.set("mvp-test-role", role);
+  storage.set(STORAGE.accounts, JSON.stringify([{ id: "mvp-test-user", displayName: "Test user", role }]));
+  storage.set(STORAGE.activeAccount, JSON.stringify("mvp-test-user"));
+}
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
@@ -403,8 +429,8 @@ const state = {
   sort: "title",
   selectedId: null,
   compared: new Set(),
-  shortlisted: new Set((Array.isArray(storedShortlistIds) ? storedShortlistIds : []).map(String).filter((id) => proposals.some((proposal) => proposal.id === id))),
-  scenarios: readStoredJSON(STORAGE.scenarios, structuredClone(DEFAULT_SCENARIOS)),
+  shortlisted: new Set((GUEST_DEMO ? proposals.filter(isEvaluated).map((proposal) => proposal.id) : Array.isArray(storedShortlistIds) ? storedShortlistIds : []).map(String).filter((id) => proposals.some((proposal) => proposal.id === id))),
+  scenarios: readStoredJSON(STORAGE.scenarios, structuredClone(TEST_MODE ? TEST_SCENARIOS : DEFAULT_SCENARIOS)),
   activeScenarioName: "A",
   portfolioReviewScenarioName: null,
   decisionScenarioId: null,
@@ -532,7 +558,7 @@ function renderEvaluationComments(proposal) {
 }
 
 function lockCompletedReview(proposal) {
-  const locked = isEvaluated(proposal) && !TEST_MODE;
+  const locked = isEvaluated(proposal);
   $("#review-score-form")?.querySelectorAll("[data-review-score], [data-review-rationale]").forEach((control) => { control.disabled = locked; });
   $("#review-notes").disabled = locked;
   $("#save-note").disabled = locked;
@@ -544,6 +570,7 @@ function lockCompletedReview(proposal) {
 }
 
 function saveEvaluationComment() {
+  if (GUEST_DEMO) return;
   const proposal = proposals.find((item) => item.id === reviewDialog.dataset.proposalId);
   const input = $("#evaluation-comment-input");
   const message = $("#evaluation-comment-message");
@@ -822,6 +849,7 @@ function shortlistedProposals() {
 }
 
 function toggleFormalShortlist(id, shouldAdd) {
+  if (GUEST_DEMO) return;
   const proposal = proposals.find((item) => item.id === id);
   if (!proposal || !isEvaluated(proposal)) {
     window.alert("Complete the five-criterion review before adding this proposal to the Shortlist.");
@@ -843,6 +871,7 @@ function bindCustomProposalDeleteButtons(scope) {
 }
 
 function deleteCustomProposal(id) {
+  if (GUEST_DEMO) return;
   const proposalIndex = proposals.findIndex((proposal) => proposal.id === id);
   const proposal = proposals[proposalIndex];
   if (!proposal?.isCustom) return;
@@ -912,13 +941,8 @@ function renderScenario() {
 function renderSavedScenarios() {
   const entries = Object.entries(state.scenarios || {});
   $("#saved-scenarios").innerHTML = entries.length ? `<h4>Defined scenarios</h4>${entries.map(([name, scenario]) => {
-    const ids = Array.isArray(scenario.projectIds) ? scenario.projectIds : [];
-    const projects = proposals.filter((proposal) => ids.includes(proposal.id) && isEvaluated(proposal));
-    const cost = projects.reduce((sum, proposal) => sum + proposal.cost, 0);
-    const staff = projects.reduce((sum, proposal) => sum + proposal.staff, 0);
-    const budget = Math.max(0, numberOr(scenario.budget, organisation.budget));
-    const capacity = Math.max(0, numberOr(scenario.staff, organisation.staff));
-    const feasible = cost <= budget && staff <= capacity;
+    const { projects, totalCost: cost, totalStaff: staff, budgetOk, staffOk } = scenarioSummary(scenario);
+    const feasible = budgetOk && staffOk;
     return `<button type="button" data-load-scenario="${escapeHTML(name)}"><span>Scenario ${escapeHTML(name)}</span><small>${projects.length} projects · ${money(cost)} · ${staff} FTE</small><strong>${feasible ? "Feasible" : "Needs revision"}</strong></button>`;
   }).join("")}` : "";
   $$('[data-load-scenario]').forEach((button) => button.addEventListener("click", () => {
@@ -1013,6 +1037,7 @@ function closeProjectDetail() {
 }
 
 function recordDecision(id, decision) {
+  if (GUEST_DEMO) return;
   const proposal = proposals.find((item) => item.id === id);
   if (!proposal || !isEvaluated(proposal)) {
     window.alert("Complete the reviewer evaluation before recording a final decision.");
@@ -1026,12 +1051,13 @@ function recordDecision(id, decision) {
   state.decisions[id] = { decision, date: new Date().toLocaleDateString("en-AU"), scenario: scenarioName };
   storage.set(STORAGE.decisions, JSON.stringify(state.decisions));
   renderAll();
+  showAssistedCompletion();
 }
 
 function openReview(id) {
   const proposal = proposals.find((item) => item.id === id);
   if (!proposal) return;
-  const reviewIsLocked = isEvaluated(proposal) && !TEST_MODE;
+  const reviewIsLocked = isEvaluated(proposal);
   reviewDialog.dataset.proposalId = id;
   $("#review-dialog-title").textContent = proposal.title;
   $("#review-score-form").innerHTML = CRITERIA.map((criterion, criterionIndex) => {
@@ -1065,13 +1091,15 @@ function openReview(id) {
   $("#evaluation-comment-message").textContent = "";
   renderEvaluationComments(proposal);
   reviewDialog.showModal();
+  renderReviewGuidance();
 }
 
 function saveReview() {
+  if (GUEST_DEMO) return;
   const id = reviewDialog.dataset.proposalId;
   const proposal = proposals.find((item) => item.id === id);
   if (!proposal) return;
-  if (isEvaluated(proposal) && !TEST_MODE) {
+  if (isEvaluated(proposal)) {
     $("#save-message").textContent = "This review is already recorded. Add a comment instead.";
     return;
   }
@@ -1101,6 +1129,8 @@ function saveReview() {
   lockCompletedReview(proposal);
   renderEvaluationComments(proposal);
   renderAll();
+  renderReviewGuidance();
+  showAssistedCompletion();
 }
 
 function renderReviewQueue() {
@@ -1123,17 +1153,26 @@ const QUICK_CHECKS = [
   {
     id: "test-data",
     title: "Test portfolio is ready",
-    detail: "Checks the four sample projects used by this walkthrough.",
+    detail: "Four test projects are available, including one awaiting evaluation.",
     run: () => ["test-service-hub", "test-accessibility-update", "test-security-pilot", "test-awaiting-review"].every((id) => proposals.some((proposal) => proposal.id === id))
   },
   {
     id: "five-criteria",
     title: "Five-criterion profiles load",
-    detail: "Checks three evaluated test projects have a rating and reason for every criterion.",
+    detail: "Completed evaluations contain five separate ratings and five reasons.",
     run: () => {
       const evaluated = proposals.filter(isEvaluated);
       return evaluated.length >= 3 && evaluated.every((proposal) => CRITERIA.every((criterion) => isScore(proposal.scores[criterion.key]) && hasRationale(proposal.rationales[criterion.key])));
     }
+  },
+  {
+    id: "review-validation",
+    title: "Review rules and risk direction agree",
+    detail: "Ratings must be 1–5, reasons cannot be blank, and a higher risk rating means lower risk.",
+    run: () => !isScore(0) && !isScore(6) && isScore(1) && isScore(5)
+      && !hasRationale("  ") && hasRationale("Evidence provided")
+      && REVIEW_SCORING_GUIDES.risk.labels[0] === "Very High Risk"
+      && REVIEW_SCORING_GUIDES.risk.labels[4] === "Very Low Risk"
   },
   {
     id: "search-filter",
@@ -1151,27 +1190,92 @@ const QUICK_CHECKS = [
     }
   },
   {
+    id: "filter-fields",
+    title: "Portfolio filters narrow the list",
+    detail: "Objective, feasibility, risk, cost, and status filters use the project evidence.",
+    run: () => {
+      const previous = { query: state.query, objective: state.objective, feasibility: state.feasibility, risk: state.risk, cost: state.cost, status: state.status, sort: state.sort };
+      try {
+        const defaults = { query: "", objective: "all", feasibility: 0, risk: 0, cost: "all", status: "all" };
+        const filters = [
+          { values: { objective: "Reduce Security Risk" }, match: (proposal) => proposal.objective === "Reduce Security Risk" },
+          { values: { feasibility: 5 }, match: (proposal) => Number(proposal.scores.feasibility) >= 5 },
+          { values: { risk: 5 }, match: (proposal) => Number(proposal.scores.risk) >= 5 },
+          { values: { cost: "0.6" }, match: (proposal) => proposal.cost <= 0.6 },
+          { values: { status: "Evaluated" }, match: (proposal) => currentStatus(proposal) === "Evaluated" }
+        ];
+        return filters.every((filter) => {
+          Object.assign(state, defaults, filter.values);
+          const found = visibleProposals();
+          return found.length > 0 && found.every(filter.match);
+        });
+      } finally { Object.assign(state, previous); }
+    }
+  },
+  {
+    id: "single-radar",
+    title: "One project has a radar profile",
+    detail: "A single evaluated project produces a chart with all five criterion labels.",
+    run: () => {
+      const proposal = proposals.find((item) => item.id === "test-service-hub");
+      const chart = proposal && radarSVG([proposal]);
+      return Boolean(chart && chart.includes("<svg") && CRITERIA.every((criterion) => chart.includes(criterion.short)));
+    }
+  },
+  {
     id: "scenario-math",
     title: "Scenario totals and limits work",
     detail: "Checks the two-project set fits and the three-project set raises both warnings.",
     run: () => {
       const twoProjects = proposals.filter((proposal) => ["test-service-hub", "test-accessibility-update"].includes(proposal.id));
       const threeProjects = proposals.filter((proposal) => ["test-service-hub", "test-accessibility-update", "test-security-pilot"].includes(proposal.id));
-      const withinLimits = calculateScenario(twoProjects);
-      const overLimits = calculateScenario(threeProjects);
+      const withinLimits = calculateScenario(twoProjects, TEST_ORGANISATION.budget, TEST_ORGANISATION.staff);
+      const overLimits = calculateScenario(threeProjects, TEST_ORGANISATION.budget, TEST_ORGANISATION.staff);
       return Math.abs(withinLimits.totalCost - 1.3) < 0.0001 && withinLimits.totalStaff === 3 && withinLimits.budgetOk && withinLimits.staffOk
         && Math.abs(overLimits.totalCost - 2.2) < 0.0001 && overLimits.totalStaff === 7 && !overLimits.budgetOk && !overLimits.staffOk;
     }
   },
   {
+    id: "limit-boundary",
+    title: "Exact capacity is allowed",
+    detail: "A candidate exactly on its budget and FTE limits is not flagged as a shortage.",
+    run: () => {
+      const exact = calculateScenario([{ cost: 1.5, staff: 4 }], 1.5, 4);
+      const above = calculateScenario([{ cost: 1.6, staff: 5 }], 1.5, 4);
+      return exact.budgetOk && exact.staffOk && !above.budgetOk && !above.staffOk;
+    }
+  },
+  {
+    id: "role-navigation",
+    title: "Role navigation stays separate",
+    detail: "Only this test role’s screens and the test checklist are available.",
+    run: () => {
+      const allowed = WORKSPACE_VIEWS_BY_ROLE[workspaceRole()] || [];
+      return ACCOUNT_ROLES.includes(workspaceRole()) && accountCanView("tests")
+        && ["organisation", "proposer", "reviewer", "manager", "comparison", "scenarios", "reports", "decisions"]
+          .every((view) => accountCanView(view) === allowed.includes(view));
+    }
+  },
+  {
+    id: "scenario-identities",
+    title: "Scenario records stay distinct",
+    detail: "Saved candidate portfolios use unique IDs for their decision history.",
+    run: () => {
+      const ids = Object.values(state.scenarios).map((scenario) => scenario.id);
+      return ids.length > 0 && ids.every(Boolean) && new Set(ids).size === ids.length;
+    }
+  },
+  {
     id: "safe-session",
     title: "Test saving is isolated",
-    detail: "Checks this walkthrough can save in the tab without using your normal workspace data.",
+    detail: "Test changes use prefixed session storage, not your account, demo, or synced workspace.",
     run: () => {
       const key = "mvp-test-probe";
       try {
         storage.set(key, "ready");
-        return storage.get(key) === "ready";
+        return TEST_MODE && !GUEST_DEMO && activeStorage === window.sessionStorage
+          && scopedStorageKey(key).startsWith(TEST_PREFIX) && storage.get(key) === "ready"
+          && window.sessionStorage.getItem(scopedStorageKey(key)) === "ready";
       } finally {
         storage.remove(key);
       }
@@ -1180,14 +1284,22 @@ const QUICK_CHECKS = [
   {
     id: "screen-controls",
     title: "Main controls are available",
-    detail: "Checks proposal entry, reviewer evaluation, comparison, and scenario controls are on the page.",
-    run: () => Boolean($("#proposal-form") && $("#review-score-form") && $("#open-compare") && $("#proposal-list") && $("#scenario-selection"))
+    detail: "Proposal entry, evaluation, comparison, portfolio builder, review, and decisions are connected.",
+    run: () => Boolean($("#proposal-form") && $("#review-score-form") && $("#open-compare") && $("#proposal-list")
+      && $("#scenario-workspace") && $("#report-workspace") && $("#decision-workspace"))
   }
 ];
 
 const TEST_STEPS = [
   {
-    id: "portfolio",
+    id: "context", role: "Portfolio Manager",
+    title: "Set the investment context",
+    copy: "Check the objectives, planning dates, budget, and available resource capacity. Save the context.",
+    expected: "The starting test limits are $1.5M and 4 FTE. All later screens use the saved context.",
+    action: "context", actionLabel: "Open Investment Context"
+  },
+  {
+    id: "portfolio", role: "Portfolio Manager",
     title: "Check the portfolio overview",
     copy: "Open the portfolio and use the search box to find a project.",
     expected: "Four test projects are shown. Searching for Security Pilot leaves one result.",
@@ -1195,23 +1307,30 @@ const TEST_STEPS = [
     actionLabel: "Open portfolio"
   },
   {
-    id: "proposal",
+    id: "proposal", role: "Project Proposer",
     title: "Submit a test proposal",
     copy: "Enter a small IT project through the normal proposal form and submit it.",
-    expected: "The proposal moves to the Reviewer queue as Submitted.",
+    expected: "The new proposal is submitted. Switch to Reviewer to find it in the queue; it is saved only in this test tab.",
     action: "proposal",
     actionLabel: "Open proposal form"
   },
   {
-    id: "review",
+    id: "review", role: "Reviewer",
     title: "Test reviewer validation",
     copy: "Open Test proposal awaiting review, try saving it blank, then add all five ratings and short reasons.",
-    expected: "The blank save shows a clear message. A complete review creates a profile and rationale.",
+    expected: "Blank or incomplete reviews cannot save. After all five ratings and reasons are saved, the evaluation becomes read-only.",
     action: "review",
     actionLabel: "Open reviewer queue"
   },
   {
-    id: "rationale",
+    id: "review-comments", role: "Reviewer",
+    title: "Comment on a completed evaluation",
+    copy: "Open Service Hub’s saved evaluation, check that its ratings are locked, and add a short comment.",
+    expected: "The original evaluation stays unchanged. The comment appears below it and survives a refresh in this tab.",
+    action: "review-comments", actionLabel: "Open completed evaluation"
+  },
+  {
+    id: "rationale", role: "Portfolio Manager",
     title: "Open reviewer evidence",
     copy: "Find Security Pilot and select Feasibility in its project detail.",
     expected: "You can read the reviewer’s reason behind the 3/5 feasibility rating.",
@@ -1219,26 +1338,54 @@ const TEST_STEPS = [
     actionLabel: "Find Security Pilot"
   },
   {
-    id: "comparison",
+    id: "single-profile", role: "Portfolio Manager",
+    title: "View one project’s radar chart",
+    copy: "Open Service Hub on the Comparison screen without selecting another project.",
+    expected: "The chart says Single project and shows five ratings, not an overall score.",
+    action: "single-profile", actionLabel: "Open single-project chart"
+  },
+  {
+    id: "comparison", role: "Portfolio Manager",
     title: "Compare two evaluated projects",
-    copy: "Prepare Service Hub and Accessibility Update, then select Compare selected.",
-    expected: "The overlay radar chart and legend show two project profiles.",
+    copy: "Compare Service Hub and Accessibility Update. Remove one and add it back through Project Overview. After evaluating the fourth sample, try selecting all four.",
+    expected: "One project gives a single chart; two to four give an overlay. Remove from comparison updates the chart immediately.",
     action: "comparison",
     actionLabel: "Prepare comparison"
   },
   {
-    id: "constraints",
+    id: "shortlist", role: "Portfolio Manager",
+    title: "Save a formal shortlist",
+    copy: "On the prepared comparison, click Add to Shortlist for both projects, then open the Shortlist page. Remove one and add it back.",
+    expected: "The formal Shortlist is saved independently of the temporary comparison selection.",
+    action: "shortlist", actionLabel: "Prepare shortlist check"
+  },
+  {
+    id: "scenario", role: "Portfolio Manager",
+    title: "Create and edit a candidate portfolio",
+    copy: "Create a new scenario, add a shortlisted project, save it, and remove the project. Rename or delete this new scenario when finished.",
+    expected: "Add, Remove, Save, Rename, and Delete work. Deleting the new scenario does not delete the proposals or shortlist.",
+    action: "scenario", actionLabel: "Open portfolio builder"
+  },
+  {
+    id: "constraints", role: "Portfolio Manager",
     title: "Check portfolio limits",
-    copy: "Add Security Pilot to the prepared selection and review the scenario panel.",
-    expected: "The panel shows $2.2M and 7 FTE, with both limits flagged.",
+    copy: "Open the prepared Scenario B and inspect its budget and staff panel. Remove Security Pilot and check the totals again.",
+    expected: "At the starting limits, three projects use $2.2M and 7 FTE and exceed both limits. Removing Security Pilot leaves $1.3M and 3 FTE.",
     action: "constraints",
     actionLabel: "Show limit check"
   },
   {
-    id: "decision",
+    id: "portfolio-review", role: "Portfolio Manager",
+    title: "Review the whole candidate portfolio",
+    copy: "Review Scenario A’s projects, strategic allocation, budget, and total FTE. Compare it with the other saved scenario.",
+    expected: "Portfolio Review uses the same projects, costs, and resource totals as the builder. Individual project evidence remains available.",
+    action: "portfolio-review", actionLabel: "Open Portfolio Review"
+  },
+  {
+    id: "decision", role: "Portfolio Manager",
     title: "Record a human decision",
-    copy: "Open Service Hub and choose Approve, Defer, or Reject after looking at its evidence.",
-    expected: "The decision is recorded in this test tab and remains after a refresh.",
+    copy: "Choose Approve, Defer, or Reject for Scenario A. Add a rationale, optionally add a follow-up action, and record the decision.",
+    expected: "A rationale is required. The scenario decision and history stay in this test tab after a refresh; no automatic approval is made.",
     action: "decision",
     actionLabel: "Open decision"
   }
@@ -1253,6 +1400,19 @@ function renderTestHarness() {
   if (banner) banner.hidden = !TEST_MODE;
   if (!TEST_MODE) return;
 
+  let roleControls = $(".test-role-controls");
+  if (!roleControls) {
+    roleControls = document.createElement("section");
+    roleControls.className = "test-role-controls";
+    roleControls.setAttribute("aria-label", "Test as a role");
+    $(".test-quick-checks").before(roleControls);
+  }
+  roleControls.innerHTML = `<p><strong>Test as a role</strong><span>Switch through the workflow without signing in. Test changes stay in this tab.</span></p><div>${ACCOUNT_ROLES.map((role) => `<button type="button" class="outline-button" data-test-role="${escapeHTML(role)}" aria-pressed="${workspaceRole() === role}">${escapeHTML(role)}</button>`).join("")}</div>`;
+  roleControls.querySelectorAll("[data-test-role]").forEach((button) => button.addEventListener("click", () => {
+    setTestRole(button.dataset.testRole);
+    setActiveView("tests");
+  }));
+
   const results = Object.values(state.quickChecks);
   const passed = results.filter((result) => result.passed).length;
   $("#quick-check-summary").textContent = results.length ? `${passed} of ${QUICK_CHECKS.length} checks passed` : "Not run yet";
@@ -1266,7 +1426,7 @@ function renderTestHarness() {
 
   $("#test-checklist").innerHTML = TEST_STEPS.map((step, index) => {
     const completed = Boolean(state.testProgress[step.id]);
-    return `<article class="test-step ${completed ? "is-complete" : ""}"><span class="test-step-number">${String(index + 1).padStart(2, "0")}</span><div class="test-step-copy"><h4>${escapeHTML(step.title)}</h4><p>${escapeHTML(step.copy)}</p><small><strong>Check:</strong> ${escapeHTML(step.expected)}</small></div><div class="test-step-actions"><button type="button" class="outline-button" data-test-action="${escapeHTML(step.action)}">${escapeHTML(step.actionLabel)}</button><button type="button" class="test-mark-button" data-mark-test="${escapeHTML(step.id)}">${completed ? "Checked · undo" : "Mark checked"}</button></div></article>`;
+    return `<article class="test-step ${completed ? "is-complete" : ""}"><span class="test-step-number">${String(index + 1).padStart(2, "0")}</span><div class="test-step-copy"><small>${escapeHTML(step.role)}</small><h4>${escapeHTML(step.title)}</h4><p>${escapeHTML(step.copy)}</p><small><strong>Check:</strong> ${escapeHTML(step.expected)}</small></div><div class="test-step-actions"><button type="button" class="outline-button" data-test-action="${escapeHTML(step.action)}">${escapeHTML(step.actionLabel)}</button><button type="button" class="test-mark-button" data-mark-test="${escapeHTML(step.id)}">${completed ? "Checked · undo" : "Mark checked"}</button></div></article>`;
   }).join("");
   $$('[data-test-action]').forEach((button) => button.addEventListener("click", () => runTestAction(button.dataset.testAction)));
   $$('[data-mark-test]').forEach((button) => button.addEventListener("click", () => toggleTestStep(button.dataset.markTest)));
@@ -1303,8 +1463,17 @@ function focusAfterRender(selector) {
 
 function runTestAction(action) {
   if (!TEST_MODE) return;
+  const step = TEST_STEPS.find((item) => item.action === action);
+  if (!step) return;
+  setTestRole(step.role);
+  if (reviewDialog.open) reviewDialog.close();
+  if (action === "context") {
+    setActiveView("organisation");
+    focusAfterRender("#org-budget");
+    return;
+  }
   if (action === "portfolio") {
-    state.query = "";
+    Object.assign(state, { query: "", objective: "all", feasibility: 0, risk: 0, cost: "all", status: "all" });
     setActiveView("manager");
     $("#proposal-search").value = "";
     focusAfterRender("#proposal-search");
@@ -1320,6 +1489,12 @@ function runTestAction(action) {
     focusAfterRender('[data-review-queue-id="test-awaiting-review"]');
     return;
   }
+  if (action === "review-comments") {
+    setActiveView("reviewer");
+    openReview("test-service-hub");
+    focusAfterRender("#evaluation-comment-input");
+    return;
+  }
   if (action === "rationale") {
     state.query = "Security Pilot";
     state.selectedId = "test-security-pilot";
@@ -1330,31 +1505,44 @@ function runTestAction(action) {
     focusAfterRender("#proposal-detail");
     return;
   }
-  if (action === "comparison" || action === "constraints") {
-    const ids = action === "comparison"
-      ? ["test-service-hub", "test-accessibility-update"]
-      : ["test-service-hub", "test-accessibility-update", "test-security-pilot"];
+  if (["single-profile", "comparison", "shortlist"].includes(action)) {
+    const ids = action === "single-profile" ? ["test-service-hub"] : ["test-service-hub", "test-accessibility-update"];
     state.compared = new Set(ids);
     state.selectedId = ids[0];
     state.query = "";
-    setActiveView("manager");
-    $("#proposal-search").value = "";
-    focusAfterRender(action === "comparison" ? "#open-compare" : "#scenario-title");
+    setActiveView("comparison");
+    focusAfterRender(action === "shortlist" ? "[data-add-formal-shortlist]" : ".comparison-radar-panel");
+    return;
+  }
+  if (action === "scenario" || action === "constraints") {
+    state.activeScenarioName = action === "constraints" ? "B" : "A";
+    setActiveView("scenarios");
+    focusAfterRender(action === "constraints" ? ".scenario-summary-panel" : "[data-create-scenario]");
+    return;
+  }
+  if (action === "portfolio-review") {
+    state.portfolioReviewScenarioName = "A";
+    setActiveView("reports");
+    focusAfterRender("#portfolio-review-scenario");
     return;
   }
   if (action === "decision") {
-    const testIds = ["test-service-hub", "test-accessibility-update"];
-    state.compared = new Set(testIds);
-    testIds.forEach((id) => state.shortlisted.add(id));
-    persistFormalShortlist();
-    state.scenarios.A = { projectIds: testIds, budget: organisation.budget, staff: organisation.staff };
-    storage.set(STORAGE.scenarios, JSON.stringify(state.scenarios));
-    state.selectedId = "test-service-hub";
-    state.query = "";
-    setActiveView("manager");
-    $("#proposal-search").value = "";
-    focusAfterRender('[data-decision="Approved"]');
+    ensureScenarioIdentifiers();
+    state.decisionScenarioId = state.scenarios.A?.id || Object.values(state.scenarios)[0]?.id;
+    setActiveView("decisions");
+    focusAfterRender("#scenario-decision-form");
   }
+}
+
+function setTestRole(role) {
+  if (!TEST_MODE || !ACCOUNT_ROLES.includes(role)) return;
+  const account = activeAccount();
+  if (!account) return;
+  account.role = role;
+  storage.set("mvp-test-role", role);
+  storage.set(STORAGE.accounts, JSON.stringify(state.accounts));
+  renderSidebarAccountSummary();
+  renderTestHarness();
 }
 
 function openTestMode() {
@@ -1362,7 +1550,9 @@ function openTestMode() {
     setActiveView("tests");
     return;
   }
-  const url = new URL(window.location.href);
+  const url = new URL("./workplace.html", window.location.href);
+  const version = new URL(window.location.href).searchParams.get("v");
+  if (version) url.searchParams.set("v", version);
   url.searchParams.set("mvpTest", "1");
   url.hash = "workspace";
   window.location.assign(url.toString());
@@ -1385,10 +1575,16 @@ function configureTestMode() {
   exitUrl.hash = "workspace";
   $("#exit-test-mode").href = exitUrl.toString();
   $("#test-mode-banner").hidden = !TEST_MODE;
+  if (TEST_MODE) {
+    document.body.classList.add("mvp-test-workspace");
+    $("#test-mode-banner span").textContent = "Editable sample data · saved only in this tab · no account or database changes";
+    document.querySelectorAll("[data-start-live-demo]").forEach((button) => { button.hidden = true; });
+  }
 }
 
 function saveOrganisation(event) {
   event.preventDefault();
+  if (GUEST_DEMO) return;
   const form = event.currentTarget;
   if (!form.reportValidity()) return;
   const objectives = uniqueObjectives(objectiveDraftValues());
@@ -1426,6 +1622,7 @@ function saveOrganisation(event) {
 
 function submitProposal(event) {
   event.preventDefault();
+  if (GUEST_DEMO) return;
   const form = event.currentTarget;
   if (!form.reportValidity()) return;
   const values = new FormData(form);
@@ -1459,31 +1656,36 @@ function submitProposal(event) {
   const isProposer = activeAccount()?.role === "Project Proposer";
   $("#proposal-form-message").textContent = "Proposal submitted. It is now awaiting reviewer assessment.";
   setActiveView(isProposer ? "proposer" : "reviewer");
+  showAssistedCompletion();
 }
 
 function activeAccount() {
   return state.accounts.find((account) => account.id === state.activeAccountId) || null;
 }
 
+function workspaceRole(account = activeAccount()) {
+  return GUEST_DEMO ? window.PPMAuth?.demoRole() || "" : account?.role || "";
+}
+
 function accountCanView(view, account = activeAccount()) {
-  if (TEST_MODE || !account) return true;
-  const views = WORKSPACE_VIEWS_BY_ROLE[account.role];
-  return !views || views.includes(view);
+  if (TEST_MODE && view === "tests") return true;
+  const views = WORKSPACE_VIEWS_BY_ROLE[workspaceRole(account)];
+  return Boolean(views?.includes(view));
 }
 
 function defaultWorkspaceView() {
   if (TEST_MODE) return "tests";
-  const role = activeAccount()?.role;
+  const role = workspaceRole();
   if (role === "Project Proposer") return "proposer";
   if (role === "Reviewer") return "reviewer";
-  return "manager";
+  return "organisation";
 }
 
 function updateRoleNavigation(account = activeAccount()) {
   const nav = $(".workspace-nav");
   if (!nav) return;
-  nav.dataset.activeRole = account?.role || "";
-  const allowedViews = TEST_MODE || !account ? null : WORKSPACE_VIEWS_BY_ROLE[account.role];
+  nav.dataset.activeRole = workspaceRole(account);
+  const allowedViews = WORKSPACE_VIEWS_BY_ROLE[workspaceRole(account)] || [];
   nav.querySelectorAll("[data-workspace-view-button]").forEach((button) => {
     button.hidden = Boolean(allowedViews && !allowedViews.includes(button.dataset.workspaceViewButton));
   });
@@ -1503,9 +1705,143 @@ function renderSidebarAccountSummary() {
   if (!container) return;
   const account = activeAccount();
   updateRoleNavigation(account);
-  container.innerHTML = account
-    ? `<span>Signed in as</span><strong>${escapeHTML(account.displayName)}</strong><small>${escapeHTML(account.role)}</small>`
-    : '<span>Demo mode</span><strong>Sample projects</strong><small>Sign in to use your workplace</small>';
+  const identityIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1.5a7 7 0 0 1 14 0V20"/></svg>';
+  const label = TEST_MODE ? "Test workspace" : account ? "Signed in as" : "Read-only demo";
+  const name = TEST_MODE || !account ? workspaceRole() : account.displayName;
+  const detail = TEST_MODE ? "Changes stay in this tab." : account ? account.role : "";
+  container.innerHTML = `<div class="sidebar-identity"><span class="sidebar-identity-mark">${identityIcon}</span><div class="sidebar-identity-copy"><span>${label}</span><strong>${escapeHTML(name)}</strong>${detail ? `<small>${escapeHTML(detail)}</small>` : ""}</div></div>${!TEST_MODE && !account ? `<a class="sidebar-role-switch" href="${window.PPMAuth.roleSelectURL}"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2 5h11l-3-3M14 11H3l3 3"/></svg>Change role</a>` : ""}`;
+}
+
+function assistanceEnabled() {
+  return !TEST_MODE && window.PPMAuth?.isAssistedMode() === true;
+}
+
+function guidanceForView(view) {
+  const evaluated = proposals.filter(isEvaluated);
+  const pending = proposals.length - evaluated.length;
+  const current = proposals.find((proposal) => proposal.id === state.selectedId);
+  const shortlist = shortlistedProposals();
+  const prefix = GUEST_DEMO ? "Sample data: " : "";
+  if (view === "organisation") return {
+    text: `${prefix}${organisation.objectives.length} objective${organisation.objectives.length === 1 ? "" : "s"}, ${money(organisation.budget)} budget, and ${organisation.staff} FTE are available for this planning cycle.`,
+    detail: "Set objectives before proposals are entered. Each proposal selects one primary objective. Budget and staff capacity are later compared with the combined demands of a candidate portfolio; being within these limits does not approve it.",
+    next: "Save the context, then project proposers can submit evidence for reviewer assessment."
+  };
+  if (view === "proposer") {
+    const fields = Array.from($("#proposal-form").querySelectorAll("[required]"));
+    const missing = fields.filter((field) => !String(field.value).trim());
+    const labels = missing.slice(0, 3).map((field) => field.closest("label")?.firstChild?.textContent.trim() || field.name);
+    return {
+      text: missing.length ? `${missing.length} required field${missing.length === 1 ? "" : "s"} still need information: ${labels.join(", ")}${missing.length > 3 ? ", …" : ""}.` : "The required fields are filled in. Check that the benefits, estimates, and risks explain the evidence behind the proposal.",
+      detail: "Choose the objective this project supports. Describe the expected benefit and the basis of your cost, staff, and timeline estimates. Record risks and dependencies so the reviewer can assess feasibility and risk using the five criteria.",
+      next: GUEST_DEMO ? "This example is read-only. Switch to Reviewer to inspect the next stage." : "Submit the proposal when the evidence is ready. A reviewer then records five ratings and their reasons."
+    };
+  }
+  if (view === "reviewer") return {
+    text: `${prefix}${pending} proposal${pending === 1 ? " is" : "s are"} awaiting a complete evaluation; ${evaluated.length} have all five ratings and reasons.`,
+    detail: "Open a proposal and check its evidence before selecting each 1–5 rating. The scoring guide explains the scale. For Risk, a higher rating means lower or more manageable risk. Explain the evidence behind every rating; a missing reason leaves the evaluation incomplete.",
+    next: "Completed evaluations become available to the Portfolio Manager. Recorded ratings remain visible with their rationale."
+  };
+  if (view === "manager") return {
+    text: current ? `${current.title}: ${current.missing.length ? `${current.missing.length} information gap${current.missing.length === 1 ? "" : "s"} recorded. Check these alongside the reviewer rationale.` : "Inspect the five ratings and their reasons before choosing it for comparison."}` : `${prefix}${evaluated.length} evaluated projects are available. ${pending ? `${pending} more still need a complete reviewer evaluation.` : "Select a project to inspect its evidence."}`,
+    detail: "Use objective, feasibility, risk, cost, and status filters to narrow the list. Click a criterion to see the reviewer's reasoning. Selecting a project for comparison only creates a temporary set; it does not shortlist or approve the project.",
+    next: "Select one project for its radar profile, or two to four for a detailed comparison."
+  };
+  if (view === "comparison" || view === "insights") {
+    const selected = selectedProposals();
+    return {
+      text: view === "insights" && current ? `Inspect the criterion evidence for ${current.title}.` : selected.length ? `${selected.length} project${selected.length === 1 ? " is" : "s are"} selected. Compare the individual criterion ratings and their reasons.` : "Choose an evaluated project in Project Overview to display its five-criterion profile.",
+      detail: "The radar chart shows the five ratings separately. A larger shape is not a final recommendation. Read the rationale and consider the organisation's objectives, costs, and constraints before deciding which projects merit further consideration.",
+      next: "Add projects worth investigating to the Shortlist. Shortlisting is still a temporary planning choice."
+    };
+  }
+  if (view === "shortlist") return {
+    text: `${prefix}${shortlist.length} project${shortlist.length === 1 ? " is" : "s are"} on the Shortlist.`,
+    detail: "The Shortlist holds projects retained after reviewing their evidence. It is separate from the temporary radar comparison set. A shortlisted project is eligible to be added to a candidate portfolio, but has not been approved.",
+    next: shortlist.length ? "Open Build Candidate Portfolio to try a combination of shortlisted projects." : "Inspect projects in Comparison before adding them to the Shortlist."
+  };
+  const name = view === "reports" ? state.portfolioReviewScenarioName || state.activeScenarioName : view === "decisions" ? Object.keys(state.scenarios).find((key) => state.scenarios[key].id === state.decisionScenarioId) || state.activeScenarioName : state.activeScenarioName;
+  const scenario = state.scenarios[name];
+  const summary = scenarioSummary({ ...scenario, budget: organisation.budget, staff: organisation.staff });
+  const shortages = [!summary.budgetOk ? `${money(summary.totalCost - organisation.budget)} over budget` : "", !summary.staffOk ? `${summary.totalStaff - organisation.staff} FTE over capacity` : ""].filter(Boolean);
+  const totals = `${scenarioDisplayName(name)} contains ${summary.projects.length} project${summary.projects.length === 1 ? "" : "s"}: ${money(summary.totalCost)} and ${summary.totalStaff} FTE. ${shortages.length ? shortages.join("; ") + "." : "The totals are within the current budget and staff limits."}`;
+  if (view === "scenarios" || view === "reports") return {
+    text: scenario ? `${prefix}${totals}` : "There is no candidate portfolio yet. Create one using shortlisted projects.",
+    detail: "These checks add the selected projects' estimated cost and total staff demand. They do not account for scheduling, staff skills, or shared resources. Also inspect which objectives the combination covers and whether important evidence or dependencies are missing.",
+    next: view === "scenarios" ? "Save the combination, then open Portfolio Review to inspect it against the organisation's limits." : "Check the project evidence and objective coverage before proceeding to Decisions."
+  };
+  if (view === "decisions") return {
+    text: scenario ? `${prefix}${totals}` : "Select a candidate portfolio to review before recording a decision.",
+    detail: "Approval, deferral, or rejection is a human decision. Explain why the combination meets the objectives and how any shortages or unresolved risks will be handled. Record follow-up actions where needed; the system retains the decision history.",
+    next: "Record the outcome and rationale after the portfolio review is complete."
+  };
+  return null;
+}
+
+function updateGuidancePanel(container, id, content) {
+  let panel = container.querySelector(`#${id}`);
+  if (!panel) {
+    panel = document.createElement("aside");
+    panel.id = id;
+    panel.className = "assisted-guidance";
+    panel.setAttribute("aria-label", "Help with this step");
+    const heading = container.querySelector(".view-heading");
+    if (heading) heading.after(panel);
+    else container.prepend(panel);
+  }
+  panel.hidden = !assistanceEnabled() || !content;
+  if (panel.hidden) return;
+  const html = `<div class="assisted-guidance-lead"><span class="assisted-guidance-icon" aria-hidden="true">i</span><div class="assisted-guidance-copy"><p class="section-kicker">Assisted mode</p><p>${escapeHTML(content.text)}</p></div></div><details><summary>Help with this step <span aria-hidden="true">+</span></summary><div class="assisted-guidance-detail"><p>${escapeHTML(content.detail)}</p><p class="assisted-next"><strong>Next:</strong> ${escapeHTML(content.next)}</p></div></details>`;
+  if (panel.dataset.content !== html) {
+    const expanded = panel.querySelector("details")?.open;
+    panel.innerHTML = html;
+    panel.dataset.content = html;
+    if (expanded) panel.querySelector("details").open = true;
+  }
+}
+
+function renderAssistedGuidance() {
+  const section = document.querySelector(`[data-workspace-view="${state.activeView}"]`);
+  if (!section) return;
+  updateGuidancePanel(section, `assisted-${state.activeView}`, guidanceForView(state.activeView));
+}
+
+function renderReviewGuidance() {
+  const proposal = proposals.find((item) => item.id === reviewDialog.dataset.proposalId);
+  if (!proposal) return;
+  let container = $("#review-assistance-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "review-assistance-container";
+    $("#review-score-form").before(container);
+  }
+  const missing = CRITERIA.filter((criterion) => !$(`[data-review-score="${criterion.key}"]:checked`) || !$(`[data-review-rationale="${criterion.key}"]`)?.value.trim()).map((criterion) => criterion.label);
+  updateGuidancePanel(container, "assisted-review-evidence", {
+    text: missing.length ? `${proposal.title}: ${missing.join(", ")} still need a rating or supporting reason.` : `${proposal.title}: all five ratings and reasons are present.`,
+    detail: `${proposal.missing.length ? `Recorded information gaps: ${proposal.missing.join(", ")}. ` : ""}Use the evidence in this proposal and the scoring guides. For Risk, 5 means lower or more manageable risk; 1 means higher risk. A rationale should explain why the evidence supports the selected rating.`,
+    next: isEvaluated(proposal) ? "The recorded evaluation is available to the Portfolio Manager. Comments can clarify the evidence without replacing the original ratings." : "Complete the remaining criterion evidence before saving the evaluation."
+  });
+}
+
+let pendingAssistedCompletion = false;
+
+function showAssistedCompletion() {
+  if (!assistanceEnabled() || !workspaceRole()) return;
+  const profileId = GUEST_DEMO ? "demo" : activeAccount()?.id || "local";
+  const key = `ppm-assisted-complete:${profileId}:${workspaceRole()}`;
+  if (sessionStorage.getItem(key)) return;
+  if (document.querySelector("dialog[open]")) { pendingAssistedCompletion = true; return; }
+  pendingAssistedCompletion = false;
+  sessionStorage.setItem(key, "true");
+  const dialog = document.createElement("dialog");
+  dialog.className = "assisted-completion-dialog";
+  dialog.setAttribute("aria-labelledby", "assisted-completion-title");
+  dialog.innerHTML = `<h2 id="assisted-completion-title">Assisted mode</h2><p>You can turn off the step guidance any time in ${GUEST_DEMO ? "Demo settings" : "your profile menu"}. The information icons and sample demo remain available when you need help.</p><div><button type="button" class="outline-button" data-assistance-off>Turn off Assisted mode</button><button type="button" class="solid-button" data-assistance-keep>Keep it on</button></div>`;
+  document.body.append(dialog);
+  dialog.querySelector("[data-assistance-off]").addEventListener("click", () => { window.PPMAuth.setAssistedMode(false); dialog.close(); });
+  dialog.querySelector("[data-assistance-keep]").addEventListener("click", () => dialog.close());
+  dialog.addEventListener("close", () => dialog.remove(), { once: true });
+  dialog.showModal();
 }
 
 function renderAll() {
@@ -1520,9 +1856,29 @@ function renderAll() {
   renderShortlistWorkspace();
   renderCriterionInsights();
   renderTestHarness();
+  renderAssistedGuidance();
 }
 
 function bindEvents() {
+  let guidanceFrame = 0;
+  const scheduleGuidance = (event) => {
+    if (!event.target.closest?.("#workspace, #review-dialog")) return;
+    if (guidanceFrame) return;
+    guidanceFrame = requestAnimationFrame(() => {
+      guidanceFrame = 0;
+      renderAssistedGuidance();
+      if (reviewDialog.open) renderReviewGuidance();
+    });
+  };
+  ["input", "change", "click"].forEach((type) => document.addEventListener(type, scheduleGuidance, true));
+  window.addEventListener("ppm:assisted-mode-changed", (event) => {
+    document.querySelectorAll("[data-assisted-mode-toggle]").forEach((checkbox) => { checkbox.checked = event.detail.enabled; });
+    if (!event.detail.enabled) document.querySelectorAll(".assisted-guidance").forEach((panel) => { panel.hidden = true; });
+    renderAssistedGuidance();
+    if (reviewDialog.open) renderReviewGuidance();
+  });
+  window.addEventListener("ppm:tour-finished", showAssistedCompletion);
+  reviewDialog.addEventListener("close", () => { if (pendingAssistedCompletion) showAssistedCompletion(); });
   $("#organisation-form").addEventListener("submit", saveOrganisation);
   $("#add-objective").addEventListener("click", () => renderObjectiveInputs([...objectiveDraftValues(), ""]));
   $("#proposal-form").addEventListener("submit", submitProposal);
@@ -1564,6 +1920,16 @@ function bindEvents() {
 
 loadStoredEvaluations();
 configureTestMode();
+if (GUEST_DEMO) {
+  const example = proposals.find((proposal) => !isEvaluated(proposal)) || proposals[0];
+  if (example) {
+    populateObjectives();
+    Object.entries(example).forEach(([name, value]) => {
+      const field = $("#proposal-form").elements.namedItem(name);
+      if (field && typeof value !== "object") field.value = value;
+    });
+  }
+}
 bindEvents();
 renderAll();
 setActiveView(defaultWorkspaceView());
@@ -1596,8 +1962,8 @@ if ("IntersectionObserver" in window) {
 function scenarioSummary(scenario) {
   const ids = Array.isArray(scenario && scenario.projectIds) ? scenario.projectIds : [];
   const projects = proposals.filter((proposal) => ids.includes(proposal.id) && isEvaluated(proposal));
-  const budget = Math.max(0, numberOr(scenario && scenario.budget, organisation.budget));
-  const staff = Math.max(0, numberOr(scenario && scenario.staff, organisation.staff));
+  const budget = organisation.budget;
+  const staff = organisation.staff;
   return { projects, budget, staff, ...calculateScenario(projects, budget, staff) };
 }
 
@@ -1730,6 +2096,7 @@ function requestedScenarioName(message, initialValue = '') {
 }
 
 function createScenario() {
+  if (GUEST_DEMO) return;
   const name = requestedScenarioName('Name the new candidate portfolio scenario:', 'Scenario C');
   if (!name) return;
   if (scenarioNameExists(name)) {
@@ -1743,6 +2110,7 @@ function createScenario() {
 }
 
 function renameActiveScenario() {
+  if (GUEST_DEMO) return;
   const oldName = state.activeScenarioName;
   if (oldName === 'A' || oldName === 'B') return;
   const name = requestedScenarioName('Rename this candidate portfolio scenario:', scenarioDisplayName(oldName));
@@ -1766,6 +2134,7 @@ function renameActiveScenario() {
 }
 
 function deleteActiveScenario() {
+  if (GUEST_DEMO) return;
   const name = state.activeScenarioName;
   if (name === 'A' || name === 'B') return;
   if (!window.confirm(`Delete “${scenarioDisplayName(name)}”? Projects, shortlist selections, and other scenarios will not be deleted.`)) return;
@@ -1776,6 +2145,7 @@ function deleteActiveScenario() {
 }
 
 function updateActiveScenarioProject(projectId, shouldAdd) {
+  if (GUEST_DEMO) return;
   const name = state.activeScenarioName;
   const current = state.scenarios[name] || { projectIds: [], budget: organisation.budget, staff: organisation.staff };
   const ids = new Set(Array.isArray(current.projectIds) ? current.projectIds : []);
@@ -1792,6 +2162,7 @@ function updateActiveScenarioProject(projectId, shouldAdd) {
 }
 
 function saveActiveScenario() {
+  if (GUEST_DEMO) return;
   storage.set(STORAGE.scenarios, JSON.stringify(state.scenarios));
   const button = $('#scenario-workspace [data-save-active-scenario]');
   if (!button) return;
@@ -1860,6 +2231,7 @@ function addDecisionActionRow(value = {}, focus = false) {
 
 function recordScenarioDecision(event, scenarioName, scenarioId) {
   event.preventDefault();
+  if (GUEST_DEMO) return;
   const form = event.currentTarget;
   if (!form.reportValidity()) return;
   const outcome = form.querySelector('[name="scenario-outcome"]:checked')?.value;
@@ -1888,6 +2260,8 @@ function recordScenarioDecision(event, scenarioName, scenarioId) {
   state.scenarioDecisions[scenarioId] = [...previous, record];
   storage.set(STORAGE.scenarioDecisions, JSON.stringify(state.scenarioDecisions));
   renderDecisionWorkspace();
+  renderAssistedGuidance();
+  showAssistedCompletion();
 }
 
 function renderReportWorkspace() {
@@ -1970,6 +2344,7 @@ function setActiveView(view) {
   if (view === "decisions") renderDecisionWorkspace();
   if (view === "reports") renderReportWorkspace();
   if (view === "tests") renderTestHarness();
+  renderAssistedGuidance();
 }
 
 
@@ -1983,6 +2358,7 @@ function saveRemovedProposals() {
 }
 
 function deleteProposal(id) {
+  if (GUEST_DEMO) return;
   const index = proposals.findIndex((proposal) => proposal.id === id);
   const proposal = proposals[index];
   if (!proposal) return;

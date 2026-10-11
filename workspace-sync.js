@@ -69,6 +69,7 @@
 
   function context() {
     const auth = window.PPMAuth;
+    if (window.PPMTestMode || new URLSearchParams(window.location.search).has("mvpTest") || window.PPMGuestDemo || auth?.isDemoMode?.()) return null;
     const user = auth?.currentUser?.();
     const token = auth?.token?.();
     const base = auth?.apiBase?.();

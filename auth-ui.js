@@ -7,6 +7,11 @@
   const APP_ACTIVE_KEY = "ppm-v2-active-account";
   const REMOTE_TOKEN_KEY = "ppm-auth-session-v1";
   const REMOTE_USER_KEY = "ppm-auth-user-v1";
+  const DEMO_ROLE_KEY = "ppm-demo-role-v1";
+  const DEMO_MODE_KEY = "ppm-demo-mode-v1";
+  const PAGE_VERSION = "20261012-demo-mvp-v1";
+  const ROLE_SELECT_URL = pageURL("role-select.html");
+  const ASSISTED_MODE_PREFIX = "ppm-assisted-mode-v1:";
   const ITERATIONS = 210000;
   const $ = (selector) => document.querySelector(selector);
 
@@ -64,6 +69,40 @@
     return apiBase() ? readCachedRemoteUser() : localUser();
   }
 
+  function demoRole() {
+    try {
+      const role = sessionStorage.getItem(DEMO_ROLE_KEY);
+      return ["Project Proposer", "Reviewer", "Portfolio Manager"].includes(role) ? role : "";
+    } catch { return ""; }
+  }
+
+  function isDemoMode() {
+    try { return sessionStorage.getItem(DEMO_MODE_KEY) === "true"; } catch { return false; }
+  }
+
+  function setDemoMode(enabled) {
+    try { sessionStorage.setItem(DEMO_MODE_KEY, String(Boolean(enabled))); } catch { /* Role selection reports storage failure. */ }
+  }
+
+  function setDemoRole(role) {
+    if (!["Project Proposer", "Reviewer", "Portfolio Manager"].includes(role)) throw new Error("Choose one of the available roles.");
+    sessionStorage.setItem(DEMO_ROLE_KEY, role);
+    setDemoMode(true);
+  }
+
+  function assistanceProfileId() {
+    return isDemoMode() ? "demo" : currentUser()?.id || "demo";
+  }
+
+  function isAssistedMode(profileId = assistanceProfileId()) {
+    try { return localStorage.getItem(`${ASSISTED_MODE_PREFIX}${profileId}`) !== "false"; } catch { return true; }
+  }
+
+  function setAssistedMode(enabled, profileId = assistanceProfileId()) {
+    localStorage.setItem(`${ASSISTED_MODE_PREFIX}${profileId}`, enabled ? "true" : "false");
+    window.dispatchEvent(new CustomEvent("ppm:assisted-mode-changed", { detail: { enabled: Boolean(enabled) } }));
+  }
+
   function syncWorkspaceProfile(user) {
     if (!user) {
       localStorage.removeItem(APP_ACTIVE_KEY);
@@ -119,18 +158,43 @@
     return firstName.length > 8 ? `${firstName.slice(0, 7)}…` : firstName;
   }
 
+  function pageURL(page) {
+    return `./${page}?v=${PAGE_VERSION}`;
+  }
+
   function authURL(mode = "login", returnTo = "workplace.html") {
-    const params = new URLSearchParams({ mode, return: returnTo });
+    const params = new URLSearchParams({ mode, return: returnTo, v: PAGE_VERSION });
     return `./login.html?${params.toString()}`;
   }
 
   function renderAuthSlot(slot, user, serviceUnavailable = false) {
-    if (!user) {
-      slot.innerHTML = `<a class="auth-sign-in-link" href="${authURL()}"${serviceUnavailable ? ' title="Account service unavailable"' : ""}>${serviceUnavailable ? "Sign in" : "Sign in"}</a>`;
+    const role = demoRole();
+    if (isDemoMode() && role) {
+      slot.hidden = false;
+      slot.innerHTML = `<div class="profile-control"><button class="profile-avatar demo-profile-trigger" type="button" aria-label="Account menu" title="Account" aria-expanded="false"><svg viewBox="0 0 34 34" fill="currentColor" aria-hidden="true" focusable="false"><g transform="translate(2 -1.8)"><circle cx="11" cy="8" r="5.2"/><path d="M11 15c-5.3 0-9.5 3.9-9.5 8.7V25h13a9.6 9.6 0 0 1 4.8-9.4A14.5 14.5 0 0 0 11 15Z"/><path class="demo-profile-gear" fill-rule="evenodd" d="M29.73 21.63L30.06 22.71L31.88 22.61L31.88 25.39L30.06 25.29L29.73 26.37L29.20 27.38L30.55 28.59L28.59 30.55L27.38 29.20L26.37 29.73L25.29 30.06L25.39 31.88L22.61 31.88L22.71 30.06L21.63 29.73L20.62 29.20L19.41 30.55L17.45 28.59L18.80 27.38L18.27 26.37L17.94 25.29L16.12 25.39L16.12 22.61L17.94 22.71L18.27 21.63L18.80 20.62L17.45 19.41L19.41 17.45L20.62 18.80L21.63 18.27L22.71 17.94L22.61 16.12L25.39 16.12L25.29 17.94L26.37 18.27L27.38 18.80L28.59 17.45L30.55 19.41L29.20 20.62Z M27.1 24a3.1 3.1 0 1 0-6.2 0a3.1 3.1 0 1 0 6.2 0Z"/></g></svg></button><section class="profile-menu" hidden aria-label="Demo settings"><button class="profile-menu-close" type="button" aria-label="Close settings">×</button><div class="profile-summary"><div><strong>Sample workspace</strong><span>Read-only demo</span><small>${escapeHTML(role)}</small></div></div><label class="profile-mode-toggle"><input type="checkbox" data-assisted-mode-toggle ${isAssistedMode("demo") ? "checked" : ""}><span><strong>Assisted mode</strong><small>Show guidance for the current step.</small></span></label><a class="profile-menu-action" href="${ROLE_SELECT_URL}"><span aria-hidden="true">↔</span> Change demo role</a><a class="profile-menu-action" href="${user ? pageURL("workplace.html") : authURL("login")}" data-use-account-sign-in><span aria-hidden="true">↗</span> ${user ? "Return to your workplace" : "Sign in"}</a></section></div>`;
+      const trigger = slot.querySelector(".profile-avatar[aria-expanded]");
+      const menu = slot.querySelector(".profile-menu");
+      const close = () => { menu.hidden = true; trigger.setAttribute("aria-expanded", "false"); };
+      trigger.addEventListener("click", () => {
+        menu.hidden = !menu.hidden;
+        trigger.setAttribute("aria-expanded", String(!menu.hidden));
+      });
+      slot.querySelector(".profile-menu-close").addEventListener("click", close);
+      slot.querySelector("[data-assisted-mode-toggle]").addEventListener("change", (event) => setAssistedMode(event.currentTarget.checked, "demo"));
+      slot.querySelector("[data-use-account-sign-in]").addEventListener("click", () => setDemoMode(false));
+      document.addEventListener("click", (event) => { if (!slot.contains(event.target)) close(); });
+      document.addEventListener("keydown", (event) => { if (event.key === "Escape") close(); });
       return;
     }
+    if (!user) {
+      slot.hidden = false;
+      slot.innerHTML = `<a class="auth-sign-in-link" href="${authURL("login")}">Sign in</a>`;
+      slot.querySelector("a").addEventListener("click", () => setDemoMode(false));
+      return;
+    }
+    slot.hidden = false;
     const shared = Boolean(apiBase());
-    slot.innerHTML = `<div class="profile-control"><button class="profile-avatar" type="button" aria-label="${escapeHTML(user.name)} account" aria-expanded="false"><span>${escapeHTML(avatarName(user.name))}</span></button><section class="profile-menu" hidden aria-label="Signed-in account"><button class="profile-menu-close" type="button" aria-label="Close account menu">×</button><div class="profile-summary"><span class="profile-avatar profile-avatar-large">${escapeHTML(avatarName(user.name))}</span><div><strong>${escapeHTML(user.name)}</strong><span>${escapeHTML(user.email)}</span><small>${escapeHTML(user.role)}</small></div></div><a class="profile-menu-action" href="./account.html"><span aria-hidden="true">⚙</span> Manage your PPM account</a><a class="profile-menu-action" href="${authURL("login")}"><span aria-hidden="true">＋</span> Add another account</a><button class="profile-menu-action profile-signout" type="button"><span aria-hidden="true">↪</span> Sign out</button><p class="profile-menu-note">${shared ? "Account available on your other devices" : "Saved in this browser"}</p></section></div>`;
+    slot.innerHTML = `<div class="profile-control"><button class="profile-avatar" type="button" aria-label="${escapeHTML(user.name)} account" aria-expanded="false"><span>${escapeHTML(avatarName(user.name))}</span></button><section class="profile-menu" hidden aria-label="Signed-in account"><button class="profile-menu-close" type="button" aria-label="Close account menu">×</button><div class="profile-summary"><span class="profile-avatar profile-avatar-large">${escapeHTML(avatarName(user.name))}</span><div><strong>${escapeHTML(user.name)}</strong><span>${escapeHTML(user.email)}</span><small>${escapeHTML(user.role)}</small></div></div><label class="profile-mode-toggle"><input type="checkbox" data-assisted-mode-toggle ${isAssistedMode(user.id) ? "checked" : ""}><span><strong>Assisted mode</strong><small>Show guidance for the current step.</small></span></label><a class="profile-menu-action" href="${pageURL("account.html")}"><span aria-hidden="true">⚙</span> Manage your PPM account</a><a class="profile-menu-action" href="${ROLE_SELECT_URL}"><span aria-hidden="true">↗</span> Explore the sample demo</a><a class="profile-menu-action" href="${authURL("login")}"><span aria-hidden="true">＋</span> Add another account</a><button class="profile-menu-action profile-signout" type="button"><span aria-hidden="true">↪</span> Sign out</button><p class="profile-menu-note">${shared ? "Account available on your other devices" : "Saved in this browser"}</p></section></div>`;
     const trigger = slot.querySelector(".profile-avatar[aria-expanded]");
     const menu = slot.querySelector(".profile-menu");
     const close = () => { menu.hidden = true; trigger.setAttribute("aria-expanded", "false"); };
@@ -139,6 +203,7 @@
       trigger.setAttribute("aria-expanded", String(!menu.hidden));
     });
     slot.querySelector(".profile-menu-close").addEventListener("click", close);
+    slot.querySelector("[data-assisted-mode-toggle]").addEventListener("change", (event) => setAssistedMode(event.currentTarget.checked, user.id));
     slot.querySelector(".profile-signout").addEventListener("click", async () => {
       const token = remoteToken();
       if (apiBase() && token) {
@@ -148,7 +213,8 @@
         localStorage.removeItem(ACTIVE_KEY);
       }
       syncWorkspaceProfile(null);
-      window.location.assign("./index.html");
+      setDemoMode(false);
+      window.location.assign(pageURL("index.html"));
     });
     document.addEventListener("click", (event) => { if (!slot.contains(event.target)) close(); });
     document.addEventListener("keydown", (event) => { if (event.key === "Escape") close(); });
@@ -156,10 +222,15 @@
 
   async function initHeader() {
     const slots = [...document.querySelectorAll(".auth-slot")];
+    if (new URLSearchParams(window.location.search).has("mvpTest")) {
+      slots.forEach((slot) => { slot.hidden = true; });
+      return null;
+    }
     if (!apiBase()) {
       const user = localUser();
       syncWorkspaceProfile(user);
       slots.forEach((slot) => renderAuthSlot(slot, user));
+      routeWorkplaceLinks(user);
       return user;
     }
     let user = null;
@@ -183,7 +254,18 @@
       syncWorkspaceProfile(null);
     }
     slots.forEach((slot) => renderAuthSlot(slot, user, serviceUnavailable));
+    routeWorkplaceLinks(user);
     return user;
+  }
+
+  function routeWorkplaceLinks(user = currentUser()) {
+    const hasWorkplace = user && ["Project Proposer", "Reviewer", "Portfolio Manager"].includes(user.role) && !isDemoMode();
+    document.querySelectorAll("[data-enter-workplace]").forEach((link) => { link.href = hasWorkplace ? pageURL("workplace.html") : ROLE_SELECT_URL; });
+  }
+
+  function refreshHeader() {
+    document.querySelectorAll(".auth-slot").forEach((slot) => renderAuthSlot(slot, currentUser()));
+    routeWorkplaceLinks();
   }
 
   function updateLocalProfile(user, { name, email, role }) {
@@ -315,7 +397,7 @@
           if (localStorage.getItem(ACTIVE_KEY) === user.id) localStorage.removeItem(ACTIVE_KEY);
         }
         removeWorkspaceProfile(user.id);
-        window.location.assign("./index.html");
+        window.location.assign(pageURL("index.html"));
       } catch (error) {
         deleteMessage.dataset.state = "error";
         deleteMessage.textContent = error instanceof Error ? error.message : "We couldn't delete your account. Please try again.";
@@ -468,6 +550,7 @@
           sessionStorage.setItem(REMOTE_TOKEN_KEY, result.token);
           sessionStorage.setItem(REMOTE_USER_KEY, JSON.stringify(result.user));
           syncWorkspaceProfile(result.user);
+          setDemoMode(false);
         } else {
           let users = readUsers();
           if (signup) {
@@ -481,6 +564,7 @@
             localStorage.setItem(USERS_KEY, JSON.stringify(users));
             localStorage.setItem(ACTIVE_KEY, user.id);
             syncWorkspaceProfile({ id: user.id, name: user.name, email: user.email, role: user.role });
+            setDemoMode(false);
           } else {
             const user = users.find((entry) => entry.email.toLocaleLowerCase() === email);
             if (!user) throw new Error("We couldn't find an account for that email in this browser.");
@@ -488,9 +572,10 @@
             if (!constantTimeEqual(verifier, user.verifier)) throw new Error("That password doesn't match this account.");
             localStorage.setItem(ACTIVE_KEY, user.id);
             syncWorkspaceProfile({ id: user.id, name: user.name, email: user.email, role: user.role });
+            setDemoMode(false);
           }
         }
-        window.location.assign(`./${returnTo}`);
+        window.location.assign(pageURL(returnTo));
       } catch (error) {
         message.dataset.state = "error";
         message.textContent = error instanceof Error ? error.message : "We couldn't save the account. Check browser storage and try again.";
@@ -504,7 +589,22 @@
     setMode();
   }
 
-  window.PPMAuth = { currentUser, syncWorkspaceProfile, apiBase, request: apiRequest, token: remoteToken };
+  window.PPMAuth = {
+    currentUser,
+    syncWorkspaceProfile,
+    apiBase,
+    request: apiRequest,
+    token: remoteToken,
+    demoRole,
+    isDemoMode,
+    setDemoRole,
+    setDemoMode,
+    refreshHeader,
+    roleSelectURL: ROLE_SELECT_URL,
+    pageURL,
+    isAssistedMode,
+    setAssistedMode
+  };
   window.PPMAuthReady = new Promise((resolve) => {
     const start = () => {
       initAuthPage();

@@ -7,13 +7,13 @@
     <meta name="description" content="Manage your PPM account details." />
     <title>Your account · PPM</title>
     <link rel="icon" href="public/favicon.svg" />
-    <link rel="stylesheet" href="app/globals.css?v=20261008-workspace-sync-v1" />
+    <link rel="stylesheet" href="app/globals.css?v=20261012-demo-mvp-v1" />
   </head>
   <body class="account-settings-page">
     <header class="auth-page-header">
-      <a class="wordmark" href="./index.html" aria-label="PPM home"><span class="wordmark-dot" aria-hidden="true"></span><span>PPM</span></a>
+      <a class="wordmark" href="./index.html?v=20261012-demo-mvp-v1" aria-label="PPM home"><span class="wordmark-dot" aria-hidden="true"></span><span>PPM</span></a>
       <div class="account-header-actions">
-        <a href="./workplace.html">The workplace <span aria-hidden="true">↗</span></a>
+        <a href="./workplace.html?v=20261012-demo-mvp-v1">The workplace <span aria-hidden="true">↗</span></a>
         <div class="auth-slot" id="auth-slot"></div>
       </div>
     </header>
@@ -45,7 +45,7 @@
           <p class="account-role-note">Your role determines which workspace screens appear in this prototype. It is a workflow setting, not a server security permission.</p>
           <p class="auth-message account-profile-message" id="account-message" role="status" aria-live="polite"></p>
           <div class="account-profile-actions">
-            <a class="outline-button" href="./workplace.html">Cancel</a>
+            <a class="outline-button" href="./workplace.html?v=20261012-demo-mvp-v1">Cancel</a>
             <button type="submit" class="auth-submit" id="account-save">Save changes</button>
           </div>
         </form>
@@ -77,6 +77,6 @@
       </form>
     </dialog>
     <script src="api-config.js?v=20261004-api-v1"></script>
-    <script src="auth-ui.js?v=20261008-workspace-sync-v1"></script>
+    <script src="auth-ui.js?v=20261012-demo-mvp-v1"></script>
   </body>
 </html>
