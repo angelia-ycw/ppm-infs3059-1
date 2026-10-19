@@ -35,9 +35,5 @@ services:
         sync: false
       - key: PPM_MAIL_FROM
         sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: PPM_AI_MODEL
-        value: gpt-6-luna
       - key: DB_POOL_SIZE
         value: "3"

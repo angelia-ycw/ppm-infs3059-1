@@ -9,148 +9,158 @@
     <button class="ppm-assistant-launcher" type="button" aria-label="Ask about PPM" aria-expanded="false" aria-controls="ppm-assistant-panel" title="Ask about PPM">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11.4a7.4 7.4 0 0 1-7.4 7.4H6L3 21v-9.6A7.4 7.4 0 0 1 10.4 4H13a7 7 0 0 1 7 7.4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 10h7M8 14h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
     </button>
-    <section class="ppm-assistant-panel" id="ppm-assistant-panel" aria-label="PPM site assistant" hidden>
+    <section class="ppm-assistant-panel" id="ppm-assistant-panel" aria-label="PPM site guide" hidden>
       <header class="ppm-assistant-header">
         <span class="ppm-assistant-mark" aria-hidden="true"><i></i></span>
-        <div><strong>Ask PPM</strong><small>Help with this prototype</small></div>
+        <div><strong>PPM guide</strong><small>Ask in your own words</small></div>
         <button class="ppm-assistant-new" type="button" aria-label="Start a new chat" title="Start a new chat">↻</button>
         <button class="ppm-assistant-close" type="button" aria-label="Close chat">×</button>
       </header>
       <div class="ppm-assistant-messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
-      <div class="ppm-assistant-suggestions" aria-label="Suggested questions">
-        <button type="button">How does project evaluation work?</button>
-        <button type="button">What can I do in Comparison?</button>
-        <button type="button">How do I build a portfolio?</button>
-      </div>
       <form class="ppm-assistant-form">
-        <label class="sr-only" for="ppm-assistant-input">Ask a question about PPM</label>
-        <textarea id="ppm-assistant-input" rows="1" maxlength="500" placeholder="Ask about the site…" required></textarea>
+        <label class="sr-only" for="ppm-assistant-input">Type a question about PPM</label>
+        <textarea id="ppm-assistant-input" rows="1" maxlength="500" placeholder="Type a question about PPM…" required></textarea>
         <button type="submit" aria-label="Send message" title="Send message"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 10 17 3l-4 14-3-6-7-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 11 7-8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
       </form>
-      <p class="ppm-assistant-note">Checking assistant…</p>
+      <p class="ppm-assistant-note">Offline guide · Answers are matched from built-in PPM help. No AI service or account is needed.</p>
     </section>`;
   document.body.append(root);
 
   const launcher = root.querySelector(".ppm-assistant-launcher");
   const panel = root.querySelector(".ppm-assistant-panel");
   const messages = root.querySelector(".ppm-assistant-messages");
-  const suggestions = root.querySelector(".ppm-assistant-suggestions");
   const form = root.querySelector(".ppm-assistant-form");
   const input = root.querySelector("#ppm-assistant-input");
   const sendButton = form.querySelector("button[type='submit']");
-  const note = root.querySelector(".ppm-assistant-note");
-  const apiBase = String(window.PPM_CONFIG?.apiBaseUrl || "").replace(/\/$/, "");
-  let assistantAvailable = null;
-  let conversation = [];
 
+  // The guide scores phrases in the typed question and returns the closest built-in answer.
+  // It deliberately does not call an AI provider, send the question elsewhere, or store chat history.
   const topics = [
     {
-      match: /\b(role|roles|proposer|reviewer|portfolio manager|permission|navigation)\b|역할|제안자|검토자|포트폴리오 매니저|메뉴/,
-      en: "The prototype has three roles. Project Proposers enter project evidence, Reviewers assess five criteria with reasons, and Portfolio Managers set the investment context, compare projects, build candidate portfolios, review constraints, and record decisions. Choose a role from the role-selection screen; the left navigation then shows that role’s pages.",
-      ko: "프로토타입에는 세 가지 역할이 있어요. Project Proposer는 프로젝트 근거를 입력하고, Reviewer는 다섯 기준을 근거와 함께 평가하며, Portfolio Manager는 투자 맥락 설정부터 비교·후보 포트폴리오·제약 검토·최종 결정까지 담당합니다. 역할 선택 화면에서 역할을 고르면 왼쪽 메뉴가 해당 역할의 화면으로 바뀝니다."
+      keywords: ["type a question", "type my own question", "own words", "free text", "write a question", "pick a topic", "choose a topic", "select a topic", "choose from buttons", "free form", "질문 입력", "직접 입력", "자유롭게 질문", "고르는 게 아니라", "고르는게 아니라", "주제 선택", "주제를 고르", "버튼을 고르", "뭘 물어볼 수"],
+      en: "You can type a question in your own words; you do not need to choose a topic or press a suggested-question button. The offline guide looks for related words and phrases, then returns the closest prepared PPM answer. It is not a generative AI, so it may ask you to rephrase if it cannot find a close match.",
+      ko: "주제를 고르지 않아도 되고, 추천 질문 버튼을 누를 필요도 없어요. 궁금한 내용을 채팅창에 평소 말투로 직접 입력하면 오프라인 안내가 관련 단어와 표현을 찾아 가장 가까운 PPM 답변을 보여줍니다. 생성형 AI는 아니라서 맞는 답을 못 찾으면 질문을 다시 표현해 달라고 안내할 수 있어요."
     },
     {
-      match: /\b(proposal|propose|submit|project form|project entry|cost|staff|fte|timeline|benefit)\b|제안서|프로젝트 입력|제출|비용|인력|일정|혜택/,
-      en: "A project proposal records its owner, primary objective, description, expected benefits, estimated cost, staff requirement, timeline, and risks or dependencies. The reviewer uses this evidence for the five-criterion assessment. The read-only demo shows the form but does not save a new proposal.",
-      ko: "프로젝트 제안서에는 담당자, 주요 목표, 설명, 기대효과, 예상 비용, 필요 인력, 일정, 위험·의존성을 입력합니다. Reviewer는 이 근거를 바탕으로 다섯 기준을 평가해요. 읽기 전용 데모에서는 양식을 볼 수 있지만 새 제안서는 저장되지 않습니다."
+      keywords: ["role", "roles", "proposer", "reviewer", "portfolio manager", "role selection", "who does", "which role", "permission", "navigation", "역할", "역할별", "역할 선택", "역할선택", "제안자", "검토자", "매니저", "권한", "메뉴"],
+      en: "There are three roles: Project Proposer submits project evidence, Reviewer rates the five criteria and records reasons, and Portfolio Manager sets the investment context, compares and shortlists projects, builds candidate portfolios, checks constraints, and records decisions. Choose a role on the role-selection screen; its navigation shows the pages for that role. The sample role experience is read-only.",
+      ko: "역할은 세 가지예요. Project Proposer는 프로젝트 근거를 제출하고, Reviewer는 다섯 기준을 평가해 이유를 남기며, Portfolio Manager는 투자 맥락 설정부터 비교·Shortlist·후보 포트폴리오·제약 검토·최종 결정까지 담당합니다. 역할 선택 화면에서 역할을 고르면 해당 역할의 메뉴가 보여요. 샘플 역할 체험은 읽기 전용입니다."
     },
     {
-      match: /\b(evaluation|evaluate|rating|score|criteria|criterion|risk manageability|rationale|review)\b|평가|점수|기준|근거|리뷰|위험 관리/,
-      en: "Reviewers give separate 1–5 ratings for Strategic Alignment, Expected Business Value, Delivery Feasibility, Risk Manageability, and Time Criticality, with a short reason for each. For Risk Manageability, 5 means lower or easier-to-manage risk. PPM does not add the ratings into one total or make an automatic approval decision.",
-      ko: "Reviewer는 전략적 정렬, 기대 비즈니스 가치, 실행 가능성, 위험 관리 가능성, 시급성에 각각 1–5점을 주고 짧은 근거를 남깁니다. Risk Manageability는 5점이 위험이 낮거나 관리하기 쉽다는 뜻이에요. PPM은 점수를 합산하거나 자동 승인 결정을 내리지 않습니다."
+      keywords: ["investment context", "planning context", "planning cycle", "business unit", "planning horizon", "staff capacity", "budget limit", "set objectives", "objectives", "budget", "capacity", "투자 맥락", "투자 컨텍스트", "맥락 설정", "계획 주기", "계획 기간", "사업부", "예산", "인력 한도", "인력 용량", "목표 설정"],
+      en: "Investment Context defines the planning cycle, objectives, budget, and available staff capacity before proposals are assessed. Proposers select a primary objective for each project. Later, candidate portfolio totals are compared with the budget and staff limits. Being within those limits does not automatically approve a portfolio.",
+      ko: "Investment Context에서는 제안서를 평가하기 전에 계획 주기, 목표, 예산, 사용 가능한 인력 규모를 설정합니다. 제안자는 각 프로젝트의 주요 목표를 선택해요. 이후 후보 포트폴리오의 비용과 인력 합계를 이 한도와 비교합니다. 한도 이내라고 자동 승인되는 것은 아닙니다."
     },
     {
-      match: /\b(compare|comparison|radar|chart|overlay|profile)\b|비교|레이더|차트|프로필/,
-      en: "Comparison can show one evaluated project’s five-criterion radar profile, or overlay two to four selected projects. Use the ratings and reviewer reasons to discuss trade-offs; the chart does not calculate a winner or overall score. The temporary comparison selection is separate from the Shortlist.",
-      ko: "평가가 끝난 프로젝트 하나를 선택하면 다섯 기준 레이더 프로필을 볼 수 있고, 두 개에서 네 개까지는 한 차트에 겹쳐 비교할 수 있어요. 점수와 검토자 근거로 장단점을 논의하며, 차트가 승자나 종합 점수를 계산하지 않습니다. 비교 선택은 Shortlist와 별개예요."
+      keywords: ["project proposal", "proposal form", "propose a project", "submit a project", "project entry", "project details", "expected benefit", "staff requirement", "timeline", "dependency", "cost", "fte", "제안서", "프로젝트 제안", "프로젝트 입력", "프로젝트 등록", "제출", "기대 효과", "기대효과", "담당자", "필요 인력", "일정", "비용", "의존성", "위험"],
+      en: "A proposal should provide the project name and owner, primary objective, description, expected benefits, estimated cost, staff requirement, timeline, and known risks or dependencies. This evidence helps the Reviewer assess the project. In the read-only sample demo, you can inspect the proposal screens but cannot save a new proposal.",
+      ko: "제안서에는 프로젝트명과 담당자, 주요 목표, 설명, 기대효과, 예상 비용, 필요 인력, 일정, 알려진 위험이나 의존성을 입력합니다. Reviewer가 이 정보를 근거로 프로젝트를 평가해요. 읽기 전용 샘플 데모에서는 제안 화면을 볼 수 있지만 새 제안서를 저장할 수는 없습니다."
     },
     {
-      match: /\b(shortlist|shortlist(ed|ing)?)\b|쇼트리스트|후보 목록|목록에 추가/,
-      en: "The Shortlist keeps projects for further consideration after review. It is different from the temporary comparison selection and does not mean a project is approved. Shortlisted projects can then be considered in a candidate portfolio scenario.",
-      ko: "Shortlist는 검토 후 더 살펴볼 프로젝트를 보관하는 목록이에요. 잠깐 비교할 프로젝트를 고르는 기능과 다르고, 승인 결정도 아닙니다. Shortlist에 담긴 프로젝트를 후보 포트폴리오 시나리오에서 조합할 수 있어요."
+      keywords: ["evaluation", "evaluate", "rating", "ratings", "score", "scoring", "criteria", "criterion", "review rationale", "reviewer reason", "risk manageability", "strategic alignment", "feasibility", "urgency", "평가", "평가하기", "점수", "기준", "평가 기준", "근거", "검토 이유", "리뷰", "위험 관리", "시급성", "실행 가능성"],
+      en: "The Reviewer gives separate 1–5 ratings for Strategic Alignment, Expected Business Value, Delivery Feasibility, Risk Manageability, and Time Criticality, and adds a short reason for each rating. For Risk Manageability, 5 means the risk is lower or easier to manage. PPM does not add ratings into one overall score or make an automatic decision.",
+      ko: "Reviewer는 Strategic Alignment, Expected Business Value, Delivery Feasibility, Risk Manageability, Time Criticality에 각각 1–5점을 주고 각 점수의 짧은 근거를 적습니다. Risk Manageability는 5점일수록 위험이 낮거나 관리하기 쉽다는 뜻이에요. PPM은 점수를 하나의 총점으로 합치거나 자동 결정을 내리지 않습니다."
     },
     {
-      match: /\b(scenario|portfolio|budget|constraint|capacity|resources|resource)\b|시나리오|포트폴리오|예산|제약|수용량|자원/,
-      en: "In Build Candidate Portfolio, combine shortlisted projects into a scenario. PPM adds their estimated costs and staff requirements, then compares those totals with the budget and capacity set in Investment Context. A warning highlights an exceeded limit; being within limits is not an approval.",
-      ko: "Build Candidate Portfolio에서 Shortlist 프로젝트를 시나리오로 조합합니다. PPM이 예상 비용과 인력 요구량을 더해 Investment Context에서 설정한 예산·수용량과 비교해요. 한도를 넘으면 경고가 표시되고, 한도 이내라는 이유만으로 승인되지는 않습니다."
+      keywords: ["not reviewed", "awaiting review", "pending review", "under review", "review status", "evaluation status", "submitted", "reviewed yet", "review needed", "아직 검토", "아직 평가", "검토 전", "평가 전", "검토 대기", "제출됨", "검토 중", "평가 완료", "상태 표시"],
+      en: "A submitted proposal that has not yet been assessed is shown as awaiting review; once a Reviewer starts or records an assessment, its status changes accordingly. “Awaiting review” means it has not been reviewed yet, not that a review is unnecessary. The project’s evaluation page is where ratings and rationales are recorded.",
+      ko: "제출 후 아직 평가되지 않은 제안서는 검토 대기 상태로 표시됩니다. Reviewer가 평가를 시작하거나 기록하면 상태가 그에 맞게 바뀝니다. ‘검토 대기’는 아직 검토가 안 됐다는 뜻이지, 검토가 필요 없다는 뜻이 아니에요. 점수와 근거는 Project Evaluation에서 기록합니다."
     },
     {
-      match: /\b(decision|approve|approval|defer|reject|human)\b|결정|승인|보류|거절|사람이/,
-      en: "The Portfolio Manager records the final approve, defer, or reject decision and explains the rationale. The decision remains human-led; PPM organizes evidence and constraint checks but does not decide automatically.",
-      ko: "Portfolio Manager가 승인·보류·거절 중 최종 결정을 기록하고 이유를 설명합니다. 결정은 사람이 내립니다. PPM은 근거와 제약 검토를 정리할 뿐 자동으로 결정하지 않아요."
+      keywords: ["search", "filter", "sort", "find projects", "project list", "by status", "by cost", "strategic objective", "검색", "찾기", "필터", "정렬", "프로젝트 목록", "상태별", "비용별", "목표별", "전략 목표"],
+      en: "In Project Overview, use search to find proposals and filters to narrow the list by available project attributes such as objective, status, risk, feasibility, or cost. Sorting changes the display order; it does not change project ratings or make a recommendation.",
+      ko: "Project Overview에서 검색으로 제안서를 찾고, 제공되는 필터를 사용해 목표·상태·위험·실행 가능성·비용 등에 따라 목록을 좁힙니다. 정렬은 화면의 표시 순서만 바꾸며 점수나 추천 결과를 바꾸지 않습니다."
     },
     {
-      match: /\b(demo|live demo|screen guide|tour|sample|read.only|help|instruction|assisted)\b|데모|화면 안내|투어|샘플|도움|설명|안내/,
-      en: "Choose a role to explore its read-only sample workspace. In the workplace, select Live demo for the guided walkthrough. On its first step, choose “View screen-by-screen guide” to browse compressed screenshots manually; there is no autoplay or video download. For help on a specific area, select the small i button, then choose the area on the page.",
-      ko: "역할을 선택하면 해당 역할의 읽기 전용 샘플 화면을 둘러볼 수 있어요. Workplace에서 Live demo를 누르면 단계별 안내가 시작되고, 첫 단계에서 “View screen-by-screen guide”를 선택하면 압축된 화면 이미지를 직접 넘겨볼 수 있습니다. 자동 재생이나 동영상 다운로드는 없어요. 특정 영역의 도움말은 작은 i 버튼을 누른 뒤 해당 영역을 선택하면 됩니다."
+      keywords: ["comparison", "compare", "radar", "radar chart", "chart", "overlay", "one project", "single project", "four projects", "side by side", "비교", "레이더", "레이더 차트", "차트", "한 프로젝트", "하나만", "한 개", "겹쳐", "나란히 비교"],
+      en: "Comparison shows a five-criterion radar profile even when one evaluated project is selected. Select two to four projects to overlay their profiles for side-by-side comparison. The chart visualizes ratings; it does not rank projects, calculate a winner, or replace the reviewer’s rationale.",
+      ko: "평가된 프로젝트를 하나만 선택해도 Comparison에서 다섯 기준 레이더 프로필을 볼 수 있어요. 두 개에서 네 개를 선택하면 프로필을 한 차트에 겹쳐 비교합니다. 차트는 평가 점수를 시각화할 뿐 프로젝트 순위나 승자를 계산하지 않고, Reviewer의 근거를 대신하지도 않습니다."
     },
     {
-      match: /\b(save|storage|stored|sync|synchroni[sz]e|account|database|data)\b|저장|동기화|계정|데이터베이스|데이터/,
-      en: "Sample-workspace changes are read-only and are not saved. In the signed-in workplace, proposals and portfolio records are saved to the PPM account service and can sync when you sign in on another device. Avoid entering sensitive personal information in this prototype.",
-      ko: "샘플 작업공간은 읽기 전용이라 변경 사항이 저장되지 않습니다. 로그인한 Workplace에서는 제안서와 포트폴리오 정보가 PPM 계정 서비스에 저장되고, 다른 기기에서도 같은 계정으로 로그인하면 동기화할 수 있어요. 프로토타입에는 민감한 개인정보를 입력하지 마세요."
+      keywords: ["shortlist", "short-listed", "short list", "save for later", "further consideration", "shortlist vs comparison", "쇼트리스트", "후보 목록", "후보로", "나중에 검토", "추가 검토", "비교 목록"],
+      en: "Shortlist is a saved set of projects for further consideration. It is different from selecting projects temporarily for Comparison, and it does not mean they are approved. Shortlisted projects can be considered when building a candidate portfolio.",
+      ko: "Shortlist는 나중에 더 검토할 프로젝트를 담아두는 목록입니다. Comparison에서 잠시 비교할 프로젝트를 선택하는 것과 다르고, 승인됐다는 뜻도 아니에요. Shortlist에 담긴 프로젝트를 후보 포트폴리오 구성에 사용할 수 있습니다."
+    },
+    {
+      keywords: ["candidate portfolio", "candidate scenario", "build portfolio", "portfolio scenario", "scenario", "aggregate cost", "total cost", "resource requirement", "resource limit", "budget check", "budget overrun", "over budget", "over the budget", "goes over budget", "goes over the budget", "above budget", "exceeds the budget", "scenario budget", "budget exceeded", "constraint", "shortage", "budget and staff", "후보 포트폴리오", "포트폴리오 구성", "시나리오", "비용 합계", "총 비용", "인력 합계", "자원 요구", "예산 확인", "예산 초과", "예산을 넘", "예산 한도 초과", "비용 한도", "제약", "부족", "한도 초과"],
+      en: "Build Candidate Portfolio combines shortlisted projects into a candidate scenario. PPM adds the selected projects’ estimated costs and staff requirements, then checks the totals against the budget and capacity from Investment Context. It flags a limit that is exceeded. Passing the check is informational, not approval.",
+      ko: "Build Candidate Portfolio에서는 Shortlist 프로젝트를 후보 시나리오로 조합합니다. 선택한 프로젝트의 예상 비용과 인력 요구량을 합산해 Investment Context의 예산·인력 한도와 비교하고, 초과한 항목을 표시해요. 한도 검토 통과는 참고 정보이며 승인을 뜻하지 않습니다."
+    },
+    {
+      keywords: ["approve", "approval", "defer", "reject", "final decision", "decision rationale", "human decision", "승인", "보류", "거절", "최종 결정", "결정 이유", "사람이 결정", "자동 결정"],
+      en: "The Portfolio Manager records the final approve, defer, or reject decision with a reason. This remains a human decision: the system organizes proposal evidence and portfolio constraints but does not automatically approve, defer, or reject projects.",
+      ko: "Portfolio Manager가 승인·보류·거절 중 최종 결정을 이유와 함께 기록합니다. 결정은 사람이 내려요. 시스템은 제안 근거와 포트폴리오 제약을 정리하지만 프로젝트를 자동 승인·보류·거절하지 않습니다."
+    },
+    {
+      keywords: ["demo", "live demo", "guided demo", "walkthrough", "video", "screenshots", "screen guide", "sample workspace", "read only", "read-only", "라이브 데모", "데모", "안내", "투어", "동영상", "영상", "이미지", "화면 안내", "샘플 작업공간", "읽기 전용"],
+      en: "The Live demo is an optional guided walkthrough; it does not start automatically. It uses sample screens and is read-only. You can move through the walkthrough or use the screen-by-screen image guide. To try role-specific screens, go to role selection and choose a role. Demo changes are separate from saved workplace records.",
+      ko: "Live demo는 자동 시작되지 않는 선택형 단계별 안내입니다. 샘플 화면을 사용하는 읽기 전용 체험이에요. 안내를 따라가거나 화면 이미지 가이드를 한 장씩 볼 수 있습니다. 역할별 화면을 보려면 역할 선택으로 가서 역할을 고르세요. 데모 변경은 저장된 Workplace 기록과 분리됩니다."
+    },
+    {
+      keywords: ["assisted mode", "contextual help", "help button", "info button", "i button", "information icon", "tooltip", "instruction", "what do i do", "help with this step", "assisted", "도움말", "도움", "i 버튼", "아이 버튼", "정보 버튼", "안내 버튼", "툴팁", "이 단계", "뭘 해야", "무엇을 해야", "설명 보기"],
+      en: "For help on a particular screen area, turn on the small i help control and then select the area you want explained. It opens a short contextual instruction for that field or section. The Live demo is a separate general tour of the workflow.",
+      ko: "특정 화면 영역의 설명은 작은 i 도움말을 켠 다음, 설명이 필요한 영역을 선택하면 확인할 수 있어요. 그 입력칸이나 구역에서 해야 할 일을 짧게 안내합니다. Live demo는 전체 흐름을 둘러보는 별도의 일반 안내입니다."
+    },
+    {
+      keywords: ["save", "saved", "storage", "sync", "synchronise", "synchronize", "another device", "account", "database", "local", "sample data", "workplace data", "저장", "저장돼", "동기화", "다른 기기", "계정", "데이터베이스", "로컬", "샘플 데이터", "작업공간 데이터"],
+      en: "The sample demo is read-only and does not save your changes. In the signed-in workplace, records are stored through the configured PPM account service; using the same account on another device can sync them when the service and database are available. Avoid entering sensitive personal information in this prototype.",
+      ko: "샘플 데모는 읽기 전용이라 변경 사항을 저장하지 않습니다. 로그인한 Workplace의 기록은 연결된 PPM 계정 서비스를 통해 저장되며, 서비스와 데이터베이스가 이용 가능할 때 같은 계정으로 다른 기기에서도 동기화할 수 있어요. 프로토타입에 민감한 개인정보를 입력하지 마세요."
+    },
+    {
+      keywords: ["login", "sign in", "sign up", "create account", "password", "authentication", "role after login", "로그인", "회원가입", "계정 만들기", "비밀번호", "인증", "가입"],
+      en: "The site has a sign-in/account flow for the saved workplace. The read-only demo can be explored without creating an account. A role chosen for the demo only changes which sample workflow you see; it is not account authentication.",
+      ko: "사이트의 저장형 Workplace에는 로그인·계정 흐름이 있고, 읽기 전용 데모는 계정을 만들지 않고 둘러볼 수 있습니다. 데모에서 고른 역할은 보여줄 샘플 흐름을 바꾸는 것이며 계정 인증은 아닙니다."
+    },
+    {
+      keywords: ["feedback", "report a bug", "confusing", "suggestion", "prototype feedback", "피드백", "버그 신고", "오류 신고", "헷갈려", "제안", "의견"],
+      en: "Use the Give Feedback link to share what you tried, what you expected, and what happened instead. Naming the screen and the action that felt confusing makes the feedback easier for the team to use.",
+      ko: "Give Feedback 링크에서 시도한 작업, 기대한 결과, 실제로 일어난 일을 적어주세요. 헷갈렸던 화면과 누른 기능을 함께 적으면 팀이 피드백을 반영하기 쉬워집니다."
+    },
+    {
+      keywords: ["what is ppm", "what does this site do", "what can i do", "about this site", "website purpose", "overview", "ppm", "project portfolio management", "이 사이트", "사이트 기능", "무엇을 할", "무슨 사이트", "ppm이 뭐", "프로토타입", "전체 기능"],
+      en: "PPM supports a human-led IT project portfolio workflow: set investment context, submit project evidence, assess proposals against five criteria, compare and shortlist projects, build candidate portfolios, check budget and staff constraints, and record decisions. It does not calculate an automatic overall score or make final decisions.",
+      ko: "PPM은 IT 프로젝트 포트폴리오 검토를 지원합니다. 투자 맥락 설정, 프로젝트 근거 제출, 다섯 기준 평가, 비교와 Shortlist, 후보 포트폴리오 구성, 예산·인력 제약 검토, 최종 결정 기록을 할 수 있어요. 자동 종합 점수나 자동 최종 결정은 제공하지 않습니다."
     }
   ];
 
+  function normalize(value) {
+    return value.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim().replace(/\s+/g, " ");
+  }
+
+  function scoreTopic(topic, normalized, compact) {
+    let score = 0;
+    for (const keyword of topic.keywords) {
+      const term = normalize(keyword);
+      if (!term) continue;
+      const termCompact = term.replace(/\s/g, "");
+      if (normalized.includes(term) || compact.includes(termCompact)) {
+        score += term.includes(" ") ? 4 : term.length >= 6 ? 3 : 2;
+      }
+    }
+    return score;
+  }
+
   function answerFor(question) {
-    const topic = topics.find((item) => item.match.test(question));
+    const normalized = normalize(question);
+    const compact = normalized.replace(/\s/g, "");
     const isKorean = /[\u3131-\uD79D]/.test(question);
-    if (topic) return isKorean ? topic.ko : topic.en;
-    return isKorean
-      ? "이 질문은 아직 안내 자료에 없어요. 역할, 프로젝트 평가, 레이더 비교, Shortlist, 포트폴리오 시나리오, 예산 제약, 최종 결정에 대해 물어보세요."
-      : "I don’t have a clear answer for that in the prototype guide yet. Try asking about roles, project evaluation, radar comparison, the Shortlist, portfolio scenarios, budget checks, or final decisions.";
-  }
+    const ranked = topics
+      .map((topic) => ({ topic, score: scoreTopic(topic, normalized, compact) }))
+      .filter((item) => item.score > 0)
+      .sort((left, right) => right.score - left.score);
 
-  function setAssistantMode(enabled, unavailable = false) {
-    assistantAvailable = enabled;
-    const subtitle = root.querySelector(".ppm-assistant-header small");
-    if (enabled) {
-      subtitle.textContent = "AI help with this prototype";
-      note.textContent = "AI replies · Messages go to an AI service. Don’t share sensitive information.";
-    } else if (unavailable) {
-      subtitle.textContent = "Site guide";
-      note.textContent = "Guide mode · The AI service is unavailable; using built-in site answers.";
-    } else {
-      subtitle.textContent = "Site guide";
-      note.textContent = "Guide mode · AI replies are not configured yet; built-in answers are available.";
+    if (!ranked.length) {
+      return isKorean
+        ? "질문의 뜻을 아직 안내 답변과 연결하지 못했어요. 질문을 평소 말투로 다시 적거나 화면/기능 이름을 포함해 주세요. 역할, 목표·예산, 제안서, 평가, 비교, Shortlist, 포트폴리오, 데모, 저장 방식에 관해 물어볼 수 있어요."
+        : "I couldn’t match that wording to a guide answer yet. Rephrase it naturally or include the screen or feature name. I can help with roles, objectives and budget, proposals, evaluation, comparison, Shortlist, portfolios, the demo, or saving data.";
     }
-  }
 
-  async function checkAssistantStatus() {
-    if (!apiBase) {
-      setAssistantMode(false, true);
-      return;
+    const selected = [ranked[0]];
+    const asksMultiple = /\b(and|also|plus|both)\b|그리고|또한|그리고도|뿐만 아니라/.test(normalized);
+    if (asksMultiple && ranked[1] && ranked[1].score >= 5 && ranked[1].score >= ranked[0].score * 0.55) {
+      selected.push(ranked[1]);
     }
-    try {
-      const response = await fetch(`${apiBase}/api/assistant/status`, { headers: { Accept: "application/json" } });
-      if (!response.ok) throw new Error("Assistant status is unavailable");
-      const data = await response.json();
-      setAssistantMode(data.enabled === true);
-    } catch {
-      setAssistantMode(false, true);
-    }
-  }
-
-  async function requestAssistantReply(question) {
-    if (!apiBase || assistantAvailable === false) return answerFor(question);
-    const response = await fetch(`${apiBase}/api/assistant/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ message: question, history: conversation.slice(-8) })
-    });
-    const data = await response.json().catch(() => ({}));
-    if (response.status === 503) {
-      setAssistantMode(false);
-      return answerFor(question);
-    }
-    if (response.status === 429) {
-      note.textContent = "AI demo limit reached for this minute · built-in site answers are still available.";
-      return answerFor(question);
-    }
-    if (!response.ok || typeof data.reply !== "string" || !data.reply.trim()) {
-      throw new Error(data.message || "Assistant reply failed");
-    }
-    setAssistantMode(true);
-    return data.reply.trim();
+    return selected.map(({ topic }) => isKorean ? topic.ko : topic.en).join(isKorean ? "\n\n" : "\n\n");
   }
 
   function addMessage(text, sender) {
@@ -162,7 +172,6 @@
     message.append(paragraph);
     messages.append(message);
     messages.scrollTop = messages.scrollHeight;
-    return message;
   }
 
   function openChat() {
@@ -177,49 +186,30 @@
     launcher.focus();
   }
 
-  async function sendQuestion(value) {
+  function sendQuestion(value) {
     const question = value.trim().slice(0, 500);
     if (!question) return;
-    suggestions.hidden = true;
     addMessage(question, "user");
     input.value = "";
     input.disabled = true;
     sendButton.disabled = true;
-    const pending = addMessage("One moment…", "assistant");
-    pending.classList.add("is-pending");
-    try {
-      const answer = await requestAssistantReply(question);
-      pending.querySelector("p").textContent = answer;
-      conversation.push({ role: "user", content: question }, { role: "assistant", content: answer });
-      conversation = conversation.slice(-8);
-    } catch {
-      const answer = answerFor(question);
-      pending.querySelector("p").textContent = answer;
-      pending.classList.remove("is-pending");
-      setAssistantMode(false, true);
-      conversation = [];
-    } finally {
-      pending.classList.remove("is-pending");
-      input.disabled = false;
-      sendButton.disabled = false;
-      input.focus();
-    }
-    messages.scrollTop = messages.scrollHeight;
+    addMessage(answerFor(question), "assistant");
+    input.disabled = false;
+    sendButton.disabled = false;
+    input.focus();
   }
 
-  addMessage("Hi! Ask me how a PPM screen or workflow works. I can explain the prototype and its sample data.", "assistant");
+  addMessage("Hi! Type a question about any PPM screen or workflow in your own words. I match it to the closest built-in answer in English or Korean.", "assistant");
   launcher.addEventListener("click", () => panel.hidden ? openChat() : closeChat());
   root.querySelector(".ppm-assistant-close").addEventListener("click", closeChat);
   root.querySelector(".ppm-assistant-new").addEventListener("click", () => {
     messages.replaceChildren();
-    suggestions.hidden = false;
-    conversation = [];
-    addMessage("Hi! Ask me how a PPM screen or workflow works. I can explain the prototype and its sample data.", "assistant");
+    addMessage("Hi! Type a question about any PPM screen or workflow in your own words. I match it to the closest built-in answer in English or Korean.", "assistant");
     input.focus();
   });
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    void sendQuestion(input.value);
+    sendQuestion(input.value);
   });
   input.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -227,12 +217,7 @@
       form.requestSubmit();
     }
   });
-  suggestions.querySelectorAll("button").forEach((button) => button.addEventListener("click", () => {
-    openChat();
-    void sendQuestion(button.textContent);
-  }));
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !panel.hidden) closeChat();
   });
-  void checkAssistantStatus();
 })();
