@@ -47,17 +47,17 @@
       ko: "역할은 세 가지예요. Project Proposer는 프로젝트 근거를 제출하고, Reviewer는 다섯 기준을 평가해 이유를 남기며, Portfolio Manager는 투자 맥락 설정부터 비교·Shortlist·후보 포트폴리오·제약 검토·최종 결정까지 담당합니다. 역할 선택 화면에서 역할을 고르면 해당 역할의 메뉴가 보여요. 샘플 역할 체험은 읽기 전용입니다."
     },
     {
-      keywords: ["investment context", "planning context", "planning cycle", "planning period", "planning phase", "planning stage", "planning timeframe", "planning activities", "portfolio planning", "start of planning", "beginning of the cycle", "set up a planning cycle", "before proposals", "before projects are submitted", "what should i do during planning", "business unit", "planning horizon", "staff capacity", "budget limit", "set objectives", "investment goals", "strategic goals", "objectives", "goals", "set budget", "budget", "capacity", "투자 맥락", "투자 컨텍스트", "맥락 설정", "계획 주기", "계획 기간", "사업부", "예산", "인력 한도", "인력 용량", "목표 설정"],
+      keywords: ["investment context", "investment context screen", "planning context", "planning cycle", "planning period", "planning phase", "planning stage", "planning timeframe", "planning activities", "planning setup", "portfolio planning", "start of planning", "beginning of the cycle", "set up a planning cycle", "before proposals", "before projects are submitted", "what should i do during planning", "business unit", "planning horizon", "staff capacity", "budget limit", "set objectives", "investment goals", "strategic goals", "objectives", "goals", "set budget", "budget", "capacity", "투자 맥락", "투자 컨텍스트", "맥락 설정", "계획 주기", "계획 기간", "사업부", "예산", "인력 한도", "인력 용량", "목표 설정"],
       en: "At the start of a planning period, the Portfolio Manager sets the cycle details, objectives, total budget, and available staff capacity in Investment Context. Save that context before proposals are submitted. Later, candidate portfolio totals are checked against the budget and staff limits; being within those limits does not automatically approve a portfolio.",
       ko: "Investment Context에서는 제안서를 평가하기 전에 계획 주기, 목표, 예산, 사용 가능한 인력 규모를 설정합니다. 제안자는 각 프로젝트의 주요 목표를 선택해요. 이후 후보 포트폴리오의 비용과 인력 합계를 이 한도와 비교합니다. 한도 이내라고 자동 승인되는 것은 아닙니다."
     },
     {
-      keywords: ["project proposal", "proposal form", "propose a project", "submit a project", "project entry", "project details", "expected benefit", "staff requirement", "timeline", "dependency", "cost", "fte", "제안서", "프로젝트 제안", "프로젝트 입력", "프로젝트 등록", "제출", "기대 효과", "기대효과", "담당자", "필요 인력", "일정", "비용", "의존성", "위험"],
+      keywords: ["project proposal", "project proposal screen", "proposal", "proposals", "proposal screen", "proposal form", "propose project", "propose a project", "submit a project", "project entry", "project details", "expected benefit", "staff requirement", "timeline", "dependency", "cost", "fte", "제안서", "프로젝트 제안", "프로젝트 입력", "프로젝트 등록", "제출", "기대 효과", "기대효과", "담당자", "필요 인력", "일정", "비용", "의존성", "위험"],
       en: "A proposal should provide the project name and owner, primary objective, description, expected benefits, estimated cost, staff requirement, timeline, and known risks or dependencies. This evidence helps the Reviewer assess the project. In the read-only sample demo, you can inspect the proposal screens but cannot save a new proposal.",
       ko: "제안서에는 프로젝트명과 담당자, 주요 목표, 설명, 기대효과, 예상 비용, 필요 인력, 일정, 알려진 위험이나 의존성을 입력합니다. Reviewer가 이 정보를 근거로 프로젝트를 평가해요. 읽기 전용 샘플 데모에서는 제안 화면을 볼 수 있지만 새 제안서를 저장할 수는 없습니다."
     },
     {
-      keywords: ["evaluation", "evaluate", "assessment", "assess", "assessed", "rating", "ratings", "score", "scoring", "5 mean", "what does 5 mean", "rating of 5", "five point scale", "criteria", "criterion", "review rationale", "reviewer reason", "risk", "risk score", "risk rating", "risk manageability", "strategic alignment", "feasibility", "urgency", "평가", "평가하기", "점수", "기준", "평가 기준", "근거", "검토 이유", "리뷰", "위험 관리", "시급성", "실행 가능성"],
+      keywords: ["project evaluation", "evaluation screen", "project evaluation screen", "reviewer evaluation", "evaluation", "evaluate", "assessment", "assess", "assessed", "rating", "ratings", "score", "scoring", "5 mean", "what does 5 mean", "rating of 5", "five point scale", "criteria", "criterion", "review rationale", "reviewer reason", "risk", "risk score", "risk rating", "risk manageability", "strategic alignment", "feasibility", "urgency", "평가", "평가하기", "점수", "기준", "평가 기준", "근거", "검토 이유", "리뷰", "위험 관리", "시급성", "실행 가능성"],
       en: "The Reviewer gives separate 1–5 ratings for Strategic Alignment, Expected Business Value, Delivery Feasibility, Risk Manageability, and Time Criticality, and adds a short reason for each rating. For Risk Manageability, 5 means the risk is lower or easier to manage. PPM does not add ratings into one overall score or make an automatic decision.",
       ko: "Reviewer는 Strategic Alignment, Expected Business Value, Delivery Feasibility, Risk Manageability, Time Criticality에 각각 1–5점을 주고 각 점수의 짧은 근거를 적습니다. Risk Manageability는 5점일수록 위험이 낮거나 관리하기 쉽다는 뜻이에요. PPM은 점수를 하나의 총점으로 합치거나 자동 결정을 내리지 않습니다."
     },
@@ -67,27 +67,32 @@
       ko: "제출 후 아직 평가되지 않은 제안서는 검토 대기 상태로 표시됩니다. Reviewer가 평가를 시작하거나 기록하면 상태가 그에 맞게 바뀝니다. ‘검토 대기’는 아직 검토가 안 됐다는 뜻이지, 검토가 필요 없다는 뜻이 아니에요. 점수와 근거는 Project Evaluation에서 기록합니다."
     },
     {
-      keywords: ["search", "filter", "sort", "find projects", "project list", "by status", "by cost", "strategic objective", "검색", "찾기", "필터", "정렬", "프로젝트 목록", "상태별", "비용별", "목표별", "전략 목표"],
+      keywords: ["project overview", "portfolio overview", "overview screen", "overview", "proposal list", "proposal pipeline", "search", "filter", "sort", "find projects", "project list", "by status", "by cost", "strategic objective", "검색", "찾기", "필터", "정렬", "프로젝트 목록", "상태별", "비용별", "목표별", "전략 목표"],
       en: "In Project Overview, use search to find proposals and filters to narrow the list by available project attributes such as objective, status, risk, feasibility, or cost. Sorting changes the display order; it does not change project ratings or make a recommendation.",
       ko: "Project Overview에서 검색으로 제안서를 찾고, 제공되는 필터를 사용해 목표·상태·위험·실행 가능성·비용 등에 따라 목록을 좁힙니다. 정렬은 화면의 표시 순서만 바꾸며 점수나 추천 결과를 바꾸지 않습니다."
     },
     {
-      keywords: ["comparison", "compare", "radar", "radar chart", "chart", "overlay", "one project", "single project", "four projects", "side by side", "비교", "레이더", "레이더 차트", "차트", "한 프로젝트", "하나만", "한 개", "겹쳐", "나란히 비교"],
+      keywords: ["comparison", "comparison screen", "detailed comparison", "project comparison", "compare projects", "compare", "radar", "radar chart", "chart", "overlay", "one project", "single project", "four projects", "side by side", "비교", "레이더", "레이더 차트", "차트", "한 프로젝트", "하나만", "한 개", "겹쳐", "나란히 비교"],
       en: "Comparison shows a five-criterion radar profile even when one evaluated project is selected. Select two to four projects to overlay their profiles for side-by-side comparison. The chart visualizes ratings; it does not rank projects, calculate a winner, or replace the reviewer’s rationale.",
       ko: "평가된 프로젝트를 하나만 선택해도 Comparison에서 다섯 기준 레이더 프로필을 볼 수 있어요. 두 개에서 네 개를 선택하면 프로필을 한 차트에 겹쳐 비교합니다. 차트는 평가 점수를 시각화할 뿐 프로젝트 순위나 승자를 계산하지 않고, Reviewer의 근거를 대신하지도 않습니다."
     },
     {
-      keywords: ["shortlist", "short-listed", "short list", "save for later", "further consideration", "shortlist vs comparison", "쇼트리스트", "후보 목록", "후보로", "나중에 검토", "추가 검토", "비교 목록"],
+      keywords: ["shortlist", "shortlist screen", "shortlist page", "short-listed", "short list", "shortlisted projects", "save for later", "further consideration", "shortlist vs comparison", "쇼트리스트", "후보 목록", "후보로", "나중에 검토", "추가 검토", "비교 목록"],
       en: "Shortlist is a saved set of projects for further consideration. It is different from selecting projects temporarily for Comparison, and it does not mean they are approved. Shortlisted projects can be considered when building a candidate portfolio.",
       ko: "Shortlist는 나중에 더 검토할 프로젝트를 담아두는 목록입니다. Comparison에서 잠시 비교할 프로젝트를 선택하는 것과 다르고, 승인됐다는 뜻도 아니에요. Shortlist에 담긴 프로젝트를 후보 포트폴리오 구성에 사용할 수 있습니다."
     },
     {
-      keywords: ["candidate portfolio", "candidate scenario", "build portfolio", "portfolio scenario", "scenario", "shortlisted proposals", "shortlisted initiatives", "combine projects", "combined portfolio", "combined projects", "combined cost", "portfolio exceeds", "aggregate cost", "total cost", "resource requirement", "resource limit", "resource capacity", "resource constraints", "available resources", "available budget", "available staff", "staff capacity", "budget check", "budget overrun", "over budget", "over the budget", "goes over budget", "goes over the budget", "above budget", "exceeds budget", "exceeds the budget", "exceeds available", "exceeds capacity", "exceeds the limit", "scenario budget", "budget exceeded", "budget and staff", "budget and resources", "staff", "resources", "constraint", "shortage", "shortage of resources"],
+      keywords: ["candidate portfolio", "build candidate portfolio", "build candidate portfolio screen", "candidate scenario", "build portfolio", "portfolio building", "portfolio scenario", "scenario", "shortlisted proposals", "shortlisted initiatives", "combine projects", "combined portfolio", "combined projects", "combined cost", "portfolio exceeds", "aggregate cost", "total cost", "resource requirement", "resource limit", "resource capacity", "resource constraints", "available resources", "available budget", "available staff", "staff capacity", "budget check", "budget overrun", "over budget", "over the budget", "goes over budget", "goes over the budget", "above budget", "exceeds budget", "exceeds the budget", "exceeds available", "exceeds capacity", "exceeds the limit", "scenario budget", "budget exceeded", "budget and staff", "budget and resources", "staff", "resources", "constraint", "shortage", "shortage of resources"],
       en: "Build Candidate Portfolio combines shortlisted projects into a candidate scenario. PPM adds the selected projects’ estimated costs and staff requirements, then checks the totals against the budget and capacity from Investment Context. It flags a limit that is exceeded. Passing the check is informational, not approval.",
       ko: "Build Candidate Portfolio에서는 Shortlist 프로젝트를 후보 시나리오로 조합합니다. 선택한 프로젝트의 예상 비용과 인력 요구량을 합산해 Investment Context의 예산·인력 한도와 비교하고, 초과한 항목을 표시해요. 한도 검토 통과는 참고 정보이며 승인을 뜻하지 않습니다."
     },
     {
-      keywords: ["approve", "approval", "defer", "reject", "final decision", "decision rationale", "human decision", "승인", "보류", "거절", "최종 결정", "결정 이유", "사람이 결정", "자동 결정"],
+      keywords: ["portfolio review", "portfolio review screen", "portfolio review page", "review a scenario", "review the portfolio", "candidate portfolio review", "scenario review", "portfolio summary", "project mix", "objective coverage", "포트폴리오 검토", "시나리오 검토"],
+      en: "Portfolio Review is where the Portfolio Manager inspects a saved candidate scenario before deciding. Check which projects it contains, objective coverage, combined cost, staff demand, and any constraint warnings. Review the proposal evidence as well; passing budget and staff checks is not an approval.",
+      ko: "Portfolio Review에서는 Portfolio Manager가 최종 결정 전에 저장된 후보 시나리오를 살펴봅니다. 포함된 프로젝트, 목표별 구성, 총비용, 인력 수요, 제약 경고를 확인하고 제안 근거도 검토하세요. 예산과 인력 한도를 통과해도 승인된 것은 아닙니다."
+    },
+    {
+      keywords: ["decision screen", "decisions page", "decision", "decisions", "record a decision", "approve", "approval", "defer", "reject", "final decision", "decision rationale", "human decision", "승인", "보류", "거절", "최종 결정", "결정 이유", "사람이 결정", "자동 결정"],
       en: "The Portfolio Manager records the final approve, defer, or reject decision with a reason. This remains a human decision: the system organizes proposal evidence and portfolio constraints but does not automatically approve, defer, or reject projects.",
       ko: "Portfolio Manager가 승인·보류·거절 중 최종 결정을 이유와 함께 기록합니다. 결정은 사람이 내려요. 시스템은 제안 근거와 포트폴리오 제약을 정리하지만 프로젝트를 자동 승인·보류·거절하지 않습니다."
     },
@@ -130,7 +135,7 @@
   const stopWords = new Set("a an and are as at be by can do does for from how i in is it me my of on or our the this to what when where which who why with you your".split(" "));
   const topicDomains = [
     "question entry", "role selection", "investment context", "project proposal", "project evaluation", "review status",
-    "project overview", "project comparison", "shortlist", "candidate portfolio", "portfolio decision", "live demo",
+    "project overview", "project comparison", "shortlist", "candidate portfolio", "portfolio review", "portfolio decision", "live demo",
     "contextual help", "saved workplace", "account access", "user feedback", "PPM workflow"
   ];
   const subjectForms = [
@@ -294,13 +299,44 @@
     return scores;
   }
 
+  function extractQuestionFocus(question) {
+    let focus = normalize(question);
+    const questionStarters = [
+      /^what is the purpose of\s+/,
+      /^what should i do (?:in|during|at|on|for|with)\s+/,
+      /^what do i do (?:in|during|at|on|for|with)\s+/,
+      /^what can i do (?:in|during|at|on|for|with)\s+/,
+      /^what do i need to do (?:in|during|at|on|for|with)\s+/,
+      /^what is\s+/,
+      /^what are\s+/,
+      /^what s\s+/,
+      /^what does\s+/,
+      /^how should i use\s+/,
+      /^how do i use\s+/,
+      /^how can i use\s+/,
+      /^(?:can you explain|could you explain|explain|tell me about)\s+/,
+    ];
+    const matchedStarter = questionStarters.find((starter) => starter.test(focus));
+    if (matchedStarter) focus = focus.replace(matchedStarter, "");
+    focus = focus
+      .replace(/^(?:the|a|an|this|that|my|our|your)\s+/, "")
+      .replace(/\s+(?:in|on)\s+(?:the\s+)?(?:ppm\s+)?(?:site|website|app|system)$/, "")
+      .replace(/\s+(?:screen|page|feature|workflow)\s+(?:in|on)\s+(?:the\s+)?(?:ppm\s+)?(?:site|website|app|system)$/, "")
+      .replace(/\s+(?:used for|for|mean|means|do|work)$/, "")
+      .trim();
+    return focus;
+  }
+
   function answerFor(question) {
     const normalized = normalize(question);
+    const focus = extractQuestionFocus(question);
     const patternScores = scoreQuestionPatterns(question);
+    const focusPatternScores = focus && focus !== normalized ? scoreQuestionPatterns(focus) : null;
     const ranked = topics.map((topic, index) => {
       const direct = scoreTopic(topic, normalized);
-      const pattern = patternScores[index];
-      return { topic, score: direct * 2 + pattern, direct, pattern };
+      const focusDirect = focus && focus !== normalized ? scoreTopic(topic, focus) : 0;
+      const pattern = patternScores[index] + (focusPatternScores ? focusPatternScores[index] * 1.5 : 0);
+      return { topic, score: direct * 2 + focusDirect * 4 + pattern, direct: Math.max(direct, focusDirect), pattern };
     }).sort((left, right) => right.score - left.score);
 
     if (!ranked.length || (ranked[0].direct === 0 && ranked[0].pattern < 2)) {
