@@ -6,7 +6,7 @@
   const root = document.createElement("div");
   root.id = "ppm-assistant";
   root.innerHTML = `
-    <button class="ppm-assistant-launcher" type="button" aria-label="Ask about PPM" aria-expanded="false" aria-controls="ppm-assistant-panel" title="Ask about PPM">
+    <button class="ppm-assistant-launcher" type="button" aria-label="Ask about PPM; drag to move" aria-expanded="false" aria-controls="ppm-assistant-panel" title="Ask about PPM · drag to move">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11.4a7.4 7.4 0 0 1-7.4 7.4H6L3 21v-9.6A7.4 7.4 0 0 1 10.4 4H13a7 7 0 0 1 7 7.4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 10h7M8 14h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
     </button>
     <section class="ppm-assistant-panel" id="ppm-assistant-panel" aria-label="PPM site guide" hidden>
@@ -33,6 +33,100 @@
   const input = root.querySelector("#ppm-assistant-input");
   const sendButton = form.querySelector("button[type='submit']");
   const newChatButton = root.querySelector(".ppm-assistant-new");
+
+  const launcherPositionKey = "ppm-assistant-launcher-position-v1";
+  const clamp = (value, min, max) => Math.min(Math.max(value, min), Math.max(min, max));
+
+  function setLauncherPosition(x, y, persist = false) {
+    const margin = 8;
+    const left = clamp(x, margin, window.innerWidth - launcher.offsetWidth - margin);
+    const top = clamp(y, margin, window.innerHeight - launcher.offsetHeight - margin);
+    launcher.style.left = `${left}px`;
+    launcher.style.top = `${top}px`;
+    launcher.style.right = "auto";
+    launcher.style.bottom = "auto";
+    if (persist) {
+      try {
+        localStorage.setItem(launcherPositionKey, JSON.stringify({ x: left, y: top }));
+      } catch {
+        // Keep the launcher movable even when browser storage is unavailable.
+      }
+    }
+  }
+
+  try {
+    const savedPosition = JSON.parse(localStorage.getItem(launcherPositionKey) || "null");
+    if (Number.isFinite(savedPosition?.x) && Number.isFinite(savedPosition?.y)) {
+      setLauncherPosition(savedPosition.x, savedPosition.y);
+    }
+  } catch {
+    // Ignore unavailable or invalid saved positions and use the default corner.
+  }
+
+  let pointerStart = null;
+  let suppressNextClick = false;
+
+  launcher.addEventListener("pointerdown", (event) => {
+    if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
+    const rect = launcher.getBoundingClientRect();
+    pointerStart = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      left: rect.left,
+      top: rect.top,
+      moved: false
+    };
+    launcher.setPointerCapture(event.pointerId);
+  });
+
+  launcher.addEventListener("pointermove", (event) => {
+    if (!pointerStart || event.pointerId !== pointerStart.pointerId) return;
+    const deltaX = event.clientX - pointerStart.startX;
+    const deltaY = event.clientY - pointerStart.startY;
+    if (!pointerStart.moved && Math.hypot(deltaX, deltaY) < 5) return;
+    pointerStart.moved = true;
+    launcher.classList.add("is-dragging");
+    setLauncherPosition(pointerStart.left + deltaX, pointerStart.top + deltaY);
+  });
+
+  function finishLauncherDrag(event) {
+    if (!pointerStart || event.pointerId !== pointerStart.pointerId) return;
+    const moved = pointerStart.moved;
+    pointerStart = null;
+    launcher.classList.remove("is-dragging");
+    if (moved) {
+      const rect = launcher.getBoundingClientRect();
+      setLauncherPosition(rect.left, rect.top, true);
+      suppressNextClick = true;
+      window.setTimeout(() => { suppressNextClick = false; }, 0);
+    }
+  }
+
+  launcher.addEventListener("pointerup", finishLauncherDrag);
+  launcher.addEventListener("pointercancel", finishLauncherDrag);
+
+  function placeChatPanel() {
+    if (panel.hidden) return;
+    const launcherRect = launcher.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+    const gap = 12;
+    const margin = 8;
+    const left = clamp(
+      launcherRect.left + launcherRect.width / 2 > window.innerWidth / 2
+        ? launcherRect.right - panelRect.width
+        : launcherRect.left,
+      margin,
+      window.innerWidth - panelRect.width - margin
+    );
+    let top = launcherRect.top - panelRect.height - gap;
+    if (top < margin) top = launcherRect.bottom + gap;
+    top = clamp(top, margin, window.innerHeight - panelRect.height - margin);
+    panel.style.left = `${left}px`;
+    panel.style.top = `${top}px`;
+    panel.style.right = "auto";
+    panel.style.bottom = "auto";
+  }
 
   // The built-in guide is a private, local fallback when the optional AI service is unavailable.
   const topics = [
@@ -371,6 +465,7 @@
 
   function openChat() {
     panel.hidden = false;
+    placeChatPanel();
     launcher.setAttribute("aria-expanded", "true");
     input.focus();
   }
@@ -435,7 +530,10 @@
   }
 
   addMessage("Type your question and I'll help.", "assistant");
-  launcher.addEventListener("click", () => panel.hidden ? openChat() : closeChat());
+  launcher.addEventListener("click", () => {
+    if (suppressNextClick) return;
+    panel.hidden ? openChat() : closeChat();
+  });
   root.querySelector(".ppm-assistant-close").addEventListener("click", closeChat);
   newChatButton.addEventListener("click", () => {
     messages.replaceChildren();
@@ -454,5 +552,10 @@
   });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !panel.hidden) closeChat();
+  });
+  window.addEventListener("resize", () => {
+    const rect = launcher.getBoundingClientRect();
+    setLauncherPosition(rect.left, rect.top);
+    if (!panel.hidden) placeChatPanel();
   });
 })();
