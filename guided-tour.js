@@ -151,7 +151,7 @@
     layer.hidden = false;
     layer.innerHTML = `<div class="tour-popover" role="dialog" aria-modal="true" aria-labelledby="tour-title"><p class="tour-progress">Live demo · ${String(stepIndex + 1).padStart(2, "0")} / ${steps.length}</p><h2 id="tour-title">${step.title}</h2><p>${step.description}</p><footer><button class="tour-skip" type="button" data-tour-skip>Skip</button><div><button type="button" data-tour-back ${stepIndex === 0 ? "disabled" : ""}>Back</button><button type="button" data-tour-next>${stepIndex === steps.length - 1 ? "Finish" : "Next"}</button></div></footer></div>`;
     layer.querySelector("[data-tour-next]").addEventListener("click", () => {
-      if (stepIndex === steps.length - 1) { finish(true, true); return; }
+      if (stepIndex === steps.length - 1) { finish(true); return; }
       stepIndex += 1;
       showStep();
     });
@@ -163,7 +163,7 @@
     }));
   }
 
-  function finish(returnToDefault = false, completed = false) {
+  function finish(returnToDefault = false) {
     if (!layer) return;
     renderVersion += 1;
     removeFocus();
@@ -172,7 +172,6 @@
     if (resizeHandler) window.removeEventListener("resize", resizeHandler);
     resizeHandler = null;
     if (returnToDefault) window.PPMWorkspace?.returnToDefault();
-    if (completed) window.dispatchEvent(new CustomEvent("ppm:tour-finished", { detail: { role: $(".workspace-nav")?.dataset.activeRole || "" } }));
   }
 
   function start() {

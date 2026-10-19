@@ -9,7 +9,7 @@
   const REMOTE_USER_KEY = "ppm-auth-user-v1";
   const DEMO_ROLE_KEY = "ppm-demo-role-v1";
   const DEMO_MODE_KEY = "ppm-demo-mode-v1";
-  const PAGE_VERSION = "20261012-demo-mvp-v1";
+  const PAGE_VERSION = "20261019-remove-assistance-panels-v1";
   const ROLE_SELECT_URL = pageURL("role-select.html");
   const ASSISTED_MODE_PREFIX = "ppm-assisted-mode-v1:";
   const ITERATIONS = 210000;
@@ -172,6 +172,7 @@
     if (isDemoMode() && role) {
       slot.hidden = false;
       slot.innerHTML = `<div class="profile-control"><button class="profile-avatar demo-profile-trigger" type="button" aria-label="Account menu" title="Account" aria-expanded="false"><svg viewBox="0 0 34 34" fill="currentColor" aria-hidden="true" focusable="false"><g transform="translate(2 -1.8)"><circle cx="11" cy="8" r="5.2"/><path d="M11 15c-5.3 0-9.5 3.9-9.5 8.7V25h13a9.6 9.6 0 0 1 4.8-9.4A14.5 14.5 0 0 0 11 15Z"/><path class="demo-profile-gear" fill-rule="evenodd" d="M29.73 21.63L30.06 22.71L31.88 22.61L31.88 25.39L30.06 25.29L29.73 26.37L29.20 27.38L30.55 28.59L28.59 30.55L27.38 29.20L26.37 29.73L25.29 30.06L25.39 31.88L22.61 31.88L22.71 30.06L21.63 29.73L20.62 29.20L19.41 30.55L17.45 28.59L18.80 27.38L18.27 26.37L17.94 25.29L16.12 25.39L16.12 22.61L17.94 22.71L18.27 21.63L18.80 20.62L17.45 19.41L19.41 17.45L20.62 18.80L21.63 18.27L22.71 17.94L22.61 16.12L25.39 16.12L25.29 17.94L26.37 18.27L27.38 18.80L28.59 17.45L30.55 19.41L29.20 20.62Z M27.1 24a3.1 3.1 0 1 0-6.2 0a3.1 3.1 0 1 0 6.2 0Z"/></g></svg></button><section class="profile-menu" hidden aria-label="Demo settings"><button class="profile-menu-close" type="button" aria-label="Close settings">×</button><div class="profile-summary"><div><strong>Sample workspace</strong><span>Read-only demo</span><small>${escapeHTML(role)}</small></div></div><label class="profile-mode-toggle"><input type="checkbox" data-assisted-mode-toggle ${isAssistedMode("demo") ? "checked" : ""}><span><strong>Assisted mode</strong><small>Show guidance for the current step.</small></span></label><a class="profile-menu-action" href="${ROLE_SELECT_URL}"><span aria-hidden="true">↔</span> Change demo role</a><a class="profile-menu-action" href="${user ? pageURL("workplace.html") : authURL("login")}" data-use-account-sign-in><span aria-hidden="true">↗</span> ${user ? "Return to your workplace" : "Sign in"}</a></section></div>`;
+      slot.querySelector(".profile-mode-toggle")?.remove();
       const trigger = slot.querySelector(".profile-avatar[aria-expanded]");
       const menu = slot.querySelector(".profile-menu");
       const close = () => { menu.hidden = true; trigger.setAttribute("aria-expanded", "false"); };
@@ -180,7 +181,6 @@
         trigger.setAttribute("aria-expanded", String(!menu.hidden));
       });
       slot.querySelector(".profile-menu-close").addEventListener("click", close);
-      slot.querySelector("[data-assisted-mode-toggle]").addEventListener("change", (event) => setAssistedMode(event.currentTarget.checked, "demo"));
       slot.querySelector("[data-use-account-sign-in]").addEventListener("click", () => setDemoMode(false));
       document.addEventListener("click", (event) => { if (!slot.contains(event.target)) close(); });
       document.addEventListener("keydown", (event) => { if (event.key === "Escape") close(); });
@@ -195,6 +195,7 @@
     slot.hidden = false;
     const shared = Boolean(apiBase());
     slot.innerHTML = `<div class="profile-control"><button class="profile-avatar" type="button" aria-label="${escapeHTML(user.name)} account" aria-expanded="false"><span>${escapeHTML(avatarName(user.name))}</span></button><section class="profile-menu" hidden aria-label="Signed-in account"><button class="profile-menu-close" type="button" aria-label="Close account menu">×</button><div class="profile-summary"><span class="profile-avatar profile-avatar-large">${escapeHTML(avatarName(user.name))}</span><div><strong>${escapeHTML(user.name)}</strong><span>${escapeHTML(user.email)}</span><small>${escapeHTML(user.role)}</small></div></div><label class="profile-mode-toggle"><input type="checkbox" data-assisted-mode-toggle ${isAssistedMode(user.id) ? "checked" : ""}><span><strong>Assisted mode</strong><small>Show guidance for the current step.</small></span></label><a class="profile-menu-action" href="${pageURL("account.html")}"><span aria-hidden="true">⚙</span> Manage your PPM account</a><a class="profile-menu-action" href="${ROLE_SELECT_URL}"><span aria-hidden="true">↗</span> Explore the sample demo</a><a class="profile-menu-action" href="${authURL("login")}"><span aria-hidden="true">＋</span> Add another account</a><button class="profile-menu-action profile-signout" type="button"><span aria-hidden="true">↪</span> Sign out</button><p class="profile-menu-note">${shared ? "Account available on your other devices" : "Saved in this browser"}</p></section></div>`;
+    slot.querySelector(".profile-mode-toggle")?.remove();
     const trigger = slot.querySelector(".profile-avatar[aria-expanded]");
     const menu = slot.querySelector(".profile-menu");
     const close = () => { menu.hidden = true; trigger.setAttribute("aria-expanded", "false"); };
@@ -203,7 +204,6 @@
       trigger.setAttribute("aria-expanded", String(!menu.hidden));
     });
     slot.querySelector(".profile-menu-close").addEventListener("click", close);
-    slot.querySelector("[data-assisted-mode-toggle]").addEventListener("change", (event) => setAssistedMode(event.currentTarget.checked, user.id));
     slot.querySelector(".profile-signout").addEventListener("click", async () => {
       const token = remoteToken();
       if (apiBase() && token) {

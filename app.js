@@ -1054,7 +1054,6 @@ function recordDecision(id, decision) {
   state.decisions[id] = { decision, date: new Date().toLocaleDateString("en-AU"), scenario: scenarioName };
   storage.set(STORAGE.decisions, JSON.stringify(state.decisions));
   renderAll();
-  showAssistedCompletion();
 }
 
 function openReview(id) {
@@ -1095,7 +1094,6 @@ function openReview(id) {
   $("#evaluation-comment-message").textContent = "";
   renderEvaluationComments(proposal);
   reviewDialog.showModal();
-  renderReviewGuidance();
 }
 
 function saveReview() {
@@ -1133,8 +1131,6 @@ function saveReview() {
   lockCompletedReview(proposal);
   renderEvaluationComments(proposal);
   renderAll();
-  renderReviewGuidance();
-  showAssistedCompletion();
 }
 
 function renderReviewQueue() {
@@ -1674,7 +1670,6 @@ function submitProposal(event) {
   const isProposer = activeAccount()?.role === "Project Proposer";
   $("#proposal-form-message").textContent = "Proposal submitted. It is now awaiting reviewer assessment.";
   setActiveView(isProposer ? "proposer" : "reviewer");
-  showAssistedCompletion();
 }
 
 function activeAccount() {
@@ -1816,142 +1811,6 @@ function bindContextHelpSelection() {
   });
 }
 
-function assistanceEnabled() {
-  return !TEST_MODE && window.PPMAuth?.isAssistedMode() === true;
-}
-
-function guidanceForView(view) {
-  const evaluated = proposals.filter(isEvaluated);
-  const pending = proposals.length - evaluated.length;
-  const current = proposals.find((proposal) => proposal.id === state.selectedId);
-  const shortlist = shortlistedProposals();
-  const prefix = GUEST_DEMO ? "Sample data: " : "";
-  if (view === "organisation") return {
-    text: `${prefix}${organisation.objectives.length} objective${organisation.objectives.length === 1 ? "" : "s"}, ${money(organisation.budget)} budget, and ${organisation.staff} FTE are available for this planning cycle.`,
-    detail: "Set objectives before proposals are entered. Each proposal selects one primary objective. Budget and staff capacity are later compared with the combined demands of a candidate portfolio; being within these limits does not approve it.",
-    next: "Save the context, then project proposers can submit evidence for reviewer assessment."
-  };
-  if (view === "proposer") {
-    const fields = Array.from($("#proposal-form").querySelectorAll("[required]"));
-    const missing = fields.filter((field) => !String(field.value).trim());
-    const labels = missing.slice(0, 3).map((field) => field.closest("label")?.firstChild?.textContent.trim() || field.name);
-    return {
-      text: missing.length ? `${missing.length} required field${missing.length === 1 ? "" : "s"} still need information: ${labels.join(", ")}${missing.length > 3 ? ", …" : ""}.` : "The required fields are filled in. Check that the benefits, estimates, and risks explain the evidence behind the proposal.",
-      detail: "Choose the objective this project supports. Describe the expected benefit and the basis of your cost, staff, and timeline estimates. Record risks and dependencies so the reviewer can assess feasibility and risk using the five criteria.",
-      next: GUEST_DEMO ? "This example is read-only. Switch to Reviewer to inspect the next stage." : "Submit the proposal when the evidence is ready. A reviewer then records five ratings and their reasons."
-    };
-  }
-  if (view === "reviewer") return {
-    text: `${prefix}${pending} proposal${pending === 1 ? " is" : "s are"} awaiting a complete evaluation; ${evaluated.length} have all five ratings and reasons.`,
-    detail: "Open a proposal and check its evidence before selecting each 1–5 rating. The scoring guide explains the scale. For Risk, a higher rating means lower or more manageable risk. Explain the evidence behind every rating; a missing reason leaves the evaluation incomplete.",
-    next: "Completed evaluations become available to the Portfolio Manager. Recorded ratings remain visible with their rationale."
-  };
-  if (view === "manager") return {
-    text: current ? `${current.title}: ${current.missing.length ? `${current.missing.length} information gap${current.missing.length === 1 ? "" : "s"} recorded. Check these alongside the reviewer rationale.` : "Inspect the five ratings and their reasons before choosing it for comparison."}` : `${prefix}${evaluated.length} evaluated projects are available. ${pending ? `${pending} more still need a complete reviewer evaluation.` : "Select a project to inspect its evidence."}`,
-    detail: "Use objective, feasibility, risk, cost, and status filters to narrow the list. Click a criterion to see the reviewer's reasoning. Selecting a project for comparison only creates a temporary set; it does not shortlist or approve the project.",
-    next: "Select one project for its radar profile, or two to four for a detailed comparison."
-  };
-  if (view === "comparison" || view === "insights") {
-    const selected = selectedProposals();
-    return {
-      text: view === "insights" && current ? `Inspect the criterion evidence for ${current.title}.` : selected.length ? `${selected.length} project${selected.length === 1 ? " is" : "s are"} selected. Compare the individual criterion ratings and their reasons.` : "Choose an evaluated project in Project Overview to display its five-criterion profile.",
-      detail: "The radar chart shows the five ratings separately. A larger shape is not a final recommendation. Read the rationale and consider the organisation's objectives, costs, and constraints before deciding which projects merit further consideration.",
-      next: "Add projects worth investigating to the Shortlist. Shortlisting is still a temporary planning choice."
-    };
-  }
-  if (view === "shortlist") return {
-    text: `${prefix}${shortlist.length} project${shortlist.length === 1 ? " is" : "s are"} on the Shortlist.`,
-    detail: "The Shortlist holds projects retained after reviewing their evidence. It is separate from the temporary radar comparison set. A shortlisted project is eligible to be added to a candidate portfolio, but has not been approved.",
-    next: shortlist.length ? "Open Build Candidate Portfolio to try a combination of shortlisted projects." : "Inspect projects in Comparison before adding them to the Shortlist."
-  };
-  const name = view === "reports" ? state.portfolioReviewScenarioName || state.activeScenarioName : view === "decisions" ? Object.keys(state.scenarios).find((key) => state.scenarios[key].id === state.decisionScenarioId) || state.activeScenarioName : state.activeScenarioName;
-  const scenario = state.scenarios[name];
-  const summary = scenarioSummary({ ...scenario, budget: organisation.budget, staff: organisation.staff });
-  const shortages = [!summary.budgetOk ? `${money(summary.totalCost - organisation.budget)} over budget` : "", !summary.staffOk ? `${summary.totalStaff - organisation.staff} FTE over capacity` : ""].filter(Boolean);
-  const totals = `${scenarioDisplayName(name)} contains ${summary.projects.length} project${summary.projects.length === 1 ? "" : "s"}: ${money(summary.totalCost)} and ${summary.totalStaff} FTE. ${shortages.length ? shortages.join("; ") + "." : "The totals are within the current budget and staff limits."}`;
-  if (view === "scenarios" || view === "reports") return {
-    text: scenario ? `${prefix}${totals}` : "There is no candidate portfolio yet. Create one using shortlisted projects.",
-    detail: "These checks add the selected projects' estimated cost and total staff demand. They do not account for scheduling, staff skills, or shared resources. Also inspect which objectives the combination covers and whether important evidence or dependencies are missing.",
-    next: view === "scenarios" ? "Save the combination, then open Portfolio Review to inspect it against the organisation's limits." : "Check the project evidence and objective coverage before proceeding to Decisions."
-  };
-  if (view === "decisions") return {
-    text: scenario ? `${prefix}${totals}` : "Select a candidate portfolio to review before recording a decision.",
-    detail: "Approval, deferral, or rejection is a human decision. Explain why the combination meets the objectives and how any shortages or unresolved risks will be handled. Record follow-up actions where needed; the system retains the decision history.",
-    next: "Record the outcome and rationale after the portfolio review is complete."
-  };
-  return null;
-}
-
-function updateGuidancePanel(container, id, content) {
-  let panel = container.querySelector(`#${id}`);
-  if (!panel) {
-    panel = document.createElement("aside");
-    panel.id = id;
-    panel.className = "assisted-guidance";
-    panel.setAttribute("aria-label", "Help with this step");
-    const heading = container.querySelector(".view-heading");
-    if (heading) heading.after(panel);
-    else container.prepend(panel);
-  }
-  panel.hidden = !assistanceEnabled() || !content;
-  if (panel.hidden) return;
-  const html = `<div class="assisted-guidance-lead"><span class="assisted-guidance-icon" aria-hidden="true">i</span><div class="assisted-guidance-copy"><p class="section-kicker">Assisted mode</p><p>${escapeHTML(content.text)}</p></div></div><details><summary>Help with this step <span aria-hidden="true">+</span></summary><div class="assisted-guidance-detail"><p>${escapeHTML(content.detail)}</p><p class="assisted-next"><strong>Next:</strong> ${escapeHTML(content.next)}</p></div></details>`;
-  if (panel.dataset.content !== html) {
-    const expanded = panel.querySelector("details")?.open;
-    panel.innerHTML = html;
-    panel.dataset.content = html;
-    if (expanded) panel.querySelector("details").open = true;
-  }
-}
-
-function renderAssistedGuidance() {
-  const section = document.querySelector(`[data-workspace-view="${state.activeView}"]`);
-  if (!section) return;
-  updateGuidancePanel(section, `assisted-${state.activeView}`, guidanceForView(state.activeView));
-}
-
-function renderReviewGuidance() {
-  const proposal = proposals.find((item) => item.id === reviewDialog.dataset.proposalId);
-  if (!proposal) return;
-  let container = $("#review-assistance-container");
-  if (!container) {
-    container = document.createElement("div");
-    container.id = "review-assistance-container";
-    $("#review-score-form").before(container);
-  }
-  const missing = CRITERIA.filter((criterion) => {
-    const score = $(`[data-review-score="${criterion.key}"]:checked`);
-    const rationale = $(`[data-review-rationale="${criterion.key}"]`);
-    return !score || !rationale?.value.trim();
-  }).map((criterion) => criterion.label);
-  updateGuidancePanel(container, "assisted-review-evidence", {
-    text: missing.length ? `${proposal.title}: ${missing.join(", ")} still need a rating or supporting reason.` : `${proposal.title}: all five ratings and reasons are present.`,
-    detail: `${proposal.missing.length ? `Recorded information gaps: ${proposal.missing.join(", ")}. ` : ""}Use the evidence in this proposal and the scoring guides. For Risk, 5 means lower or more manageable risk; 1 means higher risk. A rationale should explain why the evidence supports the selected rating.`,
-    next: isEvaluated(proposal) ? "The recorded evaluation is available to the Portfolio Manager. Comments can clarify the evidence without replacing the original ratings." : "Complete the remaining criterion evidence before saving the evaluation."
-  });
-}
-
-let pendingAssistedCompletion = false;
-
-function showAssistedCompletion() {
-  if (!assistanceEnabled() || !workspaceRole()) return;
-  const profileId = GUEST_DEMO ? "demo" : activeAccount()?.id || "local";
-  const key = `ppm-assisted-complete:${profileId}:${workspaceRole()}`;
-  if (sessionStorage.getItem(key)) return;
-  if (document.querySelector("dialog[open]")) { pendingAssistedCompletion = true; return; }
-  pendingAssistedCompletion = false;
-  sessionStorage.setItem(key, "true");
-  const dialog = document.createElement("dialog");
-  dialog.className = "assisted-completion-dialog";
-  dialog.setAttribute("aria-labelledby", "assisted-completion-title");
-  dialog.innerHTML = `<h2 id="assisted-completion-title">Assisted mode</h2><p>You can turn off the page guidance any time in ${GUEST_DEMO ? "Demo settings" : "your profile menu"}. The small field hints and sample demo remain available when you need them.</p><div><button type="button" class="outline-button" data-assistance-off>Turn off Assisted mode</button><button type="button" class="solid-button" data-assistance-keep>Keep it on</button></div>`;
-  document.body.append(dialog);
-  dialog.querySelector("[data-assistance-off]").addEventListener("click", () => { window.PPMAuth.setAssistedMode(false); dialog.close(); });
-  dialog.querySelector("[data-assistance-keep]").addEventListener("click", () => dialog.close());
-  dialog.addEventListener("close", () => dialog.remove(), { once: true });
-  dialog.showModal();
-}
-
 function renderAll() {
   renderSidebarAccountSummary();
   renderOrganisationForm();
@@ -1964,27 +1823,10 @@ function renderAll() {
   renderShortlistWorkspace();
   renderCriterionInsights();
   renderTestHarness();
-  renderAssistedGuidance();
 }
 
 function bindEvents() {
   bindContextHelpSelection();
-  let guidanceFrame = 0;
-  const scheduleGuidance = (event) => {
-    if (!assistanceEnabled() || !event.target.closest?.("#workspace, #review-dialog") || guidanceFrame) return;
-    guidanceFrame = requestAnimationFrame(() => {
-      guidanceFrame = 0;
-      renderAssistedGuidance();
-      if (reviewDialog.open) renderReviewGuidance();
-    });
-  };
-  ["input", "change"].forEach((type) => document.addEventListener(type, scheduleGuidance, true));
-  window.addEventListener("ppm:assisted-mode-changed", (event) => {
-    document.querySelectorAll("[data-assisted-mode-toggle]").forEach((checkbox) => { checkbox.checked = event.detail.enabled; });
-    renderAssistedGuidance();
-  });
-  window.addEventListener("ppm:tour-finished", showAssistedCompletion);
-  reviewDialog.addEventListener("close", () => { if (pendingAssistedCompletion) showAssistedCompletion(); });
   $("#organisation-form").addEventListener("submit", saveOrganisation);
   $("#add-objective").addEventListener("click", () => renderObjectiveInputs([...objectiveDraftValues(), ""]));
   $("#proposal-form").addEventListener("submit", submitProposal);
@@ -2382,8 +2224,6 @@ function recordScenarioDecision(event, scenarioName, scenarioId) {
   state.scenarioDecisions[scenarioId] = [...previous, record];
   storage.set(STORAGE.scenarioDecisions, JSON.stringify(state.scenarioDecisions));
   renderDecisionWorkspace();
-  renderAssistedGuidance();
-  showAssistedCompletion();
 }
 
 function renderReportWorkspace() {
@@ -2478,7 +2318,6 @@ function setActiveView(view) {
   if (view === "decisions") renderDecisionWorkspace();
   if (view === "reports") renderReportWorkspace();
   if (view === "tests") renderTestHarness();
-  renderAssistedGuidance();
 }
 
 
