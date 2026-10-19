@@ -1076,14 +1076,13 @@ function openReview(id) {
       return `<li><strong>${escapeHTML(scoreLabel)}</strong><span>${escapeHTML(description)}</span></li>`;
     }).join("");
     const riskNotice = isRisk ? '<p class="risk-direction-note"><strong>Risk scoring direction</strong><span>Higher score means lower and more manageable risk.</span></p>' : "";
-      const criterionInstruction = criterion.key === "alignment" ? "Check how directly the proposal supports the selected strategic objective." : criterion.key === "value" ? "Assess the scale and evidence for the expected financial or service benefits." : criterion.key === "feasibility" ? "Consider whether the required skills, resources, technology, and timeline are credible." : criterion.key === "risk" ? "Assess the likelihood and impact of delivery risks and how manageable they are. A higher rating means lower or more manageable risk." : "Consider what would happen if the project were delayed and whether action is time-critical.";
-      return `<section class="review-criterion-card ${isRisk ? "is-risk" : ""}" data-context-help-title="${escapeHTML(guide.title)}" data-context-help-text="${escapeHTML(criterionInstruction)}" aria-labelledby="review-criterion-${criterion.key}">
+      return `<section class="review-criterion-card ${isRisk ? "is-risk" : ""}" aria-labelledby="review-criterion-${criterion.key}">
       <div class="review-criterion-heading">
         <div><span class="criterion-number">0${criterionIndex + 1}</span><h3 id="review-criterion-${criterion.key}">${escapeHTML(guide.title)}</h3></div>
         ${riskNotice}
       </div>
       <div class="review-rating-options" role="radiogroup" aria-label="${escapeHTML(guide.title)} rating">${reviewIsLocked ? ratingCards.replaceAll(" required>", " required disabled>") : ratingCards}</div>
-      <label class="review-rationale-field" data-context-help-title="${escapeHTML(guide.title)} rationale" data-context-help-text="Explain which proposal evidence supports this rating and note any uncertainty. Keep the rationale specific to ${escapeHTML(guide.title)}."><span>Rationale <small>Required</small></span><textarea data-review-rationale="${criterion.key}" rows="3" aria-label="Rationale for ${escapeHTML(guide.title)}" placeholder="Add short evidence or a reason for this rating" ${reviewIsLocked ? "disabled" : "required"}>${escapeHTML(proposal.rationales[criterion.key] || "")}</textarea></label>
+      <label class="review-rationale-field"><span>Rationale <small>Required</small></span><textarea data-review-rationale="${criterion.key}" rows="3" aria-label="Rationale for ${escapeHTML(guide.title)}" placeholder="Add short evidence or a reason for this rating" ${reviewIsLocked ? "disabled" : "required"}>${escapeHTML(proposal.rationales[criterion.key] || "")}</textarea></label>
       <details class="scoring-guide"><summary><span>Scoring guide</span><small>View the formal 1–5 rubric</small></summary><ol>${guideItems}</ol></details>
     </section>`;
   }).join("");
@@ -1251,10 +1250,24 @@ const QUICK_CHECKS = [
     detail: "Only this test role’s screens and the test checklist are available.",
     run: () => {
       const allowed = WORKSPACE_VIEWS_BY_ROLE[workspaceRole()] || [];
-      return ACCOUNT_ROLES.includes(workspaceRole()) && accountCanView("tests")
+      const nav = $(".workspace-nav");
+      const visibleButtons = [...(nav?.querySelectorAll("[data-workspace-view-button]") || [])].filter((button) => !button.hidden);
+      const numberedInOrder = visibleButtons.every((button, index) => button.querySelector("[data-screen-number]")?.textContent === String(index + 1).padStart(2, "0"));
+      const workflowNumbersMatch = [...document.querySelectorAll("[data-workflow-step-for]")].every((number) => {
+        const index = visibleButtons.findIndex((button) => button.dataset.workspaceViewButton === number.dataset.workflowStepFor);
+        return index < 0 || number.textContent === String(index + 1).padStart(2, "0");
+      });
+      return ACCOUNT_ROLES.includes(workspaceRole()) && accountCanView("tests") && numberedInOrder && workflowNumbersMatch
         && ["organisation", "proposer", "reviewer", "manager", "comparison", "scenarios", "reports", "decisions"]
           .every((view) => accountCanView(view) === allowed.includes(view));
     }
+  },
+  {
+    id: "context-help-scope",
+    title: "Contextual help appears only where needed",
+    detail: "The small help controls select Project Description, current review stages, or the current comparison area.",
+    run: () => document.querySelectorAll("[data-context-help-toggle]").length === 2
+      && document.querySelectorAll('.proposer-view .wide-field[data-context-help-title="Project Description"], .manager-view .evaluation-readiness, .manager-view .scenario-heading').length === 3
   },
   {
     id: "scenario-identities",
@@ -1763,6 +1776,14 @@ function showContextHelpFor(area) {
   $("[data-context-help-close]")?.focus({ preventScroll: true });
 }
 
+function contextHelpAreaFor(target) {
+  const area = target.closest?.("[data-context-help-title][data-context-help-text]");
+  if (!area) return null;
+  return area.matches(
+    '.proposer-view .wide-field[data-context-help-title="Project Description"], .manager-view .evaluation-readiness, .manager-view .scenario-heading'
+  ) ? area : null;
+}
+
 function bindContextHelpSelection() {
   const popup = $("#context-help-popup");
   const hint = $("#context-help-selection-hint");
@@ -1775,7 +1796,7 @@ function bindContextHelpSelection() {
   $("[data-context-help-another]")?.addEventListener("click", () => setContextHelpSelectionMode(true));
   document.addEventListener("pointerover", (event) => {
     if (!contextHelpSelectionActive) return;
-    const area = event.target.closest?.("[data-context-help-title][data-context-help-text]");
+    const area = contextHelpAreaFor(event.target);
     if (contextHelpHoveredArea === area) return;
     contextHelpHoveredArea?.classList.remove("is-context-help-hover");
     contextHelpHoveredArea = area;
@@ -1790,7 +1811,7 @@ function bindContextHelpSelection() {
   document.addEventListener("click", (event) => {
     if (!contextHelpSelectionActive) return;
     if (event.target.closest?.("[data-context-help-toggle], #context-help-selection-hint, #context-help-popup")) return;
-    const area = event.target.closest?.("[data-context-help-title][data-context-help-text]");
+    const area = contextHelpAreaFor(event.target);
     if (!area) {
       setContextHelpSelectionMode(false);
       return;
@@ -2167,14 +2188,6 @@ function renderDecisionWorkspace() {
 
   workspace.innerHTML = '<div class="portfolio-decision-selector"><label><span>Selected Scenario</span><select id="decision-scenario-select">' + options + '</select></label><button type="button" class="outline-button" data-decision-open-review>Return to Portfolio Review</button></div><div class="portfolio-decision-layout"><form class="portfolio-decision-form" id="scenario-decision-form"><section><p class="section-kicker">Decision Outcome</p><h4>Choose a human decision</h4><div class="decision-outcome-options"><label><input type="radio" name="scenario-outcome" value="Approve" required><span>Approve</span></label><label><input type="radio" name="scenario-outcome" value="Defer" required><span>Defer</span></label><label><input type="radio" name="scenario-outcome" value="Reject" required><span>Reject</span></label></div></section><section><label class="decision-rationale-field"><span>Decision Rationale <small>Required</small></span><textarea name="scenario-rationale" rows="6" required placeholder="Explain the evidence and reasoning behind this decision"></textarea></label></section><section><div class="decision-action-heading"><div><p class="section-kicker">Conditions / Follow-up Actions</p><h4>Add actions where needed</h4></div><button type="button" class="outline-button" data-add-decision-action>Add action</button></div><div class="decision-action-list" id="decision-action-list"></div></section><button type="submit" class="solid-button decision-record-button">Record Decision</button><p class="save-message" id="scenario-decision-message" role="status"></p></form><aside class="decision-support-panel"><header><p class="section-kicker">Decision Support Summary</p><h4>' + escapeHTML(scenarioDisplayName(selectedName)) + '</h4></header><dl><div><dt>Projects</dt><dd>' + summary.projects.length + '</dd></div><div><dt>Total cost</dt><dd>' + money(summary.totalCost) + '</dd></div><div><dt>Budget balance</dt><dd class="' + (summary.budgetOk ? 'check-ok' : 'check-warning') + '">' + (summary.budgetOk ? money(budgetRemaining) + ' remaining' : money(Math.abs(budgetRemaining)) + ' over') + '</dd></div><div><dt>Total FTE</dt><dd>' + summary.totalStaff + ' / ' + organisation.staff + '</dd></div><div><dt>FTE balance</dt><dd class="' + (summary.staffOk ? 'check-ok' : 'check-warning') + '">' + (summary.staffOk ? staffRemaining + ' remaining' : Math.abs(staffRemaining) + ' over') + '</dd></div><div><dt>Objectives covered</dt><dd>' + objectives.length + '</dd></div></dl><div class="decision-known-limit"><strong>Known limits</strong><p>' + (summary.budgetOk && summary.staffOk ? 'The scenario is within the current total budget and total FTE limits.' : (!summary.budgetOk ? 'Budget exceeded. ' : '') + (!summary.staffOk ? 'Total FTE capacity exceeded.' : '')) + '</p><small>Project-level demand by resource type is not available.</small></div><button type="button" class="text-button" data-decision-open-review>View detailed Portfolio Review</button><div class="decision-scenario-comparison"><strong>Other saved scenarios</strong><ul>' + comparison + '</ul></div></aside></div><section class="scenario-decision-history"><header><p class="section-kicker">Decision History</p><h4>' + records.length + ' record' + (records.length === 1 ? '' : 's') + ' for this scenario</h4></header><div>' + history + '</div></section><details class="legacy-decision-records"><summary>Legacy project-level decisions (' + Object.keys(state.decisions || {}).length + ')</summary><p>These existing records remain stored separately and have not been converted into scenario decisions.</p></details>';
 
-  workspace.querySelector(".portfolio-decision-selector")?.setAttribute("data-context-help-title", "Scenario Selection");
-  workspace.querySelector(".portfolio-decision-selector")?.setAttribute("data-context-help-text", "Choose the saved candidate portfolio whose decision you are recording. You can return to Portfolio Review to inspect its evidence and constraints.");
-  workspace.querySelector(".portfolio-decision-form")?.setAttribute("data-context-help-title", "Record a Decision");
-  workspace.querySelector(".portfolio-decision-form")?.setAttribute("data-context-help-text", "Choose approve, defer, or reject based on your review. Explain the evidence and reasoning, and add follow-up actions or conditions where needed. The system does not choose an outcome.");
-  workspace.querySelector(".decision-support-panel")?.setAttribute("data-context-help-title", "Decision Support Summary");
-  workspace.querySelector(".decision-support-panel")?.setAttribute("data-context-help-text", "Check the selected scenario's project count, cost, staff demand, objective coverage, and known limits. Use this information alongside the detailed review; a within-limits status does not itself determine approval.");
-  workspace.querySelector(".scenario-decision-history")?.setAttribute("data-context-help-title", "Decision History");
-  workspace.querySelector(".scenario-decision-history")?.setAttribute("data-context-help-text", "Review earlier decision records for this scenario. New records are added to history rather than replacing the previous rationale.");
   addDecisionActionRow();
   workspace.querySelector('#decision-scenario-select').addEventListener('change', (event) => { state.decisionScenarioId = event.target.value; renderDecisionWorkspace(); });
   workspace.querySelectorAll('[data-decision-open-review]').forEach((button) => button.addEventListener('click', () => { state.portfolioReviewScenarioName = selectedName; setActiveView('reports'); }));
@@ -2274,18 +2287,6 @@ function renderReportWorkspace() {
   workspace.innerHTML = '<div class="portfolio-review-selector"><label><span>Selected Scenario</span><select id="portfolio-review-scenario">' + options + '</select></label><div><button type="button" class="outline-button" data-review-open-builder>Edit in Build Candidate Portfolio</button><button type="button" class="solid-button" data-review-proceed-decisions>Proceed to Decisions</button></div></div><section class="portfolio-review-metrics" aria-label="Selected scenario summary"><article><span>Selected projects</span><strong>' + summary.projects.length + '</strong><small>in ' + escapeHTML(scenarioDisplayName(selectedName)) + '</small></article><article><span>Total cost</span><strong>' + money(summary.totalCost) + '</strong><small>of ' + money(organisation.budget) + ' available</small></article><article><span>Budget remaining</span><strong class="' + (summary.budgetOk ? '' : 'is-warning') + '">' + (summary.budgetOk ? money(budgetRemaining) : '−' + money(Math.abs(budgetRemaining))) + '</strong><small>' + (summary.budgetOk ? 'remaining' : 'over budget') + '</small></article><article><span>Objectives covered</span><strong>' + coveredObjectives.length + '</strong><small>of ' + organisation.objectives.length + ' saved objectives</small></article><article><span>Constraint status</span><strong class="portfolio-review-status ' + (summary.budgetOk && summary.staffOk ? 'is-feasible' : 'is-warning') + '">' + (summary.budgetOk && summary.staffOk ? 'Within limits' : 'Review needed') + '</strong><small>budget and total FTE</small></article></section><div class="portfolio-review-main"><section class="portfolio-review-panel portfolio-review-projects"><header><p class="section-kicker">Selected Projects</p><h4>Projects in this scenario</h4></header><div class="portfolio-review-table-wrap"><table><thead><tr><th>Project</th><th>Primary strategic objective</th><th>Estimated cost</th><th>Total FTE</th><th>Evidence</th></tr></thead><tbody>' + projectRows + '</tbody></table></div></section><aside class="portfolio-review-panel portfolio-feasibility"><header><p class="section-kicker">Budget &amp; Resource Feasibility</p><h4>' + (summary.budgetOk && summary.staffOk ? 'Within limits' : 'Constraints exceeded') + '</h4></header><div class="portfolio-feasibility-metric"><span>Investment budget</span><strong>' + money(summary.totalCost) + ' / ' + money(organisation.budget) + '</strong><div class="scenario-meter"><i style="width:' + Math.min(organisation.budget ? summary.totalCost / organisation.budget * 100 : summary.totalCost ? 100 : 0, 100) + '%"></i></div><small class="' + (summary.budgetOk ? 'check-ok' : 'check-warning') + '">' + (summary.budgetOk ? money(Math.max(0, budgetRemaining)) + ' remaining' : money(Math.abs(budgetRemaining)) + ' over budget') + '</small></div><div class="portfolio-feasibility-metric"><span>Total FTE</span><strong>' + summary.totalStaff + ' / ' + organisation.staff + ' FTE</strong><div class="scenario-meter"><i style="width:' + Math.min(organisation.staff ? summary.totalStaff / organisation.staff * 100 : summary.totalStaff ? 100 : 0, 100) + '%"></i></div><small class="' + (summary.staffOk ? 'check-ok' : 'check-warning') + '">' + (summary.staffOk ? Math.max(0, staffRemaining) + ' FTE remaining' : Math.abs(staffRemaining) + ' FTE over capacity') + '</small></div><div class="portfolio-feasibility-note">' + escapeHTML(feasibilityMessage) + '</div><small class="scenario-capacity-note">Only total FTE is compared. Project-level resource-type demand is not available.</small></aside></div><div class="portfolio-review-lower"><section class="portfolio-review-panel"><header><p class="section-kicker">Strategic Investment Allocation</p><h4>Projects and cost by primary objective</h4></header><div class="portfolio-review-table-wrap"><table><thead><tr><th>Strategic objective</th><th>Projects</th><th>Investment</th></tr></thead><tbody>' + allocationRows + '</tbody></table></div></section><section class="portfolio-review-panel"><header><p class="section-kicker">Scenario Comparison</p><h4>Saved candidate portfolios</h4></header><div class="portfolio-review-table-wrap"><table><thead><tr><th>Scenario</th><th>Projects</th><th>Cost</th><th>Total FTE</th><th>Objectives</th><th>Status</th></tr></thead><tbody>' + comparisonRows + '</tbody></table></div></section></div>';
 
   workspace.querySelector('#portfolio-review-scenario').addEventListener('change', (event) => { state.portfolioReviewScenarioName = event.target.value; renderReportWorkspace(); });
-  workspace.querySelector(".portfolio-review-selector")?.setAttribute("data-context-help-title", "Select a Scenario");
-  workspace.querySelector(".portfolio-review-selector")?.setAttribute("data-context-help-text", "Choose which saved candidate scenario to review. Use Edit in Build Candidate Portfolio to change its project mix, or proceed to Decisions when the evidence and constraints have been considered.");
-  workspace.querySelector(".portfolio-review-metrics")?.setAttribute("data-context-help-title", "Portfolio Summary");
-  workspace.querySelector(".portfolio-review-metrics")?.setAttribute("data-context-help-text", "Check the number of selected projects, total cost, remaining budget, objectives covered, and constraint status for this scenario.");
-  workspace.querySelector(".portfolio-review-projects")?.setAttribute("data-context-help-title", "Projects in the Scenario");
-  workspace.querySelector(".portfolio-review-projects")?.setAttribute("data-context-help-text", "Review which projects are included, the objective each supports, estimated cost, staff demand, and evidence link. Open a proposal to inspect its reviewer rationale.");
-  workspace.querySelector(".portfolio-feasibility")?.setAttribute("data-context-help-title", "Budget and Resource Feasibility");
-  workspace.querySelector(".portfolio-feasibility")?.setAttribute("data-context-help-text", "Compare combined cost and total FTE with the organisation's available limits. Investigate any warning; the check does not account for project schedules or resource skills and does not approve the scenario.");
-  workspace.querySelectorAll(".portfolio-review-lower .portfolio-review-panel").forEach((panel, index) => {
-    panel.setAttribute("data-context-help-title", index === 0 ? "Strategic Investment Allocation" : "Scenario Comparison");
-    panel.setAttribute("data-context-help-text", index === 0 ? "Review how project count and investment are distributed across the selected primary objectives." : "Compare saved candidate scenarios by project mix, cost, staff demand, objective coverage, and constraint status.");
-  });
   workspace.querySelectorAll('[data-review-compare-scenario]').forEach((button) => button.addEventListener('click', () => { state.portfolioReviewScenarioName = button.dataset.reviewCompareScenario; renderReportWorkspace(); }));
   workspace.querySelectorAll('[data-review-project]').forEach((button) => button.addEventListener('click', () => { state.selectedId = button.dataset.reviewProject; setActiveView('manager'); renderDetail(); }));
   workspace.querySelector('[data-review-open-builder]').addEventListener('click', () => { state.activeScenarioName = selectedName; setActiveView('scenarios'); });

@@ -479,23 +479,41 @@
   async function askGemini(question) {
     const apiBaseUrl = window.PPM_CONFIG?.apiBaseUrl;
     if (!apiBaseUrl) throw new Error("Assistant API is not configured");
-    const controller = new AbortController();
-    // The free Render API may need time to wake from sleep on its first request.
-    const timeout = window.setTimeout(() => controller.abort(), 90_000);
-    try {
-      const response = await fetch(`${apiBaseUrl.replace(/\/$/, "")}/api/assistant`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ question }),
-        signal: controller.signal
-      });
-      if (!response.ok) throw new Error("Assistant API is unavailable");
-      const result = await response.json();
-      if (typeof result.answer !== "string" || !result.answer.trim()) throw new Error("Assistant returned an empty answer");
-      return result.answer.trim();
-    } finally {
-      window.clearTimeout(timeout);
+    const endpoint = `${apiBaseUrl.replace(/\/$/, "")}/api/assistant`;
+    let lastError;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const controller = new AbortController();
+      // Render's free service can be asleep. Give it time to wake, then retry once
+      // in case the first request only brought the service online.
+      const timeout = window.setTimeout(() => controller.abort(), 90_000);
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ question }),
+          signal: controller.signal
+        });
+        if (!response.ok) {
+          const error = new Error(`Assistant API returned ${response.status}`);
+          error.retryable = response.status >= 500;
+          throw error;
+        }
+        const result = await response.json();
+        if (typeof result.answer !== "string" || !result.answer.trim()) throw new Error("Assistant returned an empty answer");
+        return result.answer.trim();
+      } catch (error) {
+        lastError = error;
+        const canRetry = error.retryable || error.name === "AbortError" || error.name === "TypeError";
+        if (attempt === 0 && canRetry) {
+          await new Promise((resolve) => window.setTimeout(resolve, 1500));
+          continue;
+        }
+        throw error;
+      } finally {
+        window.clearTimeout(timeout);
+      }
     }
+    throw lastError || new Error("Assistant API is unavailable");
   }
 
   async function sendQuestion(value) {
@@ -518,8 +536,26 @@
       pendingMessage.querySelector("p").textContent = answerFor(question);
       const source = document.createElement("small");
       source.className = "ppm-assistant-source";
-      source.textContent = "Built-in guide · AI unavailable";
+      source.textContent = "Built-in guide · Gemini is temporarily unavailable; try again shortly";
       pendingMessage.append(source);
+      const retry = document.createElement("button");
+      retry.type = "button";
+      retry.className = "ppm-assistant-retry";
+      retry.textContent = "Retry with AI";
+      retry.addEventListener("click", async () => {
+        retry.disabled = true;
+        pendingMessage.querySelector("p").textContent = "Trying the PPM AI guide…";
+        try {
+          pendingMessage.querySelector("p").textContent = await askGemini(question);
+          source.textContent = "Gemini · PPM site guide";
+          retry.remove();
+        } catch {
+          pendingMessage.querySelector("p").textContent = answerFor(question);
+          source.textContent = "Built-in guide · Gemini is temporarily unavailable; try again shortly";
+          retry.disabled = false;
+        }
+      });
+      pendingMessage.append(retry);
     } finally {
       input.disabled = false;
       sendButton.disabled = false;
