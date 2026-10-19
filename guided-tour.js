@@ -45,6 +45,44 @@
       { title: "Record the human decision · 07", description: "After reviewing evidence and constraints, record the decision and its rationale. The system does not decide automatically.", demoDescription: "See where a manager records the final decision and its rationale after reviewing evidence and constraints. The system does not decide automatically, and demo decisions cannot be saved.", view: "decisions", target: "#decision-workspace" }
     ]
   };
+  const screenGuideFrames = {
+    "Project Proposer": [
+      { src: "public/live-demo/proposer-form.webp", alt: "Project Proposal form in the PPM workplace", title: "Enter a project proposal", description: "Add the project description, expected benefits, objective, cost, staff, timeline, and key risks so a reviewer has evidence to assess." }
+    ],
+    Reviewer: [
+      { src: "public/live-demo/reviewer-queue.webp", alt: "Reviewer queue showing projects awaiting evaluation and recorded evaluations", title: "Check the review queue", description: "The queue shows which proposals are not reviewed yet and which already have an evaluation." },
+      { src: "public/live-demo/reviewer-evaluation.webp", alt: "Reviewer evaluation form with five criterion ratings and rationale fields", title: "Rate each criterion with a reason", description: "Review each criterion separately and write a short evidence-based rationale. PPM does not turn the ratings into one automatic score." }
+    ],
+    "Portfolio Manager": [
+      { src: "public/live-demo/pm-context.webp", alt: "Investment Context screen with planning cycle, objectives, budget, and staff capacity", title: "Set the investment context", description: "Set the objectives and available budget and capacity before considering project combinations." },
+      { src: "public/live-demo/pm-overview.webp", alt: "Project Overview showing proposals, criterion ratings, filters, and evaluation readiness", title: "Review the project overview", description: "Search and filter proposals, check the five ratings and status, then open a project to inspect its supporting evidence." },
+      { src: "public/live-demo/pm-radar.webp", alt: "One evaluated project's five-criterion radar profile", title: "Inspect a single-project profile", description: "A single evaluated project is enough to display its five-criterion radar profile; it is not an overall score." },
+      { src: "public/live-demo/pm-compare.webp", alt: "Two evaluated projects shown together in a comparison view", title: "Compare project profiles", description: "Overlay selected projects to discuss their differences. The chart supports review and does not pick a winner." }
+    ]
+  };
+
+  function selectedRole() {
+    return window.PPMAuth?.demoRole?.() || $(".workspace-nav")?.dataset.activeRole || "";
+  }
+
+  function showScreenSequence(index = 0) {
+    if (!layer) return;
+    const frames = screenGuideFrames[selectedRole()] || [];
+    if (!frames.length) return;
+    const current = Math.max(0, Math.min(index, frames.length - 1));
+    const frame = frames[current];
+    layer.innerHTML = `<div class="tour-sequence-backdrop"><section class="tour-screen-guide" role="dialog" aria-modal="true" aria-labelledby="tour-sequence-title" tabindex="-1"><header><div class="tour-screen-guide-header-copy"><p class="section-kicker">Live demo · Screen guide</p><small>Static screen views · no video download or automatic playback</small></div><button class="tour-sequence-close" type="button" data-sequence-close aria-label="Return to live demo" title="Return to live demo">×</button></header><figure class="tour-screen-frame"><div class="tour-screen-image-wrap"><img src="${frame.src}" alt="${frame.alt}" fetchpriority="high" decoding="async" /></div><figcaption class="tour-screen-caption"><p class="tour-progress">${String(current + 1).padStart(2, "0")} / ${String(frames.length).padStart(2, "0")} · ${selectedRole()}</p><h2 id="tour-sequence-title">${frame.title}</h2><p>${frame.description}</p></figcaption></figure><footer><button type="button" data-sequence-back ${current === 0 ? "disabled" : ""}>Previous</button><span class="tour-sequence-position" aria-live="polite">Screen ${current + 1} of ${frames.length}</span><button type="button" data-sequence-next>${current === frames.length - 1 ? "Return to live demo" : "Next screen"}</button></footer></section></div>`;
+    const dialog = layer.querySelector(".tour-screen-guide");
+    layer.querySelector("[data-sequence-close]").addEventListener("click", () => showStep());
+    layer.querySelector("[data-sequence-back]").addEventListener("click", () => showScreenSequence(current - 1));
+    layer.querySelector("[data-sequence-next]").addEventListener("click", () => current === frames.length - 1 ? showStep() : showScreenSequence(current + 1));
+    dialog.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") { event.preventDefault(); showStep(); }
+      if (event.key === "ArrowLeft" && current > 0) showScreenSequence(current - 1);
+      if (event.key === "ArrowRight" && current < frames.length - 1) showScreenSequence(current + 1);
+    });
+    dialog.focus();
+  }
   function prepareSelection(count) {
     document.querySelector('[data-workspace-view-button="manager"]')?.click();
     const checkboxes = Array.from(document.querySelectorAll('[data-comparison-id]:not(:disabled)'));
@@ -149,7 +187,9 @@
     if (stepIndex < 0 || stepIndex >= steps.length) { finish(true); return; }
     renderVersion += 1;
     layer.hidden = false;
-    layer.innerHTML = `<div class="tour-popover" role="dialog" aria-modal="true" aria-labelledby="tour-title"><p class="tour-progress">Live demo · ${String(stepIndex + 1).padStart(2, "0")} / ${steps.length}</p><h2 id="tour-title">${step.title}</h2><p>${step.description}</p><footer><button class="tour-skip" type="button" data-tour-skip>Skip</button><div><button type="button" data-tour-back ${stepIndex === 0 ? "disabled" : ""}>Back</button><button type="button" data-tour-next>${stepIndex === steps.length - 1 ? "Finish" : "Next"}</button></div></footer></div>`;
+    const hasScreenGuide = stepIndex === 0 && (screenGuideFrames[selectedRole()] || []).length > 0;
+    layer.innerHTML = `<div class="tour-popover" role="dialog" aria-modal="true" aria-labelledby="tour-title"><p class="tour-progress">Live demo · ${String(stepIndex + 1).padStart(2, "0")} / ${steps.length}</p><h2 id="tour-title">${step.title}</h2><p>${step.description}</p>${hasScreenGuide ? `<button class="tour-screen-guide-link" type="button" data-tour-screen-guide>View screen-by-screen guide</button>` : ""}<footer><button class="tour-skip" type="button" data-tour-skip>Skip</button><div><button type="button" data-tour-back ${stepIndex === 0 ? "disabled" : ""}>Back</button><button type="button" data-tour-next>${stepIndex === steps.length - 1 ? "Finish" : "Next"}</button></div></footer></div>`;
+    layer.querySelector("[data-tour-screen-guide]")?.addEventListener("click", () => showScreenSequence());
     layer.querySelector("[data-tour-next]").addEventListener("click", () => {
       if (stepIndex === steps.length - 1) { finish(true, true); return; }
       stepIndex += 1;

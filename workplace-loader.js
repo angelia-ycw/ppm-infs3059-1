@@ -44,10 +44,10 @@
       source.querySelectorAll("dialog.modal").forEach((dialog) => document.body.append(dialog.cloneNode(true)));
       loading.hidden = true;
 
-      await loadScript("./app.js?v=20261019-meeting-audit-v3");
+      await loadScript("./app.js?v=20261019-live-screen-guide-v1");
       if (window.PPMGuestDemo) await loadScript("./guest-demo.js?v=20261012-demo-mvp-v1");
       await loadScript("./public/test-feedback.js?v=20261012-demo-mvp-v1");
-      await loadScript("./guided-tour.js?v=20261019-meeting-audit-v2");
+      await loadScript("./guided-tour.js?v=20261019-live-screen-guide-v1");
       window.PPMTour?.init();
     } catch (error) {
       loading.hidden = false;
