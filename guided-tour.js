@@ -23,7 +23,7 @@
   };
   const navigationStep = {
     title: "Your role-specific workplace",
-    description: "The left menu shows the activities for your selected role. Proposers see proposal entry, Reviewers see evaluation, and Portfolio Managers see Investment Context plus screens 04–09.",
+    description: "The left menu shows only the activities for your selected role, with numbering that restarts at 01 for that role.",
     view: null,
     target: ".workspace-nav"
   };
@@ -36,13 +36,13 @@
     ],
     "Portfolio Manager": [
       { title: "Set the investment context · 01", description: "Set the planning cycle, strategic objectives, budget, and available capacity used for portfolio checks.", demoDescription: "See the sample planning cycle, strategic objectives, budget, and available capacity. These values provide the context for the portfolio's constraint checks and cannot be changed in the demo.", view: "organisation", target: "#organisation-form" },
-      { title: "Review the project overview · 04", description: "Search and filter evaluated proposals. Select an individual project to inspect its ratings and reviewer rationale.", view: "manager", target: ".portfolio-layout" },
-      { title: "View one project’s radar profile · 05", description: "A single evaluated proposal is enough to show its five-criterion radar profile. This does not create a total score or recommendation.", view: "comparison", target: "#comparison-workspace", prepare: () => prepareSelection(1) },
-      { title: "Compare project profiles · 05", description: "Select two to four evaluated proposals to see their criterion profiles overlaid and compare the recorded ratings side by side.", view: "comparison", target: "#comparison-workspace", prepare: () => prepareSelection(2) },
-      { title: "Retain projects for consideration · 06", description: "Add suitable projects to the formal Shortlist after reviewing their evidence. Shortlisting is not a final decision.", demoDescription: "View the sample shortlist to see how projects are retained for further consideration. A shortlist is not a final decision; changes to it require an account.", view: "shortlist", target: "#shortlist-workspace" },
-      { title: "Build a candidate portfolio · 07", description: "Choose shortlisted projects for a scenario. The workspace totals cost and staff requirements and flags limits that are exceeded.", demoDescription: "Inspect the sample candidate portfolio and its total cost and staff requirements. The workspace flags limits that are exceeded; saving your own scenario requires an account.", view: "scenarios", target: "#scenario-workspace" },
-      { title: "Review portfolio constraints · 08", description: "Inspect the selected scenario’s project mix, budget, staff capacity, and objective coverage before proceeding.", view: "reports", target: "#report-workspace" },
-      { title: "Record the human decision · 09", description: "After reviewing evidence and constraints, record the decision and its rationale. The system does not decide automatically.", demoDescription: "See where a manager records the final decision and its rationale after reviewing evidence and constraints. The system does not decide automatically, and demo decisions cannot be saved.", view: "decisions", target: "#decision-workspace" }
+      { title: "Review the project overview · 02", description: "Search and filter evaluated proposals. Select an individual project to inspect its ratings and reviewer rationale.", view: "manager", target: ".portfolio-layout" },
+      { title: "View one project’s radar profile · 03", description: "A single evaluated proposal is enough to show its five-criterion radar profile. This does not create a total score or recommendation.", view: "comparison", target: "#comparison-workspace", prepare: () => prepareSelection(1) },
+      { title: "Compare project profiles · 03", description: "Select two to four evaluated proposals to see their criterion profiles overlaid and compare the recorded ratings side by side.", view: "comparison", target: "#comparison-workspace", prepare: () => prepareSelection(2) },
+      { title: "Retain projects for consideration · 04", description: "Add suitable projects to the formal Shortlist after reviewing their evidence. Shortlisting is not a final decision.", demoDescription: "View the sample shortlist to see how projects are retained for further consideration. A shortlist is not a final decision; changes to it require an account.", view: "shortlist", target: "#shortlist-workspace" },
+      { title: "Build a candidate portfolio · 05", description: "Choose shortlisted projects for a scenario. The workspace totals cost and staff requirements and flags limits that are exceeded.", demoDescription: "Inspect the sample candidate portfolio and its total cost and staff requirements. The workspace flags limits that are exceeded; saving your own scenario requires an account.", view: "scenarios", target: "#scenario-workspace" },
+      { title: "Review portfolio constraints · 06", description: "Inspect the selected scenario’s project mix, budget, staff capacity, and objective coverage before proceeding.", view: "reports", target: "#report-workspace" },
+      { title: "Record the human decision · 07", description: "After reviewing evidence and constraints, record the decision and its rationale. The system does not decide automatically.", demoDescription: "See where a manager records the final decision and its rationale after reviewing evidence and constraints. The system does not decide automatically, and demo decisions cannot be saved.", view: "decisions", target: "#decision-workspace" }
     ]
   };
   function prepareSelection(count) {
@@ -62,11 +62,16 @@
   function stepsForCurrentRole() {
     const isDemo = window.PPMGuestDemo === true || window.PPMAuth?.isDemoMode?.() === true;
     const role = (isDemo ? window.PPMAuth?.demoRole?.() : "") || $(".workspace-nav")?.dataset.activeRole || "";
+    const roleNavigationDescription = {
+      "Project Proposer": "The left menu shows 01 Project Proposal. Other roles’ screens are hidden.",
+      Reviewer: "The left menu shows 01 Project Evaluation. Other roles’ screens are hidden.",
+      "Portfolio Manager": "The left menu shows the manager workflow: 01 Investment Context, 02 Project Overview, 03 Comparison, 04 Shortlist, 05 Build Candidate Portfolio, 06 Portfolio Review, and 07 Decisions."
+    }[role] || navigationStep.description;
     const selectedSteps = (roleSteps[role] || []).map((step) => ({
       ...step,
       description: isDemo && step.demoDescription ? step.demoDescription : step.description
     }));
-    return [isDemo ? demoRoleStep : signInStep, navigationStep, ...selectedSteps];
+    return [isDemo ? demoRoleStep : signInStep, { ...navigationStep, description: roleNavigationDescription }, ...selectedSteps];
   }
 
   function removeFocus() {
