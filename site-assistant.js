@@ -22,7 +22,7 @@
         <textarea id="ppm-assistant-input" rows="1" maxlength="500" placeholder="Type a question about PPM…" required></textarea>
         <button type="submit" aria-label="Send message" title="Send message"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 10 17 3l-4 14-3-6-7-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 11 7-8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
       </form>
-      <p class="ppm-assistant-note">Offline guide · Answers are matched from built-in PPM help. No AI service or account is needed.</p>
+      <p class="ppm-assistant-note">Offline guide · English questions matched to built-in PPM help. No AI service or account is needed.</p>
     </section>`;
   document.body.append(root);
 
@@ -37,7 +37,7 @@
   // It deliberately does not call an AI provider, send the question elsewhere, or store chat history.
   const topics = [
     {
-      keywords: ["type a question", "type my own question", "own words", "free text", "write a question", "pick a topic", "choose a topic", "select a topic", "choose from buttons", "free form", "질문 입력", "직접 입력", "자유롭게 질문", "고르는 게 아니라", "고르는게 아니라", "주제 선택", "주제를 고르", "버튼을 고르", "뭘 물어볼 수"],
+      keywords: ["type a question", "type my own question", "own words", "free text", "write a question", "pick a topic", "choose a topic", "select a topic", "choose from buttons", "without selecting", "no topic selected", "free form", "question in my own words", "ask a question", "question box", "질문 입력", "직접 입력", "자유롭게 질문", "고르는 게 아니라", "고르는게 아니라", "주제 선택", "주제를 고르", "버튼을 고르", "뭘 물어볼 수"],
       en: "You can type a question in your own words; you do not need to choose a topic or press a suggested-question button. The offline guide looks for related words and phrases, then returns the closest prepared PPM answer. It is not a generative AI, so it may ask you to rephrase if it cannot find a close match.",
       ko: "주제를 고르지 않아도 되고, 추천 질문 버튼을 누를 필요도 없어요. 궁금한 내용을 채팅창에 평소 말투로 직접 입력하면 오프라인 안내가 관련 단어와 표현을 찾아 가장 가까운 PPM 답변을 보여줍니다. 생성형 AI는 아니라서 맞는 답을 못 찾으면 질문을 다시 표현해 달라고 안내할 수 있어요."
     },
@@ -47,7 +47,7 @@
       ko: "역할은 세 가지예요. Project Proposer는 프로젝트 근거를 제출하고, Reviewer는 다섯 기준을 평가해 이유를 남기며, Portfolio Manager는 투자 맥락 설정부터 비교·Shortlist·후보 포트폴리오·제약 검토·최종 결정까지 담당합니다. 역할 선택 화면에서 역할을 고르면 해당 역할의 메뉴가 보여요. 샘플 역할 체험은 읽기 전용입니다."
     },
     {
-      keywords: ["investment context", "planning context", "planning cycle", "business unit", "planning horizon", "staff capacity", "budget limit", "set objectives", "objectives", "budget", "capacity", "투자 맥락", "투자 컨텍스트", "맥락 설정", "계획 주기", "계획 기간", "사업부", "예산", "인력 한도", "인력 용량", "목표 설정"],
+      keywords: ["investment context", "planning context", "planning cycle", "business unit", "planning horizon", "staff capacity", "budget limit", "set objectives", "investment goals", "strategic goals", "objectives", "goals", "set budget", "budget", "capacity", "투자 맥락", "투자 컨텍스트", "맥락 설정", "계획 주기", "계획 기간", "사업부", "예산", "인력 한도", "인력 용량", "목표 설정"],
       en: "Investment Context defines the planning cycle, objectives, budget, and available staff capacity before proposals are assessed. Proposers select a primary objective for each project. Later, candidate portfolio totals are compared with the budget and staff limits. Being within those limits does not automatically approve a portfolio.",
       ko: "Investment Context에서는 제안서를 평가하기 전에 계획 주기, 목표, 예산, 사용 가능한 인력 규모를 설정합니다. 제안자는 각 프로젝트의 주요 목표를 선택해요. 이후 후보 포트폴리오의 비용과 인력 합계를 이 한도와 비교합니다. 한도 이내라고 자동 승인되는 것은 아닙니다."
     },
@@ -57,12 +57,12 @@
       ko: "제안서에는 프로젝트명과 담당자, 주요 목표, 설명, 기대효과, 예상 비용, 필요 인력, 일정, 알려진 위험이나 의존성을 입력합니다. Reviewer가 이 정보를 근거로 프로젝트를 평가해요. 읽기 전용 샘플 데모에서는 제안 화면을 볼 수 있지만 새 제안서를 저장할 수는 없습니다."
     },
     {
-      keywords: ["evaluation", "evaluate", "rating", "ratings", "score", "scoring", "criteria", "criterion", "review rationale", "reviewer reason", "risk manageability", "strategic alignment", "feasibility", "urgency", "평가", "평가하기", "점수", "기준", "평가 기준", "근거", "검토 이유", "리뷰", "위험 관리", "시급성", "실행 가능성"],
+      keywords: ["evaluation", "evaluate", "assessment", "assess", "assessed", "rating", "ratings", "score", "scoring", "5 mean", "what does 5 mean", "rating of 5", "five point scale", "criteria", "criterion", "review rationale", "reviewer reason", "risk", "risk score", "risk rating", "risk manageability", "strategic alignment", "feasibility", "urgency", "평가", "평가하기", "점수", "기준", "평가 기준", "근거", "검토 이유", "리뷰", "위험 관리", "시급성", "실행 가능성"],
       en: "The Reviewer gives separate 1–5 ratings for Strategic Alignment, Expected Business Value, Delivery Feasibility, Risk Manageability, and Time Criticality, and adds a short reason for each rating. For Risk Manageability, 5 means the risk is lower or easier to manage. PPM does not add ratings into one overall score or make an automatic decision.",
       ko: "Reviewer는 Strategic Alignment, Expected Business Value, Delivery Feasibility, Risk Manageability, Time Criticality에 각각 1–5점을 주고 각 점수의 짧은 근거를 적습니다. Risk Manageability는 5점일수록 위험이 낮거나 관리하기 쉽다는 뜻이에요. PPM은 점수를 하나의 총점으로 합치거나 자동 결정을 내리지 않습니다."
     },
     {
-      keywords: ["not reviewed", "awaiting review", "pending review", "under review", "review status", "evaluation status", "submitted", "reviewed yet", "review needed", "아직 검토", "아직 평가", "검토 전", "평가 전", "검토 대기", "제출됨", "검토 중", "평가 완료", "상태 표시"],
+      keywords: ["not reviewed", "not reviewed yet", "not assessed", "unassessed", "unreviewed", "awaiting review", "pending review", "no review yet", "under review", "review status", "evaluation status", "submitted", "submission", "submitted for review", "reviewed yet", "review needed", "review not required", "reviewer needs", "assessment pending", "waiting for review", "has not been assessed", "has not been reviewed"],
       en: "A submitted proposal that has not yet been assessed is shown as awaiting review; once a Reviewer starts or records an assessment, its status changes accordingly. “Awaiting review” means it has not been reviewed yet, not that a review is unnecessary. The project’s evaluation page is where ratings and rationales are recorded.",
       ko: "제출 후 아직 평가되지 않은 제안서는 검토 대기 상태로 표시됩니다. Reviewer가 평가를 시작하거나 기록하면 상태가 그에 맞게 바뀝니다. ‘검토 대기’는 아직 검토가 안 됐다는 뜻이지, 검토가 필요 없다는 뜻이 아니에요. 점수와 근거는 Project Evaluation에서 기록합니다."
     },
@@ -82,7 +82,7 @@
       ko: "Shortlist는 나중에 더 검토할 프로젝트를 담아두는 목록입니다. Comparison에서 잠시 비교할 프로젝트를 선택하는 것과 다르고, 승인됐다는 뜻도 아니에요. Shortlist에 담긴 프로젝트를 후보 포트폴리오 구성에 사용할 수 있습니다."
     },
     {
-      keywords: ["candidate portfolio", "candidate scenario", "build portfolio", "portfolio scenario", "scenario", "aggregate cost", "total cost", "resource requirement", "resource limit", "budget check", "budget overrun", "over budget", "over the budget", "goes over budget", "goes over the budget", "above budget", "exceeds the budget", "scenario budget", "budget exceeded", "constraint", "shortage", "budget and staff", "후보 포트폴리오", "포트폴리오 구성", "시나리오", "비용 합계", "총 비용", "인력 합계", "자원 요구", "예산 확인", "예산 초과", "예산을 넘", "예산 한도 초과", "비용 한도", "제약", "부족", "한도 초과"],
+      keywords: ["candidate portfolio", "candidate scenario", "build portfolio", "portfolio scenario", "scenario", "shortlisted proposals", "shortlisted initiatives", "combine projects", "combined portfolio", "combined projects", "combined cost", "portfolio exceeds", "aggregate cost", "total cost", "resource requirement", "resource limit", "resource capacity", "resource constraints", "available resources", "available budget", "available staff", "staff capacity", "budget check", "budget overrun", "over budget", "over the budget", "goes over budget", "goes over the budget", "above budget", "exceeds budget", "exceeds the budget", "exceeds available", "exceeds capacity", "exceeds the limit", "scenario budget", "budget exceeded", "budget and staff", "budget and resources", "staff", "resources", "constraint", "shortage", "shortage of resources"],
       en: "Build Candidate Portfolio combines shortlisted projects into a candidate scenario. PPM adds the selected projects’ estimated costs and staff requirements, then checks the totals against the budget and capacity from Investment Context. It flags a limit that is exceeded. Passing the check is informational, not approval.",
       ko: "Build Candidate Portfolio에서는 Shortlist 프로젝트를 후보 시나리오로 조합합니다. 선택한 프로젝트의 예상 비용과 인력 요구량을 합산해 Investment Context의 예산·인력 한도와 비교하고, 초과한 항목을 표시해요. 한도 검토 통과는 참고 정보이며 승인을 뜻하지 않습니다."
     },
@@ -97,7 +97,7 @@
       ko: "Live demo는 자동 시작되지 않는 선택형 단계별 안내입니다. 샘플 화면을 사용하는 읽기 전용 체험이에요. 안내를 따라가거나 화면 이미지 가이드를 한 장씩 볼 수 있습니다. 역할별 화면을 보려면 역할 선택으로 가서 역할을 고르세요. 데모 변경은 저장된 Workplace 기록과 분리됩니다."
     },
     {
-      keywords: ["assisted mode", "contextual help", "help button", "info button", "i button", "information icon", "tooltip", "instruction", "what do i do", "help with this step", "assisted", "도움말", "도움", "i 버튼", "아이 버튼", "정보 버튼", "안내 버튼", "툴팁", "이 단계", "뭘 해야", "무엇을 해야", "설명 보기"],
+      keywords: ["assisted mode", "contextual help", "contextual guidance", "help button", "field help", "field instruction", "field explanation", "input box", "input guidance", "what to enter", "help for a field", "info button", "i button", "information icon", "tooltip", "instruction", "what do i do", "help with this step", "assisted", "도움말", "도움", "i 버튼", "아이 버튼", "정보 버튼", "안내 버튼", "툴팁", "이 단계", "뭘 해야", "무엇을 해야", "설명 보기"],
       en: "For help on a particular screen area, turn on the small i help control and then select the area you want explained. It opens a short contextual instruction for that field or section. The Live demo is a separate general tour of the workflow.",
       ko: "특정 화면 영역의 설명은 작은 i 도움말을 켠 다음, 설명이 필요한 영역을 선택하면 확인할 수 있어요. 그 입력칸이나 구역에서 해야 할 일을 짧게 안내합니다. Live demo는 전체 흐름을 둘러보는 별도의 일반 안내입니다."
     },
@@ -107,7 +107,7 @@
       ko: "샘플 데모는 읽기 전용이라 변경 사항을 저장하지 않습니다. 로그인한 Workplace의 기록은 연결된 PPM 계정 서비스를 통해 저장되며, 서비스와 데이터베이스가 이용 가능할 때 같은 계정으로 다른 기기에서도 동기화할 수 있어요. 프로토타입에 민감한 개인정보를 입력하지 마세요."
     },
     {
-      keywords: ["login", "sign in", "sign up", "create account", "password", "authentication", "role after login", "로그인", "회원가입", "계정 만들기", "비밀번호", "인증", "가입"],
+      keywords: ["login", "sign in", "sign up", "create account", "without an account", "without creating an account", "no account needed", "account required", "account for demo", "demo without account", "do i need an account", "sample without account", "password", "authentication", "role after login", "로그인", "회원가입", "계정 만들기", "비밀번호", "인증", "가입"],
       en: "The site has a sign-in/account flow for the saved workplace. The read-only demo can be explored without creating an account. A role chosen for the demo only changes which sample workflow you see; it is not account authentication.",
       ko: "사이트의 저장형 Workplace에는 로그인·계정 흐름이 있고, 읽기 전용 데모는 계정을 만들지 않고 둘러볼 수 있습니다. 데모에서 고른 역할은 보여줄 샘플 흐름을 바꾸는 것이며 계정 인증은 아닙니다."
     },
@@ -124,43 +124,195 @@
   ];
 
   function normalize(value) {
-    return value.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim().replace(/\s+/g, " ");
+    return value.toLocaleLowerCase().replace(/[^a-z0-9]+/g, " ").trim().replace(/\s+/g, " ");
   }
 
-  function scoreTopic(topic, normalized, compact) {
+  const stopWords = new Set("a an and are as at be by can do does for from how i in is it me my of on or our the this to what when where which who why with you your".split(" "));
+  const topicDomains = [
+    "question entry", "role selection", "investment context", "project proposal", "project evaluation", "review status",
+    "project overview", "project comparison", "shortlist", "candidate portfolio", "portfolio decision", "live demo",
+    "contextual help", "saved workplace", "account access", "user feedback", "PPM workflow"
+  ];
+  const subjectForms = [
+    (phrase) => phrase,
+    (phrase) => `the ${phrase}`,
+    (phrase) => `my ${phrase}`,
+    (phrase) => `this ${phrase}`,
+    (phrase) => `${phrase} feature`,
+    (phrase) => `${phrase} screen`,
+    (phrase) => `${phrase} process`,
+    (phrase) => `${phrase} workflow`,
+    (phrase) => `the ${phrase} option`,
+    (phrase) => `${phrase} in the PPM site`
+  ];
+  const questionFrames = [
+    (subject, domain) => `How does ${subject} work in ${domain}?`,
+    (subject, domain) => `How do I use ${subject} in ${domain}?`,
+    (subject, domain) => `What is ${subject} in ${domain}?`,
+    (subject, domain) => `What does ${subject} mean in ${domain}?`,
+    (subject, domain) => `Can you explain ${subject} for ${domain}?`,
+    (subject, domain) => `Can you tell me about ${subject} in ${domain}?`,
+    (subject, domain) => `Where can I find ${subject} in ${domain}?`,
+    (subject, domain) => `Where do I use ${subject} in ${domain}?`,
+    (subject, domain) => `What can I do with ${subject} in ${domain}?`,
+    (subject, domain) => `What should I know about ${subject} in ${domain}?`,
+    (subject, domain) => `When do I use ${subject} in ${domain}?`,
+    (subject, domain) => `Why do we use ${subject} in ${domain}?`,
+    (subject, domain) => `Is ${subject} part of ${domain}?`,
+    (subject, domain) => `Does PPM support ${subject} in ${domain}?`,
+    (subject, domain) => `How does this site handle ${subject} in ${domain}?`,
+    (subject, domain) => `What happens when I use ${subject} in ${domain}?`,
+    (subject, domain) => `Can I edit ${subject} in ${domain}?`,
+    (subject, domain) => `Can I save ${subject} in ${domain}?`,
+    (subject, domain) => `Can I remove ${subject} in ${domain}?`,
+    (subject, domain) => `Can I compare ${subject} in ${domain}?`,
+    (subject, domain) => `How is ${subject} different in ${domain}?`,
+    (subject, domain) => `What are the steps for ${subject} in ${domain}?`,
+    (subject, domain) => `How do I get help with ${subject} in ${domain}?`,
+    (subject, domain) => `Why is ${subject} confusing in ${domain}?`,
+    (subject, domain) => `Can you help me with ${subject} in ${domain}?`,
+    (subject, domain) => `Could you explain ${subject} in ${domain}?`,
+    (subject, domain) => `What should I know about ${subject} in ${domain}?`,
+    (subject, domain) => `Does the system calculate ${subject} in ${domain}?`,
+    (subject, domain) => `How can I change ${subject} in ${domain}?`,
+    (subject, domain) => `What happens before ${subject} in ${domain}?`,
+    (subject, domain) => `What happens after ${subject} in ${domain}?`,
+    (subject, domain) => `Is ${subject} available in the demo for ${domain}?`,
+    (subject, domain) => `Can I see ${subject} in the demo for ${domain}?`,
+    (subject, domain) => `Does ${subject} work across devices in ${domain}?`,
+    (subject, domain) => `How does ${subject} connect to the portfolio in ${domain}?`,
+    (subject, domain) => `Why is ${subject} important in ${domain}?`,
+    (subject, domain) => `How can I check ${subject} in ${domain}?`,
+    (subject, domain) => `Can you show me ${subject} in ${domain}?`,
+    (subject, domain) => `Where is ${subject} in the ${domain} workflow?`,
+    (subject, domain) => `Does ${subject} mean a project is approved in ${domain}?`,
+    (subject, domain) => `Can I use ${subject} without logging in to ${domain}?`,
+    (subject, domain) => `How do reviewers handle ${subject} in ${domain}?`,
+    (subject, domain) => `How does the manager review ${subject} in ${domain}?`,
+    (subject, domain) => `How do proposers add ${subject} in ${domain}?`,
+    (subject, domain) => `How should I interpret ${subject} in ${domain}?`,
+    (subject, domain) => `What is the purpose of ${subject} in ${domain}?`,
+    (subject, domain) => `Can you help me understand ${subject} in ${domain}?`,
+    (subject, domain) => `What should I do about ${subject} in ${domain}?`,
+    (subject, domain) => `How does the workflow move from ${subject} in ${domain}?`,
+    (subject, domain) => `What does PPM do with ${subject} in ${domain}?`,
+    (subject, domain) => `How can I change my ${subject} in ${domain}?`,
+    (subject, domain) => `Is ${subject} saved automatically in ${domain}?`,
+    (subject, domain) => `How do I find ${subject} in ${domain}?`,
+    (subject, domain) => `Is ${subject} read only in ${domain}?`,
+    (subject, domain) => `Can I add details to ${subject} in ${domain}?`,
+    (subject, domain) => `Will ${subject} sync on another device in ${domain}?`,
+    (subject, domain) => `How does ${subject} affect a decision in ${domain}?`,
+    (subject, domain) => `How do I use ${subject} as a reviewer in ${domain}?`,
+    (subject, domain) => `Is ${subject} automatic or human led in ${domain}?`,
+    (subject, domain) => `Can I test ${subject} in ${domain}?`,
+    (subject, domain) => `Can I start over with ${subject} in ${domain}?`
+  ];
+
+  function tokenize(value) {
+    return normalize(value).split(" ").filter((word) => word.length > 1 && !stopWords.has(word));
+  }
+
+  function buildQuestionIndex() {
+    const index = new Map();
+    const seenQuestions = new Set();
+    let count = 0;
+    topics.forEach((topic, topicIndex) => {
+      const subjects = new Set();
+      topic.keywords.filter((keyword) => /^[a-z0-9 ]+$/i.test(keyword)).forEach((keyword) => {
+        const phrase = normalize(keyword);
+        subjectForms.forEach((format) => subjects.add(format(phrase)));
+      });
+      subjects.forEach((subject) => questionFrames.forEach((frame) => {
+        const question = normalize(frame(subject, topicDomains[topicIndex]));
+        if (seenQuestions.has(question)) return;
+        seenQuestions.add(question);
+        count += 1;
+        const words = [...new Set(tokenize(question))];
+        for (let size = 1; size <= 3; size += 1) {
+          for (let start = 0; start + size <= words.length; start += 1) {
+            const phrase = words.slice(start, start + size).join(" ");
+            if (!index.has(phrase)) index.set(phrase, new Map());
+            const topicsForPhrase = index.get(phrase);
+            topicsForPhrase.set(topicIndex, (topicsForPhrase.get(topicIndex) || 0) + 1);
+          }
+        }
+      }));
+    });
+    return { index, count };
+  }
+
+  const questionIndex = buildQuestionIndex();
+  root.dataset.questionPatterns = String(questionIndex.count);
+  root.querySelector(".ppm-assistant-note").textContent = `Offline guide · ${questionIndex.count.toLocaleString()} English question patterns matched to built-in PPM help. No AI service or account is needed.`;
+
+  function phraseMatches(queryWords, termWords) {
+    const allowedEndings = new Set(["s", "es", "ed", "ing", "er", "ers", "ly", "ment", "ments", "able", "ability", "al"]);
+    for (let start = 0; start + termWords.length <= queryWords.length; start += 1) {
+      let matched = true;
+      for (let offset = 0; offset < termWords.length; offset += 1) {
+        const term = termWords[offset];
+        const word = queryWords[start + offset];
+        if (word === term) continue;
+        const ending = word.startsWith(term) ? word.slice(term.length) : "";
+        if (term.length < 4 || !allowedEndings.has(ending)) {
+          matched = false;
+          break;
+        }
+      }
+      if (matched) return true;
+    }
+    return false;
+  }
+
+  function scoreTopic(topic, normalized) {
     let score = 0;
-    for (const keyword of topic.keywords) {
+    const queryWords = normalized.split(" ").filter(Boolean);
+    topic.keywords.filter((keyword) => /^[a-z0-9 ]+$/i.test(keyword)).forEach((keyword) => {
       const term = normalize(keyword);
-      if (!term) continue;
-      const termCompact = term.replace(/\s/g, "");
-      if (normalized.includes(term) || compact.includes(termCompact)) {
+      if (phraseMatches(queryWords, term.split(" "))) {
         score += term.includes(" ") ? 4 : term.length >= 6 ? 3 : 2;
       }
-    }
+    });
     return score;
+  }
+
+  function scoreQuestionPatterns(question) {
+    const words = [...new Set(tokenize(question))];
+    const scores = new Array(topics.length).fill(0);
+    for (let size = 1; size <= 3; size += 1) {
+      for (let start = 0; start + size <= words.length; start += 1) {
+        const matches = questionIndex.index.get(words.slice(start, start + size).join(" "));
+        if (!matches) continue;
+        const phraseWeight = size === 1 ? 0.5 : size === 2 ? 1.4 : 2.4;
+        const topicBreadthWeight = 1 / Math.sqrt(matches.size);
+        matches.forEach((patternCount, topicIndex) => {
+          scores[topicIndex] += phraseWeight * topicBreadthWeight * Math.min(2, Math.log2(patternCount + 1));
+        });
+      }
+    }
+    return scores;
   }
 
   function answerFor(question) {
     const normalized = normalize(question);
-    const compact = normalized.replace(/\s/g, "");
-    const isKorean = /[\u3131-\uD79D]/.test(question);
-    const ranked = topics
-      .map((topic) => ({ topic, score: scoreTopic(topic, normalized, compact) }))
-      .filter((item) => item.score > 0)
-      .sort((left, right) => right.score - left.score);
+    const patternScores = scoreQuestionPatterns(question);
+    const ranked = topics.map((topic, index) => {
+      const direct = scoreTopic(topic, normalized);
+      const pattern = patternScores[index];
+      return { topic, score: direct * 2 + pattern, direct, pattern };
+    }).sort((left, right) => right.score - left.score);
 
-    if (!ranked.length) {
-      return isKorean
-        ? "질문의 뜻을 아직 안내 답변과 연결하지 못했어요. 질문을 평소 말투로 다시 적거나 화면/기능 이름을 포함해 주세요. 역할, 목표·예산, 제안서, 평가, 비교, Shortlist, 포트폴리오, 데모, 저장 방식에 관해 물어볼 수 있어요."
-        : "I couldn’t match that wording to a guide answer yet. Rephrase it naturally or include the screen or feature name. I can help with roles, objectives and budget, proposals, evaluation, comparison, Shortlist, portfolios, the demo, or saving data.";
+    if (!ranked.length || (ranked[0].direct === 0 && ranked[0].pattern < 2)) {
+      return "I couldn’t match that wording to a guide answer yet. Rephrase it naturally or include the screen or feature name. I can help with roles, objectives and budget, proposals, evaluation, comparison, Shortlist, portfolios, the demo, or saving data.";
     }
 
     const selected = [ranked[0]];
-    const asksMultiple = /\b(and|also|plus|both)\b|그리고|또한|그리고도|뿐만 아니라/.test(normalized);
+    const asksMultiple = /\b(and|also|plus|both)\b/.test(normalized);
     if (asksMultiple && ranked[1] && ranked[1].score >= 5 && ranked[1].score >= ranked[0].score * 0.55) {
       selected.push(ranked[1]);
     }
-    return selected.map(({ topic }) => isKorean ? topic.ko : topic.en).join(isKorean ? "\n\n" : "\n\n");
+    return selected.map(({ topic }) => topic.en).join("\n\n");
   }
 
   function addMessage(text, sender) {
@@ -199,12 +351,12 @@
     input.focus();
   }
 
-  addMessage("Hi! Type a question about any PPM screen or workflow in your own words. I match it to the closest built-in answer in English or Korean.", "assistant");
+  addMessage("Hi! Type a question in English about any PPM screen or workflow. You do not need to choose a topic; I match your wording to the closest built-in guide answer.", "assistant");
   launcher.addEventListener("click", () => panel.hidden ? openChat() : closeChat());
   root.querySelector(".ppm-assistant-close").addEventListener("click", closeChat);
   root.querySelector(".ppm-assistant-new").addEventListener("click", () => {
     messages.replaceChildren();
-    addMessage("Hi! Type a question about any PPM screen or workflow in your own words. I match it to the closest built-in answer in English or Korean.", "assistant");
+    addMessage("Hi! Type a question in English about any PPM screen or workflow. You do not need to choose a topic; I match your wording to the closest built-in guide answer.", "assistant");
     input.focus();
   });
   form.addEventListener("submit", (event) => {
