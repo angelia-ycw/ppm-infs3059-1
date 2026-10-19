@@ -27,7 +27,7 @@
         <textarea id="ppm-assistant-input" rows="1" maxlength="500" placeholder="Ask about the site…" required></textarea>
         <button type="submit" aria-label="Send message" title="Send message"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 10 17 3l-4 14-3-6-7-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 11 7-8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
       </form>
-      <p class="ppm-assistant-note">Prototype guide · messages stay in this browser tab.</p>
+      <p class="ppm-assistant-note">Checking assistant…</p>
     </section>`;
   document.body.append(root);
 
@@ -37,6 +37,11 @@
   const suggestions = root.querySelector(".ppm-assistant-suggestions");
   const form = root.querySelector(".ppm-assistant-form");
   const input = root.querySelector("#ppm-assistant-input");
+  const sendButton = form.querySelector("button[type='submit']");
+  const note = root.querySelector(".ppm-assistant-note");
+  const apiBase = String(window.PPM_CONFIG?.apiBaseUrl || "").replace(/\/$/, "");
+  let assistantAvailable = null;
+  let conversation = [];
 
   const topics = [
     {
@@ -95,6 +100,59 @@
       : "I don’t have a clear answer for that in the prototype guide yet. Try asking about roles, project evaluation, radar comparison, the Shortlist, portfolio scenarios, budget checks, or final decisions.";
   }
 
+  function setAssistantMode(enabled, unavailable = false) {
+    assistantAvailable = enabled;
+    const subtitle = root.querySelector(".ppm-assistant-header small");
+    if (enabled) {
+      subtitle.textContent = "AI help with this prototype";
+      note.textContent = "AI replies · Messages go to an AI service. Don’t share sensitive information.";
+    } else if (unavailable) {
+      subtitle.textContent = "Site guide";
+      note.textContent = "Guide mode · The AI service is unavailable; using built-in site answers.";
+    } else {
+      subtitle.textContent = "Site guide";
+      note.textContent = "Guide mode · AI replies are not configured yet; built-in answers are available.";
+    }
+  }
+
+  async function checkAssistantStatus() {
+    if (!apiBase) {
+      setAssistantMode(false, true);
+      return;
+    }
+    try {
+      const response = await fetch(`${apiBase}/api/assistant/status`, { headers: { Accept: "application/json" } });
+      if (!response.ok) throw new Error("Assistant status is unavailable");
+      const data = await response.json();
+      setAssistantMode(data.enabled === true);
+    } catch {
+      setAssistantMode(false, true);
+    }
+  }
+
+  async function requestAssistantReply(question) {
+    if (!apiBase || assistantAvailable === false) return answerFor(question);
+    const response = await fetch(`${apiBase}/api/assistant/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ message: question, history: conversation.slice(-8) })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (response.status === 503) {
+      setAssistantMode(false);
+      return answerFor(question);
+    }
+    if (response.status === 429) {
+      note.textContent = "AI demo limit reached for this minute · built-in site answers are still available.";
+      return answerFor(question);
+    }
+    if (!response.ok || typeof data.reply !== "string" || !data.reply.trim()) {
+      throw new Error(data.message || "Assistant reply failed");
+    }
+    setAssistantMode(true);
+    return data.reply.trim();
+  }
+
   function addMessage(text, sender) {
     const message = document.createElement("article");
     message.className = `ppm-assistant-message is-${sender}`;
@@ -104,6 +162,7 @@
     message.append(paragraph);
     messages.append(message);
     messages.scrollTop = messages.scrollHeight;
+    return message;
   }
 
   function openChat() {
@@ -118,14 +177,34 @@
     launcher.focus();
   }
 
-  function sendQuestion(value) {
+  async function sendQuestion(value) {
     const question = value.trim().slice(0, 500);
     if (!question) return;
     suggestions.hidden = true;
     addMessage(question, "user");
-    addMessage(answerFor(question), "assistant");
     input.value = "";
-    input.focus();
+    input.disabled = true;
+    sendButton.disabled = true;
+    const pending = addMessage("One moment…", "assistant");
+    pending.classList.add("is-pending");
+    try {
+      const answer = await requestAssistantReply(question);
+      pending.querySelector("p").textContent = answer;
+      conversation.push({ role: "user", content: question }, { role: "assistant", content: answer });
+      conversation = conversation.slice(-8);
+    } catch {
+      const answer = answerFor(question);
+      pending.querySelector("p").textContent = answer;
+      pending.classList.remove("is-pending");
+      setAssistantMode(false, true);
+      conversation = [];
+    } finally {
+      pending.classList.remove("is-pending");
+      input.disabled = false;
+      sendButton.disabled = false;
+      input.focus();
+    }
+    messages.scrollTop = messages.scrollHeight;
   }
 
   addMessage("Hi! Ask me how a PPM screen or workflow works. I can explain the prototype and its sample data.", "assistant");
@@ -134,12 +213,13 @@
   root.querySelector(".ppm-assistant-new").addEventListener("click", () => {
     messages.replaceChildren();
     suggestions.hidden = false;
+    conversation = [];
     addMessage("Hi! Ask me how a PPM screen or workflow works. I can explain the prototype and its sample data.", "assistant");
     input.focus();
   });
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    sendQuestion(input.value);
+    void sendQuestion(input.value);
   });
   input.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -149,9 +229,10 @@
   });
   suggestions.querySelectorAll("button").forEach((button) => button.addEventListener("click", () => {
     openChat();
-    sendQuestion(button.textContent);
+    void sendQuestion(button.textContent);
   }));
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !panel.hidden) closeChat();
   });
+  void checkAssistantStatus();
 })();

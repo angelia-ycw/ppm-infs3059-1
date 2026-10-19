@@ -31,7 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
         "spring.datasource.url=jdbc:h2:mem:ppm;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
         "spring.datasource.username=sa",
         "spring.datasource.password=",
-        "spring.datasource.driver-class-name=org.h2.Driver"
+        "spring.datasource.driver-class-name=org.h2.Driver",
+        "ppm.assistant.api-key="
 })
 @AutoConfigureMockMvc
 @Import(AuthFlowTest.TestMailConfiguration.class)
@@ -41,6 +42,26 @@ class AuthFlowTest {
 
     @Autowired
     CapturingPasswordResetEmailSender resetEmailSender;
+
+    @Test
+    void assistantUsesGuideModeUntilAnApiKeyIsConfigured() throws Exception {
+        http.perform(get("/api/assistant/status"))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.enabled").value(false));
+
+        http.perform(post("/api/assistant/chat").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"message\":\"How does comparison work?\"}"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.message")
+                        .value("AI replies are not configured yet."));
+    }
+
+    @Test
+    void assistantRejectsInvalidQuestionsBeforeCallingTheProvider() throws Exception {
+        http.perform(post("/api/assistant/chat").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"message\":\"   \"}"))
+                .andExpect(status().isBadRequest());
+    }
 
     @Test
     void accountCanBeCreatedUsedOnAnotherSignInAndLoggedOut() throws Exception {
