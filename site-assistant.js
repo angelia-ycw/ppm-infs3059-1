@@ -495,7 +495,9 @@
         });
         if (!response.ok) {
           const error = new Error(`Assistant API returned ${response.status}`);
-          error.retryable = response.status >= 500;
+          // Provider 429/503 failures are already retried by the backend. Retrying
+          // those responses here would multiply model calls; only retry a gateway 502.
+          error.retryable = response.status === 502;
           throw error;
         }
         const result = await response.json();

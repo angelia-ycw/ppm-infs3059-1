@@ -3,6 +3,7 @@ package edu.anu.ppm.auth;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -10,12 +11,15 @@ import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.client.ResourceAccessException;
 import tools.jackson.databind.JsonNode;
 
 import java.net.http.HttpClient;
 
 @Service
 class GeminiAssistantService {
+    private static final int MAX_ATTEMPTS = 2;
     private static final String SITE_GUIDE = """
             You are the help assistant for this specific Project Portfolio Management (PPM) prototype.
             Answer the user's question using only the site guide below. Be concise, friendly, and practical.
@@ -65,12 +69,13 @@ class GeminiAssistantService {
     private final RestClient restClient;
 
     GeminiAssistantService(@Value("${ppm.assistant.api-key:}") String apiKey,
-            @Value("${ppm.assistant.model:gemini-3.8-flash}") String model) {
+            @Value("${ppm.assistant.model:gemini-3.5-flash-lite}") String model) {
         this.apiKey = apiKey == null ? "" : apiKey.trim();
         this.model = model;
         HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(4)).build();
         JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
-        requestFactory.setReadTimeout(Duration.ofSeconds(15));
+        // Flash Lite is usually quick, but avoid timing out healthy responses during load.
+        requestFactory.setReadTimeout(Duration.ofSeconds(30));
         this.restClient = RestClient.builder().requestFactory(requestFactory).build();
     }
 
@@ -80,14 +85,8 @@ class GeminiAssistantService {
             Map<String, Object> payload = Map.of(
                     "systemInstruction", Map.of("parts", List.of(Map.of("text", SITE_GUIDE))),
                     "contents", List.of(Map.of("role", "user", "parts", List.of(Map.of("text", question)))),
-                    "generationConfig", Map.of("temperature", 0.2, "maxOutputTokens", 500));
-            JsonNode response = restClient.post()
-                    .uri("https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent", model)
-                    .header("x-goog-api-key", apiKey)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(payload)
-                    .retrieve()
-                    .body(JsonNode.class);
+                    "generationConfig", Map.of("temperature", 0.2, "maxOutputTokens", 400));
+            JsonNode response = generateContentWithRetry(payload);
             JsonNode parts = response == null ? null : response.path("candidates").path(0).path("content").path("parts");
             if (parts != null && parts.isArray()) {
                 StringBuilder answer = new StringBuilder();
@@ -103,6 +102,40 @@ class GeminiAssistantService {
             throw new AssistantUnavailableException("Gemini returned no answer.");
         } catch (RestClientException exception) {
             throw new AssistantUnavailableException("Gemini request failed.", exception);
+        }
+    }
+
+    private JsonNode generateContentWithRetry(Map<String, Object> payload) {
+        RestClientException lastError = null;
+        for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+            try {
+                return restClient.post()
+                        .uri("https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent", model)
+                        .header("x-goog-api-key", apiKey)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(payload)
+                        .retrieve()
+                        .body(JsonNode.class);
+            } catch (RestClientResponseException exception) {
+                int status = exception.getStatusCode().value();
+                if (status != 429 && status < 500) throw exception;
+                lastError = exception;
+            } catch (ResourceAccessException exception) {
+                lastError = exception;
+            }
+
+            if (attempt + 1 < MAX_ATTEMPTS) waitBeforeRetry(lastError, attempt);
+        }
+        throw new AssistantUnavailableException("Gemini request failed after retry.", lastError);
+    }
+
+    private void waitBeforeRetry(RestClientException cause, int attempt) {
+        long backoffMillis = 500L * (1L << attempt) + ThreadLocalRandom.current().nextLong(100L, 401L);
+        try {
+            Thread.sleep(backoffMillis);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new AssistantUnavailableException("Gemini retry was interrupted.", cause);
         }
     }
 }
