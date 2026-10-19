@@ -47,8 +47,8 @@
       ko: "역할은 세 가지예요. Project Proposer는 프로젝트 근거를 제출하고, Reviewer는 다섯 기준을 평가해 이유를 남기며, Portfolio Manager는 투자 맥락 설정부터 비교·Shortlist·후보 포트폴리오·제약 검토·최종 결정까지 담당합니다. 역할 선택 화면에서 역할을 고르면 해당 역할의 메뉴가 보여요. 샘플 역할 체험은 읽기 전용입니다."
     },
     {
-      keywords: ["investment context", "planning context", "planning cycle", "business unit", "planning horizon", "staff capacity", "budget limit", "set objectives", "investment goals", "strategic goals", "objectives", "goals", "set budget", "budget", "capacity", "투자 맥락", "투자 컨텍스트", "맥락 설정", "계획 주기", "계획 기간", "사업부", "예산", "인력 한도", "인력 용량", "목표 설정"],
-      en: "Investment Context defines the planning cycle, objectives, budget, and available staff capacity before proposals are assessed. Proposers select a primary objective for each project. Later, candidate portfolio totals are compared with the budget and staff limits. Being within those limits does not automatically approve a portfolio.",
+      keywords: ["investment context", "planning context", "planning cycle", "planning period", "planning phase", "planning stage", "planning timeframe", "planning activities", "portfolio planning", "start of planning", "beginning of the cycle", "set up a planning cycle", "before proposals", "before projects are submitted", "what should i do during planning", "business unit", "planning horizon", "staff capacity", "budget limit", "set objectives", "investment goals", "strategic goals", "objectives", "goals", "set budget", "budget", "capacity", "투자 맥락", "투자 컨텍스트", "맥락 설정", "계획 주기", "계획 기간", "사업부", "예산", "인력 한도", "인력 용량", "목표 설정"],
+      en: "At the start of a planning period, the Portfolio Manager sets the cycle details, objectives, total budget, and available staff capacity in Investment Context. Save that context before proposals are submitted. Later, candidate portfolio totals are checked against the budget and staff limits; being within those limits does not automatically approve a portfolio.",
       ko: "Investment Context에서는 제안서를 평가하기 전에 계획 주기, 목표, 예산, 사용 가능한 인력 규모를 설정합니다. 제안자는 각 프로젝트의 주요 목표를 선택해요. 이후 후보 포트폴리오의 비용과 인력 합계를 이 한도와 비교합니다. 한도 이내라고 자동 승인되는 것은 아닙니다."
     },
     {
@@ -351,12 +351,12 @@
     input.focus();
   }
 
-  addMessage("Hi! Type a question in English about any PPM screen or workflow. You do not need to choose a topic; I match your wording to the closest built-in guide answer.", "assistant");
+  addMessage("Type your question and I'll help.", "assistant");
   launcher.addEventListener("click", () => panel.hidden ? openChat() : closeChat());
   root.querySelector(".ppm-assistant-close").addEventListener("click", closeChat);
   root.querySelector(".ppm-assistant-new").addEventListener("click", () => {
     messages.replaceChildren();
-    addMessage("Hi! Type a question in English about any PPM screen or workflow. You do not need to choose a topic; I match your wording to the closest built-in guide answer.", "assistant");
+    addMessage("Type your question and I'll help.", "assistant");
     input.focus();
   });
   form.addEventListener("submit", (event) => {
