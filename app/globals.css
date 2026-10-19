@@ -1670,30 +1670,22 @@ body { background: var(--ink); }
 .tour-popover button[data-tour-next] { background: var(--yellow); }
 .tour-popover button:disabled { opacity: .4; cursor: default; }
 .tour-popover .tour-skip { border-color: transparent; color: #55554f; }
-.tour-screen-guide-link { display: inline-flex; min-height: 32px !important; align-items: center; margin: -7px 0 16px; border-color: transparent !important; padding: 0 !important; color: #55554f !important; font-size: 11px !important; text-decoration: underline; text-underline-offset: 3px; }
-.tour-screen-guide-link:hover { color: var(--ink) !important; }
-.tour-sequence-backdrop { position: fixed; z-index: 4; inset: 0; display: grid; place-items: center; overflow: auto; background: rgba(12, 12, 11, .78); padding: 18px; pointer-events: auto; }
-.tour-screen-guide { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; width: min(100%, 1040px); max-height: calc(100svh - 36px); overflow: auto; border: 1px solid #d8d8d1; background: #fff; box-shadow: 0 20px 70px rgba(0, 0, 0, .28); color: var(--ink); }
-.tour-screen-guide > header, .tour-screen-guide > footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 18px; }
-.tour-screen-guide > header { border-bottom: 1px solid #e9e9e3; }
-.tour-screen-guide-header-copy { min-width: 0; }
-.tour-screen-guide-header-copy p { margin: 0; }
-.tour-screen-guide-header-copy .section-kicker { color: #74746c; font-size: 9px; }
-.tour-screen-guide-header-copy small { display: block; margin-top: 4px; color: #6a6a63; font-size: 11px; }
-.tour-screen-guide button { min-height: 38px; border: 1px solid var(--ink); background: white; padding: 0 13px; color: var(--ink); cursor: pointer; font: inherit; font-size: 11px; font-weight: 800; }
-.tour-screen-guide button:hover { background: #f2f1ec; }
-.tour-screen-guide .tour-sequence-close { width: 38px; flex: 0 0 38px; padding: 0; border-color: transparent; font-size: 24px; font-weight: 400; }
-.tour-screen-frame { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; margin: 0; padding: 16px 18px; }
-.tour-screen-image-wrap { display: grid; min-height: 180px; max-height: 56svh; place-items: center; overflow: hidden; background: #f3f2ed; }
-.tour-screen-image-wrap img { display: block; width: 100%; height: 100%; max-height: 56svh; object-fit: contain; }
-.tour-screen-caption { max-width: 760px; padding: 14px 2px 3px; }
-.tour-screen-caption p { margin: 0; }
-.tour-screen-caption .tour-progress { margin-bottom: 6px; }
-.tour-screen-caption h2 { margin: 0; font-size: clamp(21px, 3vw, 30px); letter-spacing: -.045em; }
-.tour-screen-caption > p:last-child { margin-top: 6px; color: #55554f; font-size: 12px; line-height: 1.5; }
-.tour-screen-guide > footer { border-top: 1px solid #e9e9e3; }
-.tour-sequence-position { color: #73736b; font-size: 10px; font-weight: 750; }
-.tour-screen-guide [data-sequence-next] { background: var(--yellow); }
+.tour-video-launch { display: inline-flex; min-height: 34px !important; align-items: center; gap: 8px; margin: -7px 0 16px; border-color: #d8d8d1 !important; padding: 0 11px !important; color: var(--ink) !important; font-size: 11px !important; }
+.tour-video-launch span { display: grid; width: 19px; height: 19px; place-items: center; border-radius: 50%; background: var(--yellow); font-size: 9px; }
+.tour-video-launch:hover { background: #f5f4ef !important; }
+.tour-video-backdrop { position: fixed; z-index: 4; inset: 0; display: grid; place-items: center; overflow: auto; background: rgba(12, 12, 11, .82); padding: 18px; pointer-events: auto; }
+.tour-video-dialog { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; width: min(100%, 1040px); max-height: calc(100svh - 36px); overflow: hidden; border: 1px solid #d8d8d1; background: #fff; box-shadow: 0 20px 70px rgba(0, 0, 0, .32); color: var(--ink); }
+.tour-video-dialog > header, .tour-video-dialog > footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 17px; }
+.tour-video-dialog > header { border-bottom: 1px solid #e9e9e3; }
+.tour-video-dialog > header > div { min-width: 0; }
+.tour-video-dialog .section-kicker { margin: 0 0 4px; color: #74746c; font-size: 9px; }
+.tour-video-dialog h2 { margin: 0; font-size: clamp(17px, 2.5vw, 24px); letter-spacing: -.045em; line-height: 1.1; }
+.tour-video-dialog button { min-height: 36px; border: 1px solid var(--ink); background: white; padding: 0 12px; color: var(--ink); cursor: pointer; font: inherit; font-size: 11px; font-weight: 800; }
+.tour-video-dialog button:hover { background: #f2f1ec; }
+.tour-video-dialog .tour-video-close { width: 36px; flex: 0 0 36px; padding: 0; border-color: transparent; font-size: 24px; font-weight: 400; }
+.tour-video-dialog video { display: block; width: 100%; max-height: calc(100svh - 150px); aspect-ratio: 16 / 9; object-fit: contain; background: #111; }
+.tour-video-dialog > footer { flex-wrap: wrap; border-top: 1px solid #e9e9e3; }
+.tour-video-dialog > footer span { color: #73736b; font-size: 10px; }
 #ppm-assistant { position: fixed; z-index: 11000; inset: 0; pointer-events: none; font-family: inherit; }
 .ppm-assistant-launcher { position: fixed; z-index: 11001; right: 22px; bottom: 22px; display: grid; width: 44px; height: 44px; place-items: center; border: 1px solid var(--ink); border-radius: 50%; background: var(--yellow); color: var(--ink); box-shadow: 0 4px 16px rgba(0, 0, 0, .16); cursor: grab; touch-action: none; user-select: none; pointer-events: auto; transition: transform 160ms ease, box-shadow 160ms ease; }
 .ppm-assistant-launcher svg { width: 19px; height: 19px; pointer-events: none; }
@@ -1728,14 +1720,13 @@ body { background: var(--ink); }
 .ppm-assistant-form > button svg { width: 19px; height: 19px; }
 .ppm-assistant-note { margin: 0; border-top: 1px solid #eeeDE7; padding: 7px 12px 9px; color: #77776f; font-size: 9px; line-height: 1.4; }
 @media (max-width: 700px) {
-  .tour-sequence-backdrop { align-items: end; padding: 8px; }
-  .tour-screen-guide { max-height: calc(100svh - 16px); }
-  .tour-screen-guide > header, .tour-screen-guide > footer { padding: 11px 12px; }
-  .tour-screen-frame { padding: 10px 12px; }
-  .tour-screen-image-wrap { max-height: 42svh; }
-  .tour-screen-image-wrap img { max-height: 42svh; }
-  .tour-screen-guide > footer { gap: 8px; }
-  .tour-screen-guide > footer button { padding: 0 9px; }
+  .tour-video-backdrop { padding: 8px; }
+  .tour-video-dialog { max-height: calc(100svh - 16px); }
+  .tour-video-dialog > header, .tour-video-dialog > footer { padding: 10px 12px; }
+  .tour-video-dialog > footer { gap: 8px; }
+  .tour-video-dialog > footer span { font-size: 9px; }
+  .tour-video-dialog > footer button { padding: 0 9px; }
+  .tour-video-dialog video { max-height: calc(100svh - 122px); }
   .ppm-assistant-launcher { right: 12px; bottom: 12px; }
   .ppm-assistant-panel { right: 12px; bottom: 68px; width: min(370px, calc(100vw - 24px)); height: min(540px, calc(100svh - 86px)); }
 }

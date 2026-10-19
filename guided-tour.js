@@ -13,74 +13,54 @@
     title: "Sign in and choose your role",
     description: "Start here: sign in or create an account, then choose Project Proposer, Reviewer, or Portfolio Manager. The workplace navigation will show the screens for that role. If you are already signed in, check your role from the profile menu.",
     view: null,
-    target: ".workplace-topbar .auth-slot"
+    target: ".workplace-topbar .auth-slot",
+    video: "public/live-demo/videos/choose-role.webm"
   };
   const demoRoleStep = {
     title: "Explore your selected role",
     description: "You are viewing sample projects without signing in. Your selected role controls the screens in the left menu. You can inspect the examples and switch roles from this menu to explore the rest of the workflow; changes to project records cannot be saved in the demo.",
     view: null,
-    target: ".workplace-topbar .auth-slot"
+    target: ".workplace-topbar .auth-slot",
+    video: "public/live-demo/videos/choose-role.webm"
   };
   const navigationStep = {
     title: "Your role-specific workplace",
     description: "The left menu shows only the activities for your selected role, with numbering that restarts at 01 for that role.",
     view: null,
-    target: ".workspace-nav"
+    target: ".workspace-nav",
+    video: "public/live-demo/videos/manager-navigation.webm"
   };
   const roleSteps = {
     "Project Proposer": [
-      { title: "Enter a project proposal", description: "Add the project owner, objective, benefits, estimated cost, staff, timeline, and risks. A submitted proposal waits for reviewer assessment.", demoDescription: "Explore the information a proposer supplies: owner, objective, benefits, estimated cost, staff, timeline, and risks. In the demo, these fields show the proposal structure; submitting a project requires an account.", view: "proposer", target: "#proposal-form" }
+      { title: "Enter a project proposal", description: "Add the project owner, objective, benefits, estimated cost, staff, timeline, and risks. A submitted proposal waits for reviewer assessment.", demoDescription: "Explore the information a proposer supplies: owner, objective, benefits, estimated cost, staff, timeline, and risks. In the demo, these fields show the proposal structure; submitting a project requires an account.", view: "proposer", target: "#proposal-form", video: "public/live-demo/videos/project-proposal.webm" }
     ],
     Reviewer: [
-      { title: "Evaluate a proposal", description: "Reviewers record five separate 1–5 ratings and a short rationale for each one. The evidence is recorded without calculating a single total score.", demoDescription: "Inspect sample evaluations to see five separate 1–5 ratings and the rationale behind each one. The demo lets you read the examples; it does not save new ratings or comments.", view: "reviewer", target: "#review-queue" }
+      { title: "Evaluate a proposal", description: "Reviewers record five separate 1–5 ratings and a short rationale for each one. The evidence is recorded without calculating a single total score.", demoDescription: "Inspect sample evaluations to see five separate 1–5 ratings and the rationale behind each one. The demo lets you read the examples; it does not save new ratings or comments.", view: "reviewer", target: "#review-queue", video: "public/live-demo/videos/project-evaluation.webm" }
     ],
     "Portfolio Manager": [
-      { title: "Set the investment context · 01", description: "Set the planning cycle, strategic objectives, budget, and available capacity used for portfolio checks.", demoDescription: "See the sample planning cycle, strategic objectives, budget, and available capacity. These values provide the context for the portfolio's constraint checks and cannot be changed in the demo.", view: "organisation", target: "#organisation-form" },
-      { title: "Review the project overview · 02", description: "Search and filter evaluated proposals. Select an individual project to inspect its ratings and reviewer rationale.", view: "manager", target: ".portfolio-layout" },
-      { title: "View one project’s radar profile · 03", description: "A single evaluated proposal is enough to show its five-criterion radar profile. This does not create a total score or recommendation.", view: "comparison", target: "#comparison-workspace", prepare: () => prepareSelection(1) },
-      { title: "Compare project profiles · 03", description: "Select two to four evaluated proposals to see their criterion profiles overlaid and compare the recorded ratings side by side.", view: "comparison", target: "#comparison-workspace", prepare: () => prepareSelection(2) },
-      { title: "Retain projects for consideration · 04", description: "Add suitable projects to the formal Shortlist after reviewing their evidence. Shortlisting is not a final decision.", demoDescription: "View the sample shortlist to see how projects are retained for further consideration. A shortlist is not a final decision; changes to it require an account.", view: "shortlist", target: "#shortlist-workspace" },
-      { title: "Build a candidate portfolio · 05", description: "Choose shortlisted projects for a scenario. The workspace totals cost and staff requirements and flags limits that are exceeded.", demoDescription: "Inspect the sample candidate portfolio and its total cost and staff requirements. The workspace flags limits that are exceeded; saving your own scenario requires an account.", view: "scenarios", target: "#scenario-workspace" },
-      { title: "Review portfolio constraints · 06", description: "Inspect the selected scenario’s project mix, budget, staff capacity, and objective coverage before proceeding.", view: "reports", target: "#report-workspace" },
-      { title: "Record the human decision · 07", description: "After reviewing evidence and constraints, record the decision and its rationale. The system does not decide automatically.", demoDescription: "See where a manager records the final decision and its rationale after reviewing evidence and constraints. The system does not decide automatically, and demo decisions cannot be saved.", view: "decisions", target: "#decision-workspace" }
+      { title: "Set the investment context · 01", description: "Set the planning cycle, strategic objectives, budget, and available capacity used for portfolio checks.", demoDescription: "See the sample planning cycle, strategic objectives, budget, and available capacity. These values provide the context for the portfolio's constraint checks and cannot be changed in the demo.", view: "organisation", target: "#organisation-form", video: "public/live-demo/videos/investment-context.webm" },
+      { title: "Review the project overview · 02", description: "Search and filter evaluated proposals. Select an individual project to inspect its ratings and reviewer rationale.", view: "manager", target: ".portfolio-layout", video: "public/live-demo/videos/project-overview.webm" },
+      { title: "View one project’s radar profile · 03", description: "A single evaluated proposal is enough to show its five-criterion radar profile. This does not create a total score or recommendation.", view: "comparison", target: "#comparison-workspace", prepare: () => prepareSelection(1), video: "public/live-demo/videos/single-project-radar.webm" },
+      { title: "Compare project profiles · 03", description: "Select two to four evaluated proposals to see their criterion profiles overlaid and compare the recorded ratings side by side.", view: "comparison", target: "#comparison-workspace", prepare: () => prepareSelection(2), video: "public/live-demo/videos/compare-projects.webm" },
+      { title: "Retain projects for consideration · 04", description: "Add suitable projects to the formal Shortlist after reviewing their evidence. Shortlisting is not a final decision.", demoDescription: "View the sample shortlist to see how projects are retained for further consideration. A shortlist is not a final decision; changes to it require an account.", view: "shortlist", target: "#shortlist-workspace", video: "public/live-demo/videos/shortlist-projects.webm" },
+      { title: "Build a candidate portfolio · 05", description: "Choose shortlisted projects for a scenario. The workspace totals cost and staff requirements and flags limits that are exceeded.", demoDescription: "Inspect the sample candidate portfolio and its total cost and staff requirements. The workspace flags limits that are exceeded; saving your own scenario requires an account.", view: "scenarios", target: "#scenario-workspace", video: "public/live-demo/videos/build-candidate-portfolio.webm" },
+      { title: "Review portfolio constraints · 06", description: "Inspect the selected scenario’s project mix, budget, staff capacity, and objective coverage before proceeding.", view: "reports", target: "#report-workspace", video: "public/live-demo/videos/portfolio-review.webm" },
+      { title: "Record the human decision · 07", description: "After reviewing evidence and constraints, record the decision and its rationale. The system does not decide automatically.", demoDescription: "See where a manager records the final decision and its rationale after reviewing evidence and constraints. The system does not decide automatically, and demo decisions cannot be saved.", view: "decisions", target: "#decision-workspace", video: "public/live-demo/videos/record-decision.webm" }
     ]
   };
-  const screenGuideFrames = {
-    "Project Proposer": [
-      { src: "public/live-demo/proposer-form.webp", alt: "Project Proposal form in the PPM workplace", title: "Enter a project proposal", description: "Add the project description, expected benefits, objective, cost, staff, timeline, and key risks so a reviewer has evidence to assess." }
-    ],
-    Reviewer: [
-      { src: "public/live-demo/reviewer-queue.webp", alt: "Reviewer queue showing projects awaiting evaluation and recorded evaluations", title: "Check the review queue", description: "The queue shows which proposals are not reviewed yet and which already have an evaluation." },
-      { src: "public/live-demo/reviewer-evaluation.webp", alt: "Reviewer evaluation form with five criterion ratings and rationale fields", title: "Rate each criterion with a reason", description: "Review each criterion separately and write a short evidence-based rationale. PPM does not turn the ratings into one automatic score." }
-    ],
-    "Portfolio Manager": [
-      { src: "public/live-demo/pm-context.webp", alt: "Investment Context screen with planning cycle, objectives, budget, and staff capacity", title: "Set the investment context", description: "Set the objectives and available budget and capacity before considering project combinations." },
-      { src: "public/live-demo/pm-overview.webp", alt: "Project Overview showing proposals, criterion ratings, filters, and evaluation readiness", title: "Review the project overview", description: "Search and filter proposals, check the five ratings and status, then open a project to inspect its supporting evidence." },
-      { src: "public/live-demo/pm-radar.webp", alt: "One evaluated project's five-criterion radar profile", title: "Inspect a single-project profile", description: "A single evaluated project is enough to display its five-criterion radar profile; it is not an overall score." },
-      { src: "public/live-demo/pm-compare.webp", alt: "Two evaluated projects shown together in a comparison view", title: "Compare project profiles", description: "Overlay selected projects to discuss their differences. The chart supports review and does not pick a winner." }
-    ]
-  };
-
-  function selectedRole() {
-    return window.PPMAuth?.demoRole?.() || $(".workspace-nav")?.dataset.activeRole || "";
-  }
-
-  function showScreenSequence(index = 0) {
+  function showStepVideo() {
     if (!layer) return;
-    const frames = screenGuideFrames[selectedRole()] || [];
-    if (!frames.length) return;
-    const current = Math.max(0, Math.min(index, frames.length - 1));
-    const frame = frames[current];
-    layer.innerHTML = `<div class="tour-sequence-backdrop"><section class="tour-screen-guide" role="dialog" aria-modal="true" aria-labelledby="tour-sequence-title" tabindex="-1"><header><div class="tour-screen-guide-header-copy"><p class="section-kicker">Live demo · Screen guide</p><small>Static screen views · no video download or automatic playback</small></div><button class="tour-sequence-close" type="button" data-sequence-close aria-label="Return to live demo" title="Return to live demo">×</button></header><figure class="tour-screen-frame"><div class="tour-screen-image-wrap"><img src="${frame.src}" alt="${frame.alt}" fetchpriority="high" decoding="async" /></div><figcaption class="tour-screen-caption"><p class="tour-progress">${String(current + 1).padStart(2, "0")} / ${String(frames.length).padStart(2, "0")} · ${selectedRole()}</p><h2 id="tour-sequence-title">${frame.title}</h2><p>${frame.description}</p></figcaption></figure><footer><button type="button" data-sequence-back ${current === 0 ? "disabled" : ""}>Previous</button><span class="tour-sequence-position" aria-live="polite">Screen ${current + 1} of ${frames.length}</span><button type="button" data-sequence-next>${current === frames.length - 1 ? "Return to live demo" : "Next screen"}</button></footer></section></div>`;
-    const dialog = layer.querySelector(".tour-screen-guide");
-    layer.querySelector("[data-sequence-close]").addEventListener("click", () => showStep());
-    layer.querySelector("[data-sequence-back]").addEventListener("click", () => showScreenSequence(current - 1));
-    layer.querySelector("[data-sequence-next]").addEventListener("click", () => current === frames.length - 1 ? showStep() : showScreenSequence(current + 1));
+    const step = steps[stepIndex];
+    if (!step?.video) return;
+    removeFocus();
+    layer.innerHTML = `<div class="tour-video-backdrop"><section class="tour-video-dialog" role="dialog" aria-modal="true" aria-labelledby="tour-video-title" tabindex="-1"><header><div><p class="section-kicker">Live demo · Video walkthrough</p><h2 id="tour-video-title">${step.title}</h2></div><button class="tour-video-close" type="button" data-tour-video-close aria-label="Close video">×</button></header><video controls autoplay playsinline preload="metadata" aria-label="Video demonstration: ${step.title}"><source src="${step.video}" type="video/webm" />Your browser does not support WebM video.</video><footer><span>Example recording · isolated sample data · cursor hidden</span><button type="button" data-tour-video-close>Back to this step</button></footer></section></div>`;
+    const dialog = layer.querySelector(".tour-video-dialog");
+    const close = () => showStep();
+    dialog.querySelectorAll("[data-tour-video-close]").forEach((button) => button.addEventListener("click", close));
     dialog.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") { event.preventDefault(); showStep(); }
-      if (event.key === "ArrowLeft" && current > 0) showScreenSequence(current - 1);
-      if (event.key === "ArrowRight" && current < frames.length - 1) showScreenSequence(current + 1);
+      if (event.key === "Escape") { event.preventDefault(); close(); }
     });
+    dialog.querySelector("video").play().catch(() => {});
     dialog.focus();
   }
   function prepareSelection(count) {
@@ -105,11 +85,16 @@
       Reviewer: "The left menu shows 01 Project Evaluation. Other roles’ screens are hidden.",
       "Portfolio Manager": "The left menu shows the manager workflow: 01 Investment Context, 02 Project Overview, 03 Comparison, 04 Shortlist, 05 Build Candidate Portfolio, 06 Portfolio Review, and 07 Decisions."
     }[role] || navigationStep.description;
+    const roleNavigationVideo = {
+      "Project Proposer": "public/live-demo/videos/proposer-navigation.webm",
+      Reviewer: "public/live-demo/videos/reviewer-navigation.webm",
+      "Portfolio Manager": "public/live-demo/videos/manager-navigation.webm"
+    }[role];
     const selectedSteps = (roleSteps[role] || []).map((step) => ({
       ...step,
       description: isDemo && step.demoDescription ? step.demoDescription : step.description
     }));
-    return [isDemo ? demoRoleStep : signInStep, { ...navigationStep, description: roleNavigationDescription }, ...selectedSteps];
+    return [isDemo ? demoRoleStep : signInStep, { ...navigationStep, description: roleNavigationDescription, video: roleNavigationVideo }, ...selectedSteps];
   }
 
   function removeFocus() {
@@ -187,9 +172,8 @@
     if (stepIndex < 0 || stepIndex >= steps.length) { finish(true); return; }
     renderVersion += 1;
     layer.hidden = false;
-    const hasScreenGuide = stepIndex === 0 && (screenGuideFrames[selectedRole()] || []).length > 0;
-    layer.innerHTML = `<div class="tour-popover" role="dialog" aria-modal="true" aria-labelledby="tour-title"><p class="tour-progress">Live demo · ${String(stepIndex + 1).padStart(2, "0")} / ${steps.length}</p><h2 id="tour-title">${step.title}</h2><p>${step.description}</p>${hasScreenGuide ? `<button class="tour-screen-guide-link" type="button" data-tour-screen-guide>View screen-by-screen guide</button>` : ""}<footer><button class="tour-skip" type="button" data-tour-skip>Skip</button><div><button type="button" data-tour-back ${stepIndex === 0 ? "disabled" : ""}>Back</button><button type="button" data-tour-next>${stepIndex === steps.length - 1 ? "Finish" : "Next"}</button></div></footer></div>`;
-    layer.querySelector("[data-tour-screen-guide]")?.addEventListener("click", () => showScreenSequence());
+    layer.innerHTML = `<div class="tour-popover" role="dialog" aria-modal="true" aria-labelledby="tour-title"><p class="tour-progress">Live demo · ${String(stepIndex + 1).padStart(2, "0")} / ${steps.length}</p><h2 id="tour-title">${step.title}</h2><p>${step.description}</p>${step.video ? `<button class="tour-video-launch" type="button" data-tour-video><span aria-hidden="true">▶</span> Watch this step</button>` : ""}<footer><button class="tour-skip" type="button" data-tour-skip>Skip</button><div><button type="button" data-tour-back ${stepIndex === 0 ? "disabled" : ""}>Back</button><button type="button" data-tour-next>${stepIndex === steps.length - 1 ? "Finish" : "Next"}</button></div></footer></div>`;
+    layer.querySelector("[data-tour-video]")?.addEventListener("click", showStepVideo);
     layer.querySelector("[data-tour-next]").addEventListener("click", () => {
       if (stepIndex === steps.length - 1) { finish(true, true); return; }
       stepIndex += 1;
