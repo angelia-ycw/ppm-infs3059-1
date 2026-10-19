@@ -37,3 +37,7 @@ services:
         sync: false
       - key: DB_POOL_SIZE
         value: "3"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.8-flash

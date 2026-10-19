@@ -56,6 +56,10 @@ The Blueprint configures these server variables (never commit the database crede
 - `PPM_ALLOWED_ORIGINS` — the GitHub Pages origin and local development origins
 - `PPM_SESSION_HOURS` — sign-in token lifetime (default: 168 hours)
 
+The public PPM guide can use Gemini for site-specific questions. In Render, set `GEMINI_API_KEY` directly in the service's Environment settings; the key is not stored in this repository or sent to the browser. The default model is `gemini-3.8-flash`; `GEMINI_MODEL` can override it. The backend sends Gemini fixed PPM site instructions and the current typed question, not chat history or saved proposal/workspace records. Its instructions describe the PPM roles, workflow, and limitations so answers are about this prototype rather than generic PPM definitions. If Gemini is not configured or is unavailable, the existing built-in guide answers locally. The public endpoint has a small per-process request limit.
+
+Do not enter sensitive, confidential, or personal information in the guide. Google's unpaid Gemini API terms allow submitted prompts and responses to be used to improve Google products and may allow human review; check the current terms and free-tier limits before enabling it for public use.
+
 When the API URL is set, account registration, sign-in, profile edits, sign-out, account deletion, and password reset use the shared account service. Password recovery uses a single-use link that expires after 30 minutes; passwords are never retrievable or partially displayed. To enable email delivery, configure `PPM_PASSWORD_RESET_MAIL_ENABLED=true`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, and a verified `PPM_MAIL_FROM` address in Render's environment settings. Keep mail credentials out of Git. Until a mail provider is configured, the recovery screen explains that email reset is unavailable. Run the backend tests with `cd backend && mvn test`; the integration tests use an in-memory database. This student prototype does not include email verification, distributed rate limiting, backups, or production monitoring, so it should not be used for sensitive accounts.
 
 ## Main files

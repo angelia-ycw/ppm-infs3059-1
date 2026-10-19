@@ -22,7 +22,7 @@
         <textarea id="ppm-assistant-input" rows="1" maxlength="500" placeholder="Type a question about PPM…" required></textarea>
         <button type="submit" aria-label="Send message" title="Send message"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 10 17 3l-4 14-3-6-7-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 11 7-8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
       </form>
-      <p class="ppm-assistant-note">Offline guide · English questions matched to built-in PPM help. No AI service or account is needed.</p>
+      <p class="ppm-assistant-note">Questions go to Google Gemini. Free-tier prompts may be used to improve products or reviewed. Don’t enter sensitive project data; built-in help is the fallback.</p>
     </section>`;
   document.body.append(root);
 
@@ -32,9 +32,9 @@
   const form = root.querySelector(".ppm-assistant-form");
   const input = root.querySelector("#ppm-assistant-input");
   const sendButton = form.querySelector("button[type='submit']");
+  const newChatButton = root.querySelector(".ppm-assistant-new");
 
-  // The guide scores phrases in the typed question and returns the closest built-in answer.
-  // It deliberately does not call an AI provider, send the question elsewhere, or store chat history.
+  // The built-in guide is a private, local fallback when the optional AI service is unavailable.
   const topics = [
     {
       keywords: ["type a question", "type my own question", "own words", "free text", "write a question", "pick a topic", "choose a topic", "select a topic", "choose from buttons", "without selecting", "no topic selected", "free form", "question in my own words", "ask a question", "question box", "질문 입력", "직접 입력", "자유롭게 질문", "고르는 게 아니라", "고르는게 아니라", "주제 선택", "주제를 고르", "버튼을 고르", "뭘 물어볼 수"],
@@ -249,7 +249,7 @@
 
   const questionIndex = buildQuestionIndex();
   root.dataset.questionPatterns = String(questionIndex.count);
-  root.querySelector(".ppm-assistant-note").textContent = `Offline guide · ${questionIndex.count.toLocaleString()} English question patterns matched to built-in PPM help. No AI service or account is needed.`;
+  root.dataset.offlineQuestionPatterns = String(questionIndex.count);
 
   function phraseMatches(queryWords, termWords) {
     const allowedEndings = new Set(["s", "es", "ed", "ing", "er", "ers", "ly", "ment", "ments", "able", "ability", "al"]);
@@ -351,15 +351,22 @@
     return selected.map(({ topic }) => topic.en).join("\n\n");
   }
 
-  function addMessage(text, sender) {
+  function addMessage(text, sender, source) {
     const message = document.createElement("article");
     message.className = `ppm-assistant-message is-${sender}`;
     message.setAttribute("aria-label", sender === "user" ? "You" : "PPM guide");
     const paragraph = document.createElement("p");
     paragraph.textContent = text;
     message.append(paragraph);
+    if (source) {
+      const label = document.createElement("small");
+      label.className = "ppm-assistant-source";
+      label.textContent = source;
+      message.append(label);
+    }
     messages.append(message);
     messages.scrollTop = messages.scrollHeight;
+    return message;
   }
 
   function openChat() {
@@ -374,23 +381,63 @@
     launcher.focus();
   }
 
-  function sendQuestion(value) {
+  async function askGemini(question) {
+    const apiBaseUrl = window.PPM_CONFIG?.apiBaseUrl;
+    if (!apiBaseUrl) throw new Error("Assistant API is not configured");
+    const controller = new AbortController();
+    // The free Render API may need time to wake from sleep on its first request.
+    const timeout = window.setTimeout(() => controller.abort(), 90_000);
+    try {
+      const response = await fetch(`${apiBaseUrl.replace(/\/$/, "")}/api/assistant`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ question }),
+        signal: controller.signal
+      });
+      if (!response.ok) throw new Error("Assistant API is unavailable");
+      const result = await response.json();
+      if (typeof result.answer !== "string" || !result.answer.trim()) throw new Error("Assistant returned an empty answer");
+      return result.answer.trim();
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }
+
+  async function sendQuestion(value) {
     const question = value.trim().slice(0, 500);
     if (!question) return;
     addMessage(question, "user");
     input.value = "";
     input.disabled = true;
     sendButton.disabled = true;
-    addMessage(answerFor(question), "assistant");
-    input.disabled = false;
-    sendButton.disabled = false;
-    input.focus();
+    newChatButton.disabled = true;
+    const pendingMessage = addMessage("Thinking…", "assistant");
+    try {
+      const answer = await askGemini(question);
+      pendingMessage.querySelector("p").textContent = answer;
+      const source = document.createElement("small");
+      source.className = "ppm-assistant-source";
+      source.textContent = "Gemini · PPM site guide";
+      pendingMessage.append(source);
+    } catch {
+      pendingMessage.querySelector("p").textContent = answerFor(question);
+      const source = document.createElement("small");
+      source.className = "ppm-assistant-source";
+      source.textContent = "Built-in guide · AI unavailable";
+      pendingMessage.append(source);
+    } finally {
+      input.disabled = false;
+      sendButton.disabled = false;
+      newChatButton.disabled = false;
+      input.focus();
+      messages.scrollTop = messages.scrollHeight;
+    }
   }
 
   addMessage("Type your question and I'll help.", "assistant");
   launcher.addEventListener("click", () => panel.hidden ? openChat() : closeChat());
   root.querySelector(".ppm-assistant-close").addEventListener("click", closeChat);
-  root.querySelector(".ppm-assistant-new").addEventListener("click", () => {
+  newChatButton.addEventListener("click", () => {
     messages.replaceChildren();
     addMessage("Type your question and I'll help.", "assistant");
     input.focus();
