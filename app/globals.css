@@ -708,8 +708,8 @@ body.js-ready .reveal-group.is-visible .reveal { transition-delay: 0ms; }
 .context-help-popup > p:not(.section-kicker) { margin: 12px 0 16px; color: #4f4f49; font-size: 12px; line-height: 1.55; }
 .context-help-popup header button { width: 28px; height: 28px; flex: 0 0 28px; border: 1px solid var(--line); color: var(--ink); text-decoration: none; font-size: 20px; line-height: 1; }
 .context-help-popup .context-help-another { min-height: 34px; border: 1px solid var(--ink); padding: 0 10px; font-size: 10px; text-decoration: none; }
-body.context-help-selecting .proposer-view .wide-field[data-context-help-title="Project Description"], body.context-help-selecting .manager-view .evaluation-readiness, body.context-help-selecting .manager-view .scenario-heading { cursor: help !important; }
-body.context-help-selecting .proposer-view .wide-field[data-context-help-title="Project Description"].is-context-help-hover, body.context-help-selecting .manager-view .evaluation-readiness.is-context-help-hover, body.context-help-selecting .manager-view .scenario-heading.is-context-help-hover { outline: 2px solid var(--yellow); outline-offset: 2px; box-shadow: 0 0 0 4px rgba(244,255,69,.18); }
+body.context-help-selecting [data-context-help-title][data-context-help-text] { cursor: help !important; }
+body.context-help-selecting [data-context-help-title][data-context-help-text].is-context-help-hover { outline: 2px solid var(--yellow); outline-offset: 2px; box-shadow: 0 0 0 4px rgba(244,255,69,.18); }
 @media (max-width: 700px) { .context-help-selection-hint { left: 12px; right: 12px; width: auto; transform: none; justify-content: space-between; }.context-help-popup { right: 12px; bottom: 12px; } }
 .setup-form, .proposal-form { max-width: 1040px; }
 .setup-form > label, .proposal-form label { display: grid; gap: 8px; color: #42423d; font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
