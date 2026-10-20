@@ -1283,17 +1283,23 @@ const QUICK_CHECKS = [
     }
   },
   {
-    id: "scenario-exclusive-projects",
-    title: "Projects cannot be duplicated across scenarios",
-    detail: "A project assigned to one candidate scenario is not available in another until it is removed.",
+    id: "scenario-project-reuse",
+    title: "Shortlisted projects can be reused across scenarios",
+    detail: "Each scenario can include the same shortlisted project, while preventing duplicate entries within that scenario.",
     run: () => {
       const sample = {
-        A: { projectIds: ["test-service-hub"] },
-        B: { projectIds: ["test-accessibility-update"] }
+        A: { projectIds: ["test-service-hub", "test-network-refresh"] },
+        B: { projectIds: ["test-accessibility-update", "test-security-pilot"] }
       };
-      return projectAssignedToAnotherScenario("test-service-hub", "B", sample)
-        && !projectAssignedToAnotherScenario("test-service-hub", "A", sample)
-        && !projectAssignedToAnotherScenario("test-security-pilot", "B", sample);
+      const canAddToB = !projectAlreadyInScenario("test-service-hub", "B", sample);
+      const reused = {
+        ...sample,
+        B: { ...sample.B, projectIds: [...sample.B.projectIds, "test-service-hub"] }
+      };
+      return canAddToB
+        && projectAlreadyInScenario("test-service-hub", "A", reused)
+        && projectAlreadyInScenario("test-service-hub", "B", reused)
+        && !projectAlreadyInScenario("test-service-hub", "B", sample);
     }
   },
   {
@@ -2037,9 +2043,7 @@ function renderScenarioWorkspace() {
   const name = state.activeScenarioName;
   const scenario = state.scenarios[name] || { projectIds: [], budget: organisation.budget, staff: organisation.staff };
   const summary = scenarioSummary({ ...scenario, budget: organisation.budget, staff: organisation.staff });
-  const selectedIds = new Set(summary.projects.map((proposal) => proposal.id));
-  const available = shortlistedProposals().filter((proposal) => !selectedIds.has(proposal.id)
-    && !projectAssignedToAnotherScenario(proposal.id, name));
+  const available = shortlistedProposals().filter((proposal) => !projectAlreadyInScenario(proposal.id, name));
   const costRemaining = summary.budget - summary.totalCost;
   const staffRemaining = summary.staff - summary.totalStaff;
   const displayName = scenarioDisplayName(name);
@@ -2049,7 +2053,7 @@ function renderScenarioWorkspace() {
   const currentCards = summary.projects.map((proposal) => '<article class="scenario-project-card"><div><h4>' + escapeHTML(proposal.title) + '</h4><span class="objective-tag">' + escapeHTML(proposal.objective) + '</span><p>' + money(proposal.cost) + ' · ' + proposal.staff + ' FTE</p></div><button type="button" class="text-button" data-remove-from-scenario="' + escapeHTML(proposal.id) + '">Remove</button></article>').join("") || '<div class="scenario-column-empty"><strong>' + escapeHTML(displayName) + ' is empty.</strong><p>Add a project from the saved formal Shortlist.</p></div>';
   const constraintClass = summary.budgetOk && summary.staffOk ? 'is-feasible' : 'is-warning';
 
-  workspace.innerHTML = '<div class="scenario-builder-toolbar" data-context-help-title="Scenario Tabs and Actions" data-context-help-text="Choose which candidate scenario to edit. Add projects from the available list, then save your changes or continue to Portfolio Review. Scenario A and B keep separate project combinations."><div class="scenario-editor-tabs" aria-label="Choose a scenario">' + tabs + '<button type="button" class="scenario-new-button" data-create-scenario>+ New Scenario</button></div><div class="scenario-toolbar-actions">' + (isProtectedScenario ? '' : '<button type="button" class="text-button" data-rename-active-scenario>Rename</button><button type="button" class="text-button scenario-delete-button" data-delete-active-scenario>Delete</button>') + '<button type="button" class="outline-button" data-save-active-scenario>Save ' + escapeHTML(displayName) + '</button><button type="button" class="solid-button" data-open-portfolio-review>Proceed to Portfolio Review</button></div></div><p class="scenario-data-note"><strong>Candidate source:</strong> the saved formal Shortlist. Existing scenario projects remain available even if they are not currently shortlisted.</p><div class="scenario-builder-grid"><section class="scenario-builder-column" data-context-help-title="Available Projects" data-context-help-text="Add a project from the formal Shortlist to the scenario you are currently editing. A project already assigned to another scenario will not be available here."><header><p class="section-kicker">Available shortlisted projects</p><h4>' + available.length + ' available</h4></header><div class="scenario-project-list">' + availableCards + '</div></section><section class="scenario-builder-column" data-context-help-title="Current Scenario Projects" data-context-help-text="These projects are included in the active scenario. Remove a project here to release it so it can be assigned to a different scenario."><header><p class="section-kicker">Currently editing</p><h4>' + escapeHTML(displayName) + '</h4><span>' + summary.projects.length + ' project' + (summary.projects.length === 1 ? '' : 's') + ' included</span></header><div class="scenario-project-list">' + currentCards + '</div></section><aside class="scenario-summary-panel ' + constraintClass + '" data-context-help-title="Scenario Constraints" data-context-help-text="Compare the combined project cost and staff demand with the saved organisation limits. If a limit is exceeded, adjust the project mix. Within limits means feasible for review, not approved."><header><p class="section-kicker">Scenario summary</p><h4>' + (summary.budgetOk && summary.staffOk ? 'Within limits' : 'Constraints exceeded') + '</h4></header><div class="scenario-summary-metric"><span>Budget usage</span><strong>' + money(summary.totalCost) + ' <small>of ' + money(summary.budget) + '</small></strong><div class="scenario-meter"><i style="width:' + Math.min(summary.budget ? summary.totalCost / summary.budget * 100 : summary.totalCost ? 100 : 0, 100) + '%"></i></div><p class="' + (summary.budgetOk ? 'check-ok' : 'check-warning') + '">' + (summary.budgetOk ? money(Math.max(0, costRemaining)) + ' remaining' : money(Math.abs(costRemaining)) + ' over budget') + '</p></div><div class="scenario-summary-metric"><span>Total staff capacity</span><strong>' + summary.totalStaff + ' FTE <small>of ' + summary.staff + ' FTE</small></strong><div class="scenario-meter"><i style="width:' + Math.min(summary.staff ? summary.totalStaff / summary.staff * 100 : summary.totalStaff ? 100 : 0, 100) + '%"></i></div><p class="' + (summary.staffOk ? 'check-ok' : 'check-warning') + '">' + (summary.staffOk ? Math.max(0, staffRemaining) + ' FTE remaining' : Math.abs(staffRemaining) + ' FTE over capacity') + '</p></div><div class="scenario-constraint-summary"><strong>' + (summary.budgetOk && summary.staffOk ? 'Feasible candidate' : 'Needs revision') + '</strong><p>' + (summary.budgetOk && summary.staffOk ? 'The current scenario is within the saved budget and total FTE limits.' : (!summary.budgetOk ? 'The investment budget is exceeded. ' : '') + (!summary.staffOk ? 'The total staff capacity is exceeded.' : '')) + '</p></div><small class="scenario-capacity-note">Projects currently provide total FTE only. No resource-type usage is inferred.</small></aside></div>';
+  workspace.innerHTML = '<div class="scenario-builder-toolbar" data-context-help-title="Scenario Tabs and Actions" data-context-help-text="Choose which candidate scenario to edit. Add projects from the available list, then save your changes or continue to Portfolio Review. Scenario A and B keep separate project combinations."><div class="scenario-editor-tabs" aria-label="Choose a scenario">' + tabs + '<button type="button" class="scenario-new-button" data-create-scenario>+ New Scenario</button></div><div class="scenario-toolbar-actions">' + (isProtectedScenario ? '' : '<button type="button" class="text-button" data-rename-active-scenario>Rename</button><button type="button" class="text-button scenario-delete-button" data-delete-active-scenario>Delete</button>') + '<button type="button" class="outline-button" data-save-active-scenario>Save ' + escapeHTML(displayName) + '</button><button type="button" class="solid-button" data-open-portfolio-review>Proceed to Portfolio Review</button></div></div><p class="scenario-data-note"><strong>Candidate source:</strong> the saved formal Shortlist. Existing scenario projects remain available even if they are not currently shortlisted.</p><div class="scenario-builder-grid"><section class="scenario-builder-column" data-context-help-title="Available Projects" data-context-help-text="Add a project from the formal Shortlist to the scenario you are currently editing. A shortlisted project can also be included in other scenarios for comparison; it is hidden here only when already in this scenario."><header><p class="section-kicker">Available shortlisted projects</p><h4>' + available.length + ' available</h4></header><div class="scenario-project-list">' + availableCards + '</div></section><section class="scenario-builder-column" data-context-help-title="Current Scenario Projects" data-context-help-text="These projects are included in the active scenario. Remove a project here to remove it from this scenario only; it remains in the Shortlist and in any other scenarios that include it."><header><p class="section-kicker">Currently editing</p><h4>' + escapeHTML(displayName) + '</h4><span>' + summary.projects.length + ' project' + (summary.projects.length === 1 ? '' : 's') + ' included</span></header><div class="scenario-project-list">' + currentCards + '</div></section><aside class="scenario-summary-panel ' + constraintClass + '" data-context-help-title="Scenario Constraints" data-context-help-text="Compare the combined project cost and staff demand with the saved organisation limits. If a limit is exceeded, adjust the project mix. Within limits means feasible for review, not approved."><header><p class="section-kicker">Scenario summary</p><h4>' + (summary.budgetOk && summary.staffOk ? 'Within limits' : 'Constraints exceeded') + '</h4></header><div class="scenario-summary-metric"><span>Budget usage</span><strong>' + money(summary.totalCost) + ' <small>of ' + money(summary.budget) + '</small></strong><div class="scenario-meter"><i style="width:' + Math.min(summary.budget ? summary.totalCost / summary.budget * 100 : summary.totalCost ? 100 : 0, 100) + '%"></i></div><p class="' + (summary.budgetOk ? 'check-ok' : 'check-warning') + '">' + (summary.budgetOk ? money(Math.max(0, costRemaining)) + ' remaining' : money(Math.abs(costRemaining)) + ' over budget') + '</p></div><div class="scenario-summary-metric"><span>Total staff capacity</span><strong>' + summary.totalStaff + ' FTE <small>of ' + summary.staff + ' FTE</small></strong><div class="scenario-meter"><i style="width:' + Math.min(summary.staff ? summary.totalStaff / summary.staff * 100 : summary.totalStaff ? 100 : 0, 100) + '%"></i></div><p class="' + (summary.staffOk ? 'check-ok' : 'check-warning') + '">' + (summary.staffOk ? Math.max(0, staffRemaining) + ' FTE remaining' : Math.abs(staffRemaining) + ' FTE over capacity') + '</p></div><div class="scenario-constraint-summary"><strong>' + (summary.budgetOk && summary.staffOk ? 'Feasible candidate' : 'Needs revision') + '</strong><p>' + (summary.budgetOk && summary.staffOk ? 'The current scenario is within the saved budget and total FTE limits.' : (!summary.budgetOk ? 'The investment budget is exceeded. ' : '') + (!summary.staffOk ? 'The total staff capacity is exceeded.' : '')) + '</p></div><small class="scenario-capacity-note">Projects currently provide total FTE only. No resource-type usage is inferred.</small></aside></div>';
 
   workspace.querySelectorAll('[data-edit-scenario]').forEach((button) => button.addEventListener('click', () => { state.activeScenarioName = button.dataset.editScenario; renderScenarioWorkspace(); }));
   workspace.querySelector('[data-create-scenario]')?.addEventListener('click', createScenario);
@@ -2133,7 +2137,7 @@ function updateActiveScenarioProject(projectId, shouldAdd) {
   const proposal = proposals.find((item) => item.id === projectId);
   if (shouldAdd) {
     if (!proposal || !state.shortlisted.has(projectId) || !isEvaluated(proposal)
-      || projectAssignedToAnotherScenario(projectId, name)) return;
+      || projectAlreadyInScenario(projectId, name)) return;
     ids.add(projectId);
   } else {
     ids.delete(projectId);
@@ -2143,10 +2147,9 @@ function updateActiveScenarioProject(projectId, shouldAdd) {
   renderScenarioWorkspace();
 }
 
-function projectAssignedToAnotherScenario(projectId, activeScenarioName, scenarios = state.scenarios) {
-  return Object.entries(scenarios || {}).some(([scenarioName, scenario]) => scenarioName !== activeScenarioName
-    && Array.isArray(scenario?.projectIds)
-    && scenario.projectIds.includes(projectId));
+function projectAlreadyInScenario(projectId, scenarioName, scenarios = state.scenarios) {
+  const projectIds = scenarios?.[scenarioName]?.projectIds;
+  return Array.isArray(projectIds) && projectIds.includes(projectId);
 }
 
 function saveActiveScenario() {
