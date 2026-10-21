@@ -78,6 +78,7 @@ const DEFAULT_ORGANISATION = {
   endDate: "2027-01-13",
   businessUnit: "IT Department",
   planningHorizon: "FY2026–FY2027",
+  additionalInfo: "",
   objectives: ["Improve Customer Experience", "Improve Operational Efficiency", "Service Reliability"],
   budget: 5,
   resources: [
@@ -400,6 +401,7 @@ function normaliseOrganisation(raw) {
     endDate: String(raw?.endDate || ""),
     businessUnit: String(raw?.businessUnit || ""),
     planningHorizon: String(raw?.planningHorizon || ""),
+    additionalInfo: String(raw?.additionalInfo || ""),
     objectives: suppliedObjectives,
     budget: Math.max(0, numberOr(raw?.budget, DEFAULT_ORGANISATION.budget)),
     resources,
@@ -721,6 +723,7 @@ function renderOrganisationForm() {
   $("#org-end-date").value = organisation.endDate;
   $("#org-business-unit").value = organisation.businessUnit;
   $("#org-planning-horizon").value = organisation.planningHorizon;
+  $("#org-additional-info").value = organisation.additionalInfo;
   renderObjectiveInputs(organisation.objectives);
   $("#org-budget").value = String(organisation.budget);
   renderResourceRows(organisation.resources);
@@ -1645,6 +1648,7 @@ function saveOrganisation(event) {
     endDate: $("#org-end-date").value,
     businessUnit: $("#org-business-unit").value.trim(),
     planningHorizon: $("#org-planning-horizon").value.trim(),
+    additionalInfo: $("#org-additional-info").value.trim(),
     objectives,
     budget: numberOr($("#org-budget").value, DEFAULT_ORGANISATION.budget),
     resources: [...fixedResources, ...legacyResources],

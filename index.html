@@ -15,7 +15,7 @@
     <meta name="twitter:image" content="public/og.png" />
     <title>PPM — Project Portfolio Management</title>
     <link rel="icon" href="public/favicon.svg" />
-    <link rel="stylesheet" href="app/globals.css?v=20261020-context-help-v1" />
+    <link rel="stylesheet" href="app/globals.css?v=20261021-demo-input-context-v1" />
   </head>
   <body class="intro-document">
     <main id="app">
@@ -25,10 +25,6 @@
             <span class="wordmark-dot" aria-hidden="true"></span>
             <span>PPM</span>
           </a>
-          <nav aria-label="Introduction navigation">
-            <a href="#top">Overview</a>
-            <a href="#approach">How it works</a>
-          </nav>
           <div class="header-actions">
             <a class="header-cta" data-enter-workplace href="./role-select.html?v=20261012-demo-mvp-v1">Enter workspace <span aria-hidden="true">↘</span></a>
             <div class="auth-slot" id="auth-slot"></div>
@@ -57,44 +53,6 @@
             <p>
               Built for startup teams planning their IT projects. Submit proposals, review their benefits and risks, and choose projects that fit your budget and available staff.
             </p>
-          </div>
-        </section>
-
-        <section class="story-section" id="approach" aria-labelledby="approach-title">
-          <div class="story-intro reveal">
-            <p class="section-kicker">How it works</p>
-            <h2 id="approach-title">Three roles, different tasks.</h2>
-            <p class="story-copy">
-              Proposers submit projects, reviewers evaluate them, and portfolio managers decide which projects to include. Each role has access to different pages and actions.
-            </p>
-          </div>
-
-          <div class="principle-grid reveal-group">
-            <article class="principle-card principle-card--wide">
-              <span class="card-index">01</span>
-              <div class="orbit-mark" aria-hidden="true"><i></i><i></i><i></i></div>
-              <div class="reveal">
-                <p>PROPOSER</p>
-                <h3>Submit a project proposal.</h3>
-                <small>Describe the project, its expected benefits, estimated cost and staffing needs.</small>
-              </div>
-            </article>
-            <article class="principle-card principle-card--acid">
-              <span class="card-index">02</span>
-              <div class="reveal">
-                <p>REVIEWER</p>
-                <h3>Evaluate a proposal.</h3>
-                <small>Assess proposals using the five rating guides and explain the reasons for your ratings.</small>
-              </div>
-            </article>
-            <article class="principle-card principle-card--dark">
-              <span class="card-index">03</span>
-              <div class="reveal">
-                <p>PORTFOLIO MANAGER</p>
-                <h3>Choose projects for your portfolio.</h3>
-                <small>Set objectives and resource limits, compare reviewed proposals, and build a portfolio within those limits.</small>
-              </div>
-            </article>
           </div>
         </section>
 
@@ -176,6 +134,11 @@
                   <div class="context-card-heading"><span aria-hidden="true">04</span><div><h4 id="context-objectives-title">Strategic Investment Objectives</h4></div></div>
                   <div class="objective-input-list" id="objective-input-list"></div>
                   <button type="button" class="outline-button add-objective-button" id="add-objective">+ Add another objective</button>
+                </section>
+
+                <section class="context-card context-card--additional" data-context-help-title="Additional Information" data-context-help-text="Add optional background or assumptions for this planning cycle. This context does not replace the evidence that belongs in each project proposal." aria-labelledby="context-additional-title">
+                  <div class="context-card-heading"><span aria-hidden="true">05</span><div><h4 id="context-additional-title">Additional Information</h4><p>Optional notes for this planning cycle.</p></div></div>
+                  <label for="org-additional-info">Background, assumptions, or constraints<textarea id="org-additional-info" name="additionalInfo" rows="4" maxlength="2000" placeholder="Add any planning context that may help reviewers and portfolio managers."></textarea></label>
                 </section>
               </div>
 

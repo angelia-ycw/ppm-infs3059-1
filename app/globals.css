@@ -747,11 +747,13 @@ body.context-help-selecting [data-context-help-title][data-context-help-text].is
 .context-card-heading p { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
 .context-card label, .objective-input-row label { display: grid; min-width: 0; gap: 8px; color: #42423d; font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .context-card input { box-sizing: border-box; min-width: 0; min-inline-size: 0; max-width: 100%; width: 100%; border: 1px solid var(--ink); border-radius: 0; background: white; color: var(--ink); padding: 13px 14px; font: inherit; font-size: 14px; font-weight: 500; letter-spacing: -.02em; text-transform: none; }
+.context-card textarea { box-sizing: border-box; display: block; width: 100%; min-height: 110px; resize: vertical; border: 1px solid var(--ink); border-radius: 0; background: white; color: var(--ink); padding: 13px 14px; font: inherit; font-size: 14px; font-weight: 500; letter-spacing: -.02em; line-height: 1.45; text-transform: none; }
 .context-card input[type="date"] { padding-inline: 9px; font-size: 13px; }
-.context-card input:focus { outline: 3px solid rgba(244, 255, 69, .72); outline-offset: 1px; }
+.context-card input:focus, .context-card textarea:focus { outline: 3px solid rgba(244, 255, 69, .72); outline-offset: 1px; }
 .context-field-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
 @container (max-width: 560px) { .context-field-row--dates { grid-template-columns: minmax(0, 1fr); } }
 .context-card--objectives { grid-column: 1 / -1; }
+.context-card--additional { grid-column: 1 / -1; }
 .objective-input-list { display: grid; max-height: 320px; gap: 10px; overflow-y: auto; overscroll-behavior: contain; padding-right: 8px; scrollbar-gutter: stable; }
 .objective-input-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 10px; }
 .objective-input-row .text-button { min-height: 43px; padding-inline: 5px; }
@@ -886,7 +888,7 @@ body.context-help-selecting [data-context-help-title][data-context-help-text].is
   .pending-evaluation .solid-button { justify-self: start; }
   .portfolio-catalog-panel { border-right: 0; border-bottom: 1px solid var(--ink); }
   .investment-context-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .context-card--objectives { grid-column: 1 / -1; }
+  .context-card--objectives, .context-card--additional { grid-column: 1 / -1; }
 }
 @media (max-width: 700px) {
   .workspace-rolebar, .setup-view, .proposer-view, .reviewer-view, .test-view { padding: 18px; }
@@ -903,7 +905,7 @@ body.context-help-selecting [data-context-help-title][data-context-help-text].is
   .test-step-actions .outline-button, .test-mark-button { width: 100%; }
   .setup-form-grid, .proposal-form-grid, .review-queue { grid-template-columns: 1fr; }
   .investment-context-grid, .context-field-row { grid-template-columns: 1fr; }
-  .context-card--objectives { grid-column: auto; }
+  .context-card--objectives, .context-card--additional { grid-column: auto; }
   .context-card { padding: 17px; }
   .resource-capacity-row { grid-template-columns: minmax(0, 1fr) 88px auto; }
   .objective-input-row { grid-template-columns: 1fr; }
@@ -941,7 +943,16 @@ body.context-help-selecting [data-context-help-title][data-context-help-text].is
 .guest-demo-copy strong { font-size: 11px; line-height: 1.25; }
 .guest-demo-copy span { margin-top: 1px; color: #686861; font-size: 10px; line-height: 1.3; }
 .guest-demo button:disabled { cursor: not-allowed; opacity: .5; }
+.guest-demo #workspace input[readonly], .guest-demo #workspace textarea[readonly], .guest-demo #review-dialog input[readonly], .guest-demo #review-dialog textarea[readonly] { cursor: pointer; }
+.demo-login-notice { position: fixed; z-index: 1500; left: 20px; bottom: 20px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 16px; width: min(460px, calc(100vw - 40px)); border: 1px solid var(--ink); background: #fffef5; box-shadow: 0 12px 38px rgba(0,0,0,.18); padding: 16px 18px; color: var(--ink); }
+.demo-login-notice[hidden] { display: none; }
+.demo-login-notice strong { display: block; font-size: 12px; }
+.demo-login-notice p { margin: 4px 0 0; color: #686861; font-size: 11px; line-height: 1.4; }
+.demo-login-notice a { display: inline-flex; min-height: 36px; align-items: center; justify-content: center; background: var(--ink); padding: 0 13px; color: white; font-size: 11px; font-weight: 800; text-decoration: none; }
+.demo-login-notice a:hover, .demo-login-notice a:focus-visible { background: var(--yellow); color: var(--ink); }
+.demo-login-notice button { width: 28px; height: 28px; border: 0; background: transparent; color: var(--ink); cursor: pointer; font: inherit; font-size: 20px; line-height: 1; }
 @media (max-width: 600px) { .guest-demo-banner { gap: 8px; padding: 8px 14px; } .guest-demo-copy span { font-size: 10px; } }
+@media (max-width: 600px) { .demo-login-notice { left: 12px; bottom: 12px; gap: 10px; width: calc(100vw - 24px); padding: 13px; } }
 .workspace-nav-group-label { margin: 16px 8px 5px; color: #a4a49b; font-size: 8px; font-weight: 850; letter-spacing: .1em; line-height: 1.2; text-transform: uppercase; }
 .workspace-nav-group-label:first-child { margin-top: 4px; }
 .workspace-nav button, .workspace-setting { display: grid; grid-template-columns: 28px minmax(0, 1fr); min-height: 42px; align-items: center; width: 100%; border: 1px solid transparent; background: transparent; color: #e7e7de; padding: 0 8px; cursor: pointer; font: inherit; font-size: 10px; font-weight: 800; letter-spacing: -.01em; text-align: left; }
@@ -1349,6 +1360,7 @@ body { background: var(--ink); }
 .intro-site .site-header {
   position: relative;
   top: auto;
+  grid-template-columns: 1fr auto;
   background: white;
 }
 
@@ -1358,8 +1370,6 @@ body { background: var(--ink); }
   padding-top: 40px;
 }
 
-.intro-site .story-section { background: var(--paper); }
-.intro-site #approach { scroll-margin-top: 76px; }
 #workspace { scroll-margin-top: 0; }
 
 .hero-actions {
@@ -1711,7 +1721,6 @@ body { background: var(--ink); }
     min-height: calc(100svh - 64px);
     padding-top: 30px;
   }
-  .intro-site #approach { scroll-margin-top: 64px; }
   .hero-bottom { align-items: start; grid-template-columns: 1fr; }
   .hero-actions { justify-self: start; }
   .hero-try-button { min-height: 50px; }
