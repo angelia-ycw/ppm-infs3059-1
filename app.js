@@ -1861,7 +1861,7 @@ function bindEvents() {
   $("#organisation-form").addEventListener("submit", saveOrganisation);
   $("#add-objective").addEventListener("click", () => renderObjectiveInputs([...objectiveDraftValues(), ""]));
   $("#proposal-form").addEventListener("submit", submitProposal);
-  $("#open-test-mode").addEventListener("click", openTestMode);
+  $("#open-test-mode")?.addEventListener("click", openTestMode);
   $("#reset-test-data").addEventListener("click", resetTestData);
   $("#run-quick-checks").addEventListener("click", runQuickChecks);
   $$('[data-workspace-view-button]').forEach((button) => button.addEventListener("click", () => {

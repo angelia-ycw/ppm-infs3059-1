@@ -602,18 +602,6 @@ body.js-ready .reveal-group.is-visible .reveal { transition-delay: 0ms; }
   font-weight: 800;
 }
 .role-tabs button:hover, .role-tabs button[aria-selected="true"] { border-color: var(--yellow); background: var(--yellow); color: var(--ink); }
-.test-launch {
-  min-height: 36px;
-  border: 1px solid var(--yellow);
-  background: var(--yellow);
-  color: var(--ink);
-  padding: 0 13px;
-  cursor: pointer;
-  font: inherit;
-  font-size: 10px;
-  font-weight: 850;
-}
-.test-launch:hover, .test-launch[aria-pressed="true"] { background: white; border-color: white; }
 .test-mode-banner { display: flex; align-items: center; justify-content: space-between; gap: 18px; border-bottom: 1px solid var(--ink); background: var(--yellow); padding: 12px 22px; }
 .test-mode-banner > div { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
 .test-mode-banner strong { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; }
@@ -895,7 +883,6 @@ body.context-help-selecting [data-context-help-title][data-context-help-text].is
   .workspace-actions { width: 100%; }
   .role-tabs { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
   .role-tabs button { padding-inline: 7px; }
-  .test-launch { width: 100%; }
   .test-mode-banner { padding: 13px 18px; }
   .test-quick-checks, .test-checklist-heading { align-items: stretch; flex-direction: column; }
   .test-quick-checks .solid-button { width: 100%; }
