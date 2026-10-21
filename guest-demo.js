@@ -58,6 +58,11 @@
     event.preventDefault();
     event.stopImmediatePropagation();
   }, true);
+  // Trigger on pointer down as well as focus/click. Native date and number
+  // inputs can handle their own click behavior differently across browsers.
+  document.addEventListener("pointerdown", (event) => {
+    if (event.target instanceof Element && event.target.closest(textEntryControls)) showLoginNotice();
+  }, true);
   ["click", "change"].forEach((eventName) => document.addEventListener(eventName, (event) => {
     if (!(event.target instanceof Element) || !event.target.closest(mutationControls)) return;
     if (eventName === "click" && event.target.closest(textEntryControls)) showLoginNotice();
