@@ -1641,46 +1641,6 @@ body { background: var(--ink); }
 .tour-popover button[data-tour-next] { background: var(--yellow); }
 .tour-popover button:disabled { opacity: .4; cursor: default; }
 .tour-popover .tour-skip { border-color: transparent; color: #55554f; }
-#ppm-assistant { position: fixed; z-index: 11000; inset: 0; pointer-events: none; font-family: inherit; }
-.ppm-assistant-launcher { position: fixed; z-index: 11001; right: 22px; bottom: 22px; display: grid; width: 44px; height: 44px; place-items: center; border: 1px solid var(--ink); border-radius: 50%; background: var(--yellow); color: var(--ink); box-shadow: 0 4px 16px rgba(0, 0, 0, .16); cursor: grab; touch-action: none; user-select: none; pointer-events: auto; transition: transform 160ms ease, box-shadow 160ms ease; }
-.ppm-assistant-launcher svg { width: 19px; height: 19px; pointer-events: none; }
-.ppm-assistant-launcher:hover { transform: translateY(-2px); box-shadow: 0 7px 20px rgba(0, 0, 0, .2); }
-.ppm-assistant-launcher.is-dragging { cursor: grabbing; transform: none; transition: box-shadow 160ms ease; }
-.ppm-assistant-launcher:focus-visible, .ppm-assistant-panel button:focus-visible, .ppm-assistant-form textarea:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
-.ppm-assistant-panel { position: fixed; z-index: 11000; right: 22px; bottom: 78px; display: grid; grid-template-rows: auto minmax(120px, 1fr) auto auto; width: min(370px, calc(100vw - 32px)); height: min(540px, calc(100svh - 104px)); overflow: hidden; border: 1px solid #d8d8d1; background: white; box-shadow: 0 12px 42px rgba(0, 0, 0, .2); color: var(--ink); pointer-events: auto; }
-.ppm-assistant-panel[hidden] { display: none; }
-.ppm-assistant-header { display: flex; min-height: 64px; align-items: center; gap: 10px; border-bottom: 1px solid #343430; background: var(--ink); padding: 0 12px; color: white; }
-.ppm-assistant-mark { display: grid; flex: 0 0 30px; width: 30px; height: 30px; place-items: center; border: 2px solid var(--yellow); border-radius: 50%; }
-.ppm-assistant-mark i { width: 9px; height: 9px; border-radius: 50%; background: var(--yellow); }
-.ppm-assistant-header > div { display: grid; min-width: 0; gap: 3px; margin-right: auto; }
-.ppm-assistant-header strong { font-size: 13px; }
-.ppm-assistant-header small { color: #c5c5ba; font-size: 10px; }
-.ppm-assistant-header button { display: grid; width: 32px; height: 32px; place-items: center; border: 1px solid #5d5d56; background: transparent; color: white; cursor: pointer; font: inherit; }
-.ppm-assistant-header button:hover { border-color: var(--yellow); color: var(--yellow); }
-.ppm-assistant-header button:disabled { cursor: wait; opacity: .55; }
-.ppm-assistant-new { font-size: 20px !important; }
-.ppm-assistant-close { font-size: 23px !important; font-weight: 300 !important; }
-.ppm-assistant-messages { display: flex; min-height: 0; flex-direction: column; gap: 9px; overflow: auto; padding: 14px 12px; overscroll-behavior: contain; }
-.ppm-assistant-message { max-width: 91%; border: 1px solid #e3e2db; background: #f6f5f0; padding: 9px 11px; }
-.ppm-assistant-message p { margin: 0; color: #34342e; font-size: 11px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
-.ppm-assistant-message.is-user { align-self: end; border-color: #e2d34b; background: #fff9c2; }
-.ppm-assistant-message.is-assistant { align-self: start; }
-.ppm-assistant-source { display: block; margin-top: 5px; color: #77776f; font-size: 9px; line-height: 1.3; }
-.ppm-assistant-retry { margin-top: 7px; border: 0; border-bottom: 1px solid currentColor; background: transparent; color: #34342e; padding: 0 0 2px; font: inherit; font-size: 10px; font-weight: 700; cursor: pointer; }
-.ppm-assistant-retry:disabled { cursor: wait; opacity: .6; }
-.ppm-assistant-form { display: grid; grid-template-columns: minmax(0, 1fr) 38px; align-items: end; gap: 7px; border-top: 1px solid #e3e2db; padding: 10px 11px; }
-.ppm-assistant-form textarea { width: 100%; min-height: 38px; max-height: 94px; resize: vertical; border: 1px solid #c9c8be; border-radius: 0; padding: 9px 10px; color: var(--ink); font: inherit; font-size: 11px; line-height: 1.4; }
-.ppm-assistant-form > button { display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid var(--ink); background: var(--yellow); color: var(--ink); cursor: pointer; }
-.ppm-assistant-form > button:hover { background: #f2df14; }
-.ppm-assistant-form > button:disabled { cursor: wait; opacity: .58; }
-.ppm-assistant-form textarea:disabled { background: #f6f5f0; }
-.ppm-assistant-form > button svg { width: 19px; height: 19px; }
-.ppm-assistant-note { margin: 0; border-top: 1px solid #eeeDE7; padding: 7px 12px 9px; color: #77776f; font-size: 9px; line-height: 1.4; }
-@media (max-width: 700px) {
-  .ppm-assistant-launcher { right: 12px; bottom: 12px; }
-  .ppm-assistant-panel { right: 12px; bottom: 68px; width: min(370px, calc(100vw - 24px)); height: min(540px, calc(100svh - 86px)); }
-}
-
 @media (max-width: 700px) {
   .header-actions { gap: 10px; }
   .site-header { padding-inline: 14px; }
