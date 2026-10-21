@@ -80,7 +80,7 @@ class GeminiAssistantService {
     }
 
     String answer(String question) {
-        if (apiKey.isBlank()) throw new AssistantUnavailableException("Gemini is not configured.");
+        if (apiKey.isBlank()) throw new AssistantUnavailableException("not_configured", "Gemini is not configured.");
         try {
             Map<String, Object> payload = Map.of(
                     "systemInstruction", Map.of("parts", List.of(Map.of("text", SITE_GUIDE))),
@@ -99,9 +99,9 @@ class GeminiAssistantService {
                 }
                 if (!answer.isEmpty()) return answer.toString().trim();
             }
-            throw new AssistantUnavailableException("Gemini returned no answer.");
+            throw new AssistantUnavailableException("empty_response", "Gemini returned no answer.");
         } catch (RestClientException exception) {
-            throw new AssistantUnavailableException("Gemini request failed.", exception);
+            throw new AssistantUnavailableException(reasonCodeFor(exception), "Gemini request failed.", exception);
         }
     }
 
@@ -126,7 +126,7 @@ class GeminiAssistantService {
 
             if (attempt + 1 < MAX_ATTEMPTS) waitBeforeRetry(lastError, attempt);
         }
-        throw new AssistantUnavailableException("Gemini request failed after retry.", lastError);
+        throw new AssistantUnavailableException(reasonCodeFor(lastError), "Gemini request failed after retry.", lastError);
     }
 
     private void waitBeforeRetry(RestClientException cause, int attempt) {
@@ -135,7 +135,18 @@ class GeminiAssistantService {
             Thread.sleep(backoffMillis);
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
-            throw new AssistantUnavailableException("Gemini retry was interrupted.", cause);
+            throw new AssistantUnavailableException("network_error", "Gemini retry was interrupted.", cause);
         }
+    }
+
+    private String reasonCodeFor(RestClientException exception) {
+        if (exception instanceof RestClientResponseException response) {
+            int status = response.getStatusCode().value();
+            if (status == 401 || status == 403 || status == 404) return "configuration_error";
+            if (status == 429) return "quota_or_rate_limit";
+            if (status >= 500) return "provider_unavailable";
+            return "provider_error";
+        }
+        return "network_error";
     }
 }

@@ -434,7 +434,22 @@
     }).sort((left, right) => right.score - left.score);
 
     if (!ranked.length || (ranked[0].direct === 0 && ranked[0].pattern < 2)) {
-      return "I couldn’t match that wording to a guide answer yet. Rephrase it naturally or include the screen or feature name. I can help with roles, objectives and budget, proposals, evaluation, comparison, Shortlist, portfolios, the demo, or saving data.";
+      const screenTopicIndexes = {
+        organisation: 2,
+        proposer: 3,
+        reviewer: 4,
+        manager: 6,
+        comparison: 7,
+        shortlist: 8,
+        scenarios: 9,
+        reports: 10,
+        decisions: 11
+      };
+      const activeScreen = document.querySelector("#workspace .workspace-view:not([hidden])");
+      const activeTopic = topics[screenTopicIndexes[activeScreen?.dataset.workspaceView]];
+      if (activeTopic) return activeTopic.en;
+
+      return "This PPM prototype supports a human-led project portfolio workflow. The Portfolio Manager sets planning objectives, budget and staff capacity; Project Proposers submit project evidence; Reviewers assess each proposal against five criteria; then the Portfolio Manager compares and shortlists projects, builds candidate portfolios, checks constraints, and records the final decision. The system organises evidence but does not choose a winner or approve projects automatically.";
     }
 
     const selected = [ranked[0]];
@@ -494,7 +509,9 @@
           signal: controller.signal
         });
         if (!response.ok) {
+          const details = await response.json().catch(() => ({}));
           const error = new Error(`Assistant API returned ${response.status}`);
+          error.reasonCode = details.reasonCode || (response.status === 429 ? "quota_or_rate_limit" : "provider_unavailable");
           // Provider 429/503 failures are already retried by the backend. Retrying
           // those responses here would multiply model calls; only retry a gateway 502.
           error.retryable = response.status === 502;
@@ -518,6 +535,19 @@
     throw lastError || new Error("Assistant API is unavailable");
   }
 
+  function offlineSource(error) {
+    const reasonText = {
+      not_configured: "AI service needs configuration",
+      configuration_error: "AI service configuration needs checking",
+      quota_or_rate_limit: "AI request limit reached",
+      provider_unavailable: "AI service is temporarily unavailable",
+      network_error: "AI service could not be reached",
+      empty_response: "AI returned no answer"
+    };
+    const detail = reasonText[error?.reasonCode] || "AI is unavailable right now";
+    return `PPM site guide · ${detail}; showing built-in guidance`;
+  }
+
   async function sendQuestion(value) {
     const question = value.trim().slice(0, 500);
     if (!question) return;
@@ -534,11 +564,11 @@
       source.className = "ppm-assistant-source";
       source.textContent = "Gemini · PPM site guide";
       pendingMessage.append(source);
-    } catch {
+    } catch (error) {
       pendingMessage.querySelector("p").textContent = answerFor(question);
       const source = document.createElement("small");
       source.className = "ppm-assistant-source";
-      source.textContent = "Built-in guide · Gemini is temporarily unavailable; try again shortly";
+      source.textContent = offlineSource(error);
       pendingMessage.append(source);
       const retry = document.createElement("button");
       retry.type = "button";
@@ -551,9 +581,9 @@
           pendingMessage.querySelector("p").textContent = await askGemini(question);
           source.textContent = "Gemini · PPM site guide";
           retry.remove();
-        } catch {
+        } catch (error) {
           pendingMessage.querySelector("p").textContent = answerFor(question);
-          source.textContent = "Built-in guide · Gemini is temporarily unavailable; try again shortly";
+          source.textContent = offlineSource(error);
           retry.disabled = false;
         }
       });

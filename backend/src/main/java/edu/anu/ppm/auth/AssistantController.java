@@ -34,7 +34,7 @@ class AssistantController {
             return ResponseEntity.ok(new AssistantAnswer(assistant.answer(request.question().trim())));
         } catch (AssistantUnavailableException exception) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(Map.of("message", "The AI guide is unavailable."));
+                    .body(Map.of("message", "The AI guide is unavailable.", "reasonCode", exception.reasonCode()));
         }
     }
 }

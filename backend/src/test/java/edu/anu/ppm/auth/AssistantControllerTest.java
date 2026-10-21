@@ -51,12 +51,14 @@ class AssistantControllerTest {
 
     @Test
     void returnsServiceUnavailableSoTheBrowserCanUseOfflineGuide() throws Exception {
-        when(assistant.answer(anyString())).thenThrow(new AssistantUnavailableException("Gemini unavailable."));
+        when(assistant.answer(anyString())).thenThrow(new AssistantUnavailableException(
+                "provider_unavailable", "Gemini unavailable."));
 
         http.perform(post("/api/assistant")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"question\":\"How does comparison work?\"}"))
                 .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.message").value("The AI guide is unavailable."));
+                .andExpect(jsonPath("$.message").value("The AI guide is unavailable."))
+                .andExpect(jsonPath("$.reasonCode").value("provider_unavailable"));
     }
 }
